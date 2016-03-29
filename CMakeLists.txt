@@ -422,6 +422,7 @@ graph.cpp
 candidateset.cpp
 checkpoint.cpp
 upperbounds.cpp
+estimator.cpp
 )
 
 if (NOT IQTREE_FLAGS MATCHES "nozlib")

@@ -52,6 +52,7 @@
 #include "model/modelset.h"
 #include "timeutil.h"
 #include "upperbounds.h"
+#include "estimator.h"
 
 
 void reportReferences(Params &params, ofstream &out, string &original_model) {
@@ -1685,6 +1686,13 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
     	UpperBounds(&params, iqtree.aln, &iqtree);
     	exit(0);
 	}
+    
+    // Estimator analysis. Here, to analyse the initial tree without any tree search or optimization
+    if (params.estimator_analysis){
+        iqtree.initializeAllPartialLh();
+        estimatorAnalysis(&params, iqtree.aln, &iqtree);
+        exit(0);
+    }
 
     // degree of freedom
     cout << endl;
@@ -2482,6 +2490,15 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
 			alignment->addConstPatterns(params.freq_const_patterns);
 			cout << "INFO: " << alignment->getNSite() - orig_nsite << " const sites added into alignment" << endl;
 		}
+        
+        // Using the James-Stein shrinkage estimator to modify the original alignment
+        if(params.estimator_JS){
+            string outFile;
+            Alignment* alignment2;
+            alignment2 = alignment->shrinkageEstimator(outFile.c_str());
+            delete alignment;
+            alignment = alignment2;
+        }
 		tree = new IQTree(alignment);
 	}
 
@@ -2609,6 +2626,7 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
 			((PhyloSuperTreePlen*) tree)->printNNIcasesNUM();
 		}
 	}
+    
     // 2015-09-22: bug fix, move this line to before deleting tree
     alignment = tree->aln;
 	delete tree;

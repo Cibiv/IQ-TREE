@@ -663,6 +663,31 @@ public:
     void getAppearance(char state, double *state_app);
 
     void getAppearance(char state, StateBitset &state_app);
+    
+    /****************************************************************************
+            James-Stein shrinkage estimator
+     ****************************************************************************/
+    
+    /**
+            modify the alignment using the pattern probabilities obtained by James-Stein estimator
+            TODO: allow for inputing targets for observed and non-observed patterns
+            TODO: better output the new alignment already....
+            @param outFile (OUT) file name with a new modified alignment
+     */
+    Alignment* shrinkageEstimator(const char* outFile);
+    
+    /**
+            compute pattern probabilities with James-Stein estimator
+            @param ptn_freq_JS (OUT) the vector of pattern probabilities
+     */
+    void computePatternProbJS(double *ptn_freq_JS);
+    
+    /**
+            copy alignment James-Stein estimator
+            @param ptn_freq_JS (OUT) the vector of pattern probabilities
+     */
+    void createAlignmentJS(Alignment *aln);
+    
 
 protected:
 

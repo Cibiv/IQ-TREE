@@ -1511,6 +1511,15 @@ public:
 	 * if UBincreased < L, ignore corresponding NNI Add a comment to this line
 	 */
 	double upper_bound_frac;
+    
+    /**********************************************/
+    /****** variables for estimator analysis *******/
+    bool estimator_analysis;
+    
+    /**
+     *  apply James-Stein shrinkage estimator for pattern probabilities
+     */
+    bool estimator_JS;
 
 
     /**********************************************/

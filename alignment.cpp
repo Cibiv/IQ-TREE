@@ -3472,3 +3472,38 @@ double Alignment::multinomialProb (IntVector &pattern_freq)
     }
     return (fac - sumFac + sumProb);
 }
+
+Alignment* Alignment::shrinkageEstimator(const char* outFile){
+    
+    Alignment* alnMOD = new Alignment();
+    
+    return alnMOD;
+    
+}
+
+void Alignment::computePatternProbJS(double *ptn_freq_JS){
+    
+}
+
+void Alignment::createAlignmentJS(Alignment *aln) {
+    int site, nsite = aln->getNSite();
+    seq_names.insert(seq_names.begin(), aln->seq_names.begin(), aln->seq_names.end());
+    num_states = aln->num_states;
+    seq_type = aln->seq_type;
+    genetic_code = aln->genetic_code;
+    STATE_UNKNOWN = aln->STATE_UNKNOWN;
+    site_pattern.resize(nsite, -1);
+    clear();
+    pattern_index.clear();
+    VerboseMode save_mode = verbose_mode;
+    verbose_mode = min(verbose_mode, VB_MIN); // to avoid printing gappy sites in addPattern
+    for (site = 0; site < nsite; site++) {
+        int site_id = site;
+        int ptn_id = aln->getPatternID(site_id);
+        Pattern pat = aln->at(ptn_id);
+        addPattern(pat, site);
+    }
+    verbose_mode = save_mode;
+    countConstSite();
+    buildSeqStates();
+}

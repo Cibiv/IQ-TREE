@@ -835,6 +835,9 @@ void parseArg(int argc, char *argv[], Params &params) {
 	params.upper_bound = false;
 	params.upper_bound_NNI = false;
 	params.upper_bound_frac = 0.0;
+    
+    params.estimator_analysis=false;
+    params.estimator_JS=false;
 
     params.gbo_replicates = 0;
 	params.ufboot_epsilon = 0.5;
@@ -2363,13 +2366,23 @@ void parseArg(int argc, char *argv[], Params &params) {
 			}
 			if (strcmp(argv[cnt], "-upNNI") == 0) {
  				params.upper_bound_NNI = true;
+                continue;
 			}
 			if (strcmp(argv[cnt], "-upFrac") == 0) {
 				cnt++;
 				if (cnt >= argc)
 				  throw "Use -upFrac <fraction>";
 				params.upper_bound_frac = convert_double(argv[cnt]);
+                continue;
 			}
+            if (strcmp(argv[cnt], "-estAls") == 0) {
+                params.estimator_analysis = true;
+                continue;
+            }
+            if (strcmp(argv[cnt], "-estJS") == 0) {
+                params.estimator_JS = true;
+                continue;
+            }
 			if (strcmp(argv[cnt], "-ecoR") == 0) {
 				cnt++;
 				if (cnt >= argc)
