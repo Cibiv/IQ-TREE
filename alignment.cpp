@@ -1833,7 +1833,7 @@ void Alignment::printPhylip(ostream &out, bool append, const char *aln_site_list
 		int j = 0;
 		for (IntVector::iterator i = site_pattern.begin();  i != site_pattern.end(); i++, j++)
 			if (kept_sites[j])
-				out << convertStateBackStr(at(*i)[seq_id]);
+				out << convertStateBackStr(at(*i)[seq_id])<<" "; //delete <<"|" it is only used for a quick check with James-Stein estimator
 		out << endl;
 	}
 }
@@ -3481,29 +3481,180 @@ Alignment* Alignment::shrinkageEstimator(const char* outFile){
     
 }
 
+
+void Alignment::readPatternProbEstimator(double *ptn_freq){
+    
+    const char* infile=Params::getInstance().estimator_ptn_prob_file;
+    ifstream in;
+    
+    int site;
+    int nsite=this->getNSite();
+    double freq=0.0;
+    
+    for(int ptn = 0; ptn<this->size();ptn++){
+        ptn_freq[ptn]=0.0;
+    }
+    
+    cout<<"Reading site pattern probabilities from file: "<<infile<<endl;
+    try {
+        in.exceptions(ios::failbit | ios::badbit);
+        in.open(infile);
+        in.exceptions(ios::badbit);
+        
+        // Reading from the user file --------------------------
+        for (site = 0; site < nsite; site++) {
+            int site_id = site;
+            int ptn_id = this->getPatternID(site_id);
+            if(!(in >> freq)) throw "Could not read entry!";
+            if(ptn_freq[ptn_id]==0.0){
+                if(freq<0.0){
+                    freq = exp(freq);
+                }
+                ptn_freq[ptn_id]=freq;
+                cout<<"The site pattern probability for Pattern "<<ptn_id<<" is set to "<<freq<<endl;
+            }
+        }
+        // end -------------------------------------------------
+        in.close();
+    } catch (const char* str) {
+        outError(str);
+    } catch (ios::failure) {
+        outError(ERR_READ_INPUT, infile);
+    }
+}
+
 void Alignment::computePatternProbJS(double *ptn_freq_JS){
+    
+    int i, p = Params::getInstance().estimator_p; // p is the fictional total number of patterns from the unknown multinomial distribution
+    
+    // Pattern counts
+    int nptn = size(), nsite = getNSite();
+    IntVector ptn_freq;
+    ptn_freq.resize(nptn,-1);
+    getPatternFreq(ptn_freq);
+    
+    // Lambda - shrinkage intensity: in [0 (no shrinkage), 1 (full shrinkage)]
+    double lambda = 0.0, sum_ml = 0.0, sum_t_ml = 0.0;
+    double* target = new double[p];
+    
+    // Maximum likelihood estimates for observed patterns
+    double* ptn_freq_ml = new double[nptn];
+    
+    // For observed patterns
+    for(i = 0; i<nptn; i++){
+        ptn_freq_ml[i]=(double)ptn_freq[i]/(double)nsite;
+        //cout<<"Pattern "<<i+1<<": ML = "<<ptn_freq_ml[i]<<"; counts = "<<ptn_freq[i]<<"; nsite = "<<nsite<<"; ml/nsite = "<< (double)ptn_freq[i]/(double)nsite<<endl;
+        target[i]=1.0/p;                            // uniform target; must be improved
+        sum_ml   = sum_ml + ptn_freq_ml[i]*ptn_freq_ml[i];
+        sum_t_ml = sum_t_ml + (target[i]-ptn_freq_ml[i])*(target[i]-ptn_freq_ml[i]);
+    }
+    // For unobserved patterns
+    for(i = 0; i<p; i++){
+        target[i]=1.0/p;                            // uniform target; must be improved
+        sum_t_ml = sum_t_ml + target[i]*target[i];
+    }
+    
+    lambda = (1-sum_ml)/((nsite-1)*sum_t_ml);
+    cout<<"Lambda = "<<lambda<<endl;
+    
+    if(lambda>1)
+        lambda = 1;
+    
+    double ml = 0.0, js = 0.0;
+    // Compute James-Stein estimates
+    for(i = 0; i<nptn; i++){
+        ptn_freq_JS[i] = (lambda * target[i] + (1 - lambda)*ptn_freq_ml[i])*nsite;
+        cout<<"Pattern "<<i+1<<": ML = "<<ptn_freq_ml[i]<<"; JS = "<<ptn_freq_JS[i]/nsite<<endl;
+        ml = ml + ptn_freq_ml[i];
+        js = js + ptn_freq_JS[i];
+    }
+    cout<<"Total : ML = "<< ml <<"; JS = "<< js / nsite <<endl;
+    
+    
+    
+    delete [] target;
+    delete [] ptn_freq_ml;
+    
+    // Since one can use relative log-likelihood, which is independent of the alignment length, we don't care about the length anymore
+    /*
+    // New alignment length: computed only from the observed patterns
+    int new_aln_len = 0;
+    for(i = 0; i<nptn; i++){
+        new_aln_len = new_aln_len + ptn_freq_JS[i];
+    }
+    // get the numerator of new_aln_len as the length of the new alignment
+     */
+    
     
 }
 
 void Alignment::createAlignmentJS(Alignment *aln) {
-    int site, nsite = aln->getNSite();
+    
+    int nsite_new = aln->getNSite();
+    // TODO: what's the new alignment length? I suggest, the sum of numerator for observed patterns (given common denominator, of course)
+    
+    int ptn, nptn = aln->getNPattern();
+    
+    // Get the corrected frequencies
+    double* ptn_freq_JS = new double[nptn];
+    int ptn_counts_JS[nptn];
+    aln->computePatternProbJS(ptn_freq_JS);
+    
+    // Copy general info
     seq_names.insert(seq_names.begin(), aln->seq_names.begin(), aln->seq_names.end());
     num_states = aln->num_states;
     seq_type = aln->seq_type;
     genetic_code = aln->genetic_code;
     STATE_UNKNOWN = aln->STATE_UNKNOWN;
-    site_pattern.resize(nsite, -1);
+    
+    // the new size should be corrected according to the new pattern frequencies, oder?
+    // what to do with the unobserved patterns? nothing yet..
+    site_pattern.resize(nsite_new, -1);
     clear();
     pattern_index.clear();
-    VerboseMode save_mode = verbose_mode;
-    verbose_mode = min(verbose_mode, VB_MIN); // to avoid printing gappy sites in addPattern
-    for (site = 0; site < nsite; site++) {
-        int site_id = site;
-        int ptn_id = aln->getPatternID(site_id);
-        Pattern pat = aln->at(ptn_id);
-        addPattern(pat, site);
+    
+    int site_id = -1;
+    
+    for (ptn = 0; ptn < nptn; ptn++) {
+        Pattern pat = aln->at(ptn);
+        for(int i = 0; i < ptn_counts_JS[ptn]; i++){
+            site_id++;
+            addPattern(pat, site_id);
+        }
     }
-    verbose_mode = save_mode;
+    assert((site_id++) == nsite_new);
+    
     countConstSite();
     buildSeqStates();
 }
+
+void Alignment::createAlignmentPatternsOnly(Alignment *aln) {
+    
+    int ptn, nptn = aln->getNPattern();
+    
+    // Copy general info
+    seq_names.insert(seq_names.begin(), aln->seq_names.begin(), aln->seq_names.end());
+    num_states = aln->num_states;
+    seq_type = aln->seq_type;
+    genetic_code = aln->genetic_code;
+    STATE_UNKNOWN = aln->STATE_UNKNOWN;
+    
+    site_pattern.resize(nptn, -1);
+    clear();
+    pattern_index.clear();
+    
+    int site_id = -1;
+    
+    for (ptn = 0; ptn < nptn; ptn++) {
+        Pattern pat = aln->at(ptn);
+        site_id++;
+        addPattern(pat, site_id);
+        cout<<"JS info Pattern "<<ptn+1<<"|"<<aln->at(ptn).frequency<<"|"<<aln->getNSite()<<endl;
+    }
+    assert(size() == nptn);
+    
+    countConstSite();
+    buildSeqStates();
+    
+}
+

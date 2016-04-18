@@ -531,13 +531,30 @@ void PhyloTree::computeTipPartialLikelihood() {
 void PhyloTree::computePtnFreq() {
 	if (ptn_freq_computed) return;
 	ptn_freq_computed = true;
-	size_t nptn = aln->getNPattern();
-	size_t maxptn = get_safe_upper_limit(nptn+model_factory->unobserved_ptns.size());
-	int ptn;
-	for (ptn = 0; ptn < nptn; ptn++)
-		ptn_freq[ptn] = (*aln)[ptn].frequency;
-	for (ptn = nptn; ptn < maxptn; ptn++)
-		ptn_freq[ptn] = 0.0;
+    
+    size_t nptn = aln->getNPattern();
+    size_t nsite = aln->getNSite();
+    size_t maxptn = get_safe_upper_limit(nptn+model_factory->unobserved_ptns.size());
+    int ptn;
+    
+    if(params->estimator_JS){
+        if(params->estimator_ml){
+            for (ptn = 0; ptn < nptn; ptn++){
+                ptn_freq[ptn] = (double)((*aln)[ptn].frequency)/(double)nsite;
+                cout<<"Frequency: Pattern "<<ptn+1<<" = "<< ptn_freq[ptn]<<endl;
+            }
+        } if(params->estimator_ptn_prob_file){
+            aln->readPatternProbEstimator(ptn_freq);
+        } else {
+            aln->computePatternProbJS(ptn_freq);
+        }
+    } else {
+        for (ptn = 0; ptn < nptn; ptn++)
+            ptn_freq[ptn] = (*aln)[ptn].frequency;
+    }
+    
+    for (ptn = nptn; ptn < maxptn; ptn++)
+        ptn_freq[ptn] = 0.0;
 }
 
 void PhyloTree::computePtnInvar() {

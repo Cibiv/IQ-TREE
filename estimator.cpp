@@ -19,16 +19,18 @@ void estimatorAnalysis(Params* params, Alignment* alignment, IQTree* tree){
     if(append){
         out_file = "results.PatternInfo";   // Write results from multiple tree+alignment into one file // not a good idea, since you don't know in advance how many patterns do you have for a specific alignment
     }else{
-        out_file += ".PatternInfo";
+        //out_file += ".PatternInfo";
+        out_file += ".modALN";
     }
 //--------------------------------------------------------------------------------------------------
     
     Alignment *aln_modified = new Alignment();
+    aln_modified->createAlignmentPatternsOnly(alignment);
+    aln_modified->printPhylip(out_file.c_str());
     
     
     
-    
-    printPatternLhFreq(out_file.c_str(), (PhyloTree*)tree, NULL,append);
+    //printPatternLhFreq(out_file.c_str(), (PhyloTree*)tree, NULL,append);
 }
 
 

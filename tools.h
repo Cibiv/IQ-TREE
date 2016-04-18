@@ -1520,7 +1520,21 @@ public:
      *  apply James-Stein shrinkage estimator for pattern probabilities
      */
     bool estimator_JS;
-
+    
+    /**
+     *  use ML estimator for pattern probabilities with relative likelihood (multiplication with ptobability instead of counts)
+     */
+    bool estimator_ml;
+    
+    /**
+     *  fictional total number of patterns from the unknown multinomial distribution
+     */
+    int estimator_p;
+    
+    /**
+     *  file containing pattern probabilities, will be used instead of counts in likelihood computations
+     */
+    char* estimator_ptn_prob_file;
 
     /**********************************************/
     /**** variables for ultra-fast bootstrap ******/

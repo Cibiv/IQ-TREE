@@ -838,6 +838,9 @@ void parseArg(int argc, char *argv[], Params &params) {
     
     params.estimator_analysis=false;
     params.estimator_JS=false;
+    params.estimator_p = 0;
+    params.estimator_ml = false;
+    params.estimator_ptn_prob_file = NULL;
 
     params.gbo_replicates = 0;
 	params.ufboot_epsilon = 0.5;
@@ -2381,6 +2384,24 @@ void parseArg(int argc, char *argv[], Params &params) {
             }
             if (strcmp(argv[cnt], "-estJS") == 0) {
                 params.estimator_JS = true;
+                continue;
+            }
+            if (strcmp(argv[cnt], "-estML") == 0) {
+                params.estimator_ml = true;
+                continue;
+            }
+            if (strcmp(argv[cnt], "-est_p") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -est_p <patterns num>";
+                params.estimator_p = convert_int(argv[cnt]);
+                continue;
+            }
+            if (strcmp(argv[cnt], "-est_ptn_freq") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -est_ptn_freq <file>";
+                params.estimator_ptn_prob_file = argv[cnt];
                 continue;
             }
 			if (strcmp(argv[cnt], "-ecoR") == 0) {

@@ -2492,13 +2492,14 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
 		}
         
         // Using the James-Stein shrinkage estimator to modify the original alignment
-        if(params.estimator_JS){
+        /*if(params.estimator_JS){
             string outFile;
-            Alignment* alignment2;
-            alignment2 = alignment->shrinkageEstimator(outFile.c_str());
+            Alignment* alignment2 = new Alignment();
+            alignment2->createAlignmentJS(alignment);
             delete alignment;
             alignment = alignment2;
-        }
+        }*/
+        
 		tree = new IQTree(alignment);
 	}
 

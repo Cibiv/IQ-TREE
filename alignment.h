@@ -677,16 +677,28 @@ public:
     Alignment* shrinkageEstimator(const char* outFile);
     
     /**
+            read pattern probabilities from the user file
+            @param ptn_freq (OUT) the vector of pattern probabilities
+     */
+    void readPatternProbEstimator(double *ptn_freq);
+    
+    /**
             compute pattern probabilities with James-Stein estimator
             @param ptn_freq_JS (OUT) the vector of pattern probabilities
      */
     void computePatternProbJS(double *ptn_freq_JS);
     
     /**
-            copy alignment James-Stein estimator
-            @param ptn_freq_JS (OUT) the vector of pattern probabilities
+            create a modified alignment according to James-Stein counts/frequencies
+            @param aln "template" alignment
      */
     void createAlignmentJS(Alignment *aln);
+    
+    /**
+            create an alignment only from different patterns of template alignment
+            @param aln "template" alignment
+     */
+    void createAlignmentPatternsOnly(Alignment *aln);
     
 
 protected:
