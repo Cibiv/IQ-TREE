@@ -3487,6 +3487,7 @@ void Alignment::readPatternProbEstimator(double *ptn_freq){
     const char* infile=Params::getInstance().estimator_ptn_prob_file;
     ifstream in;
     
+    double sum=0.0;
     int site;
     int nsite=this->getNSite();
     double freq=0.0;
@@ -3502,17 +3503,32 @@ void Alignment::readPatternProbEstimator(double *ptn_freq){
         in.exceptions(ios::badbit);
         
         // Reading from the user file --------------------------
+        int inNsite;
+        string str;
+        double c=(Params::getInstance().estimator_p > 0) ? Params::getInstance().estimator_p : this->getNSeq()*this->getNSeq();
+        
+        if(!(in >> inNsite)) throw "Could not read the entry!";
+        if(!(in >> inNsite)) throw "Could not read the entry!";
+        if(!(in >> str)) throw "Could not read the entry!";
+        cout<<"There are "<<inNsite<<" "<<str<<" in the file."<<endl;
+        
+        
         for (site = 0; site < nsite; site++) {
             int site_id = site;
             int ptn_id = this->getPatternID(site_id);
-            if(!(in >> freq)) throw "Could not read entry!";
+            if(!(in >> freq)) throw "Could not read the entry!";
             if(ptn_freq[ptn_id]==0.0){
                 if(freq<0.0){
                     freq = exp(freq);
                 }
                 ptn_freq[ptn_id]=freq;
-                cout<<"The site pattern probability for Pattern "<<ptn_id<<" is set to "<<freq<<endl;
+                sum = sum+freq;
+                //cout<<"The site pattern probability for Pattern "<<ptn_id<<" is set to "<<ptn_freq[ptn_id]<<" (sitelh = "<<log(freq)<<", c = "<<c<<")"<<"total sum"<<sum<<endl;
             }
+        }
+        for(int ptn = 0; ptn<this->size();ptn++){
+            ptn_freq[ptn]=(double)ptn_freq[ptn]/(double)sum;
+            cout<<"The site pattern probability for Pattern "<<ptn<<" is set to "<<ptn_freq[ptn]<<endl;
         }
         // end -------------------------------------------------
         in.close();
@@ -3521,6 +3537,7 @@ void Alignment::readPatternProbEstimator(double *ptn_freq){
     } catch (ios::failure) {
         outError(ERR_READ_INPUT, infile);
     }
+    
 }
 
 void Alignment::computePatternProbJS(double *ptn_freq_JS){
