@@ -9,6 +9,7 @@
 // Copyright: See COPYING file that comes with this distribution
 //
 //
+#include "iqtree.h"
 #include "alignment.h"
 #include "myreader.h"
 #include <numeric>
@@ -62,6 +63,10 @@ Alignment::Alignment()
     seq_type = SEQ_UNKNOWN;
     STATE_UNKNOWN = 126;
     pars_lower_bound = NULL;
+    
+    // For James-Stein estimator
+    nptn_orgn = NULL;
+    nsite_orgn= NULL;
 }
 
 string &Alignment::getSeqName(int i) {
@@ -379,6 +384,10 @@ Alignment::Alignment(char *filename, char *sequence_type, InputType &intype) : v
     //cout << "Number of character states is " << num_states << endl;
     //cout << "Number of patterns = " << size() << endl;
     //cout << "Fraction of constant sites: " << frac_const_sites << endl;
+    
+    // For James-Stein estimator
+    nptn_orgn = size();
+    nsite_orgn = getNSite();
 
 }
 
@@ -697,6 +706,41 @@ bool Alignment::addPattern(Pattern &pat, int site, int freq) {
         site_pattern[site] = index;
     }
     return gaps_only;
+}
+
+bool Alignment::addOnlyNewPattern(Pattern &pat, int site, int freq) {
+    // check if pattern contains only gaps
+    bool gaps_only = true;
+    bool added_new_pat = false;
+    for (Pattern::iterator it = pat.begin(); it != pat.end(); it++)
+        if ((*it) != STATE_UNKNOWN) {
+            gaps_only = false;
+            break;
+        }
+    if (gaps_only) {
+        if (verbose_mode >= VB_DEBUG)
+            cout << "Site " << site << " contains only gaps or ambiguous characters" << endl;
+        return true;
+    }
+    
+    //cout<<"Not an only-gaps-pattern. Adding to the alignment.. Current nptn = "<<this->getNPattern()<<endl;
+    PatternIntMap::iterator pat_it = pattern_index.find(pat);
+    
+    if (pat_it == pattern_index.end()) { // not found
+        pat.frequency = freq;
+        computeConst(pat);
+        push_back(pat);
+        pattern_index[back()] = size()-1;
+        site_pattern.resize(site+1);
+        site_pattern[site] = size()-1;
+        added_new_pat = true;
+    }
+    /*else {
+        cout<<"Index of pattern "<<pat_it->second<<endl;
+    }*/
+    
+    //cout<<"Added a new unobserved pattern to the alignment.... Current nptn = "<<this->getNPattern()<<endl;
+    return added_new_pat;
 }
 
 void Alignment::addConstPatterns(char *freq_const_patterns) {
@@ -3505,7 +3549,7 @@ void Alignment::readPatternProbEstimator(double *ptn_freq){
         // Reading from the user file --------------------------
         int inNsite;
         string str;
-        double c=(Params::getInstance().estimator_p > 0) ? Params::getInstance().estimator_p : this->getNSeq()*this->getNSeq();
+//        double c =(Params::getInstance().estimator_p > 0) ? Params::getInstance().estimator_p : this->getNSeq()*this->getNSeq();
         
         if(!(in >> inNsite)) throw "Could not read the entry!";
         if(!(in >> inNsite)) throw "Could not read the entry!";
@@ -3541,33 +3585,84 @@ void Alignment::readPatternProbEstimator(double *ptn_freq){
 }
 
 void Alignment::computePatternProbJS(double *ptn_freq_JS){
+    cout<<"================================================="<<endl;
+    cout<<"            Computing JS estimates ..."<<endl;
+    cout<<"================================================="<<endl;
     
-    int i, p = Params::getInstance().estimator_p; // p is the fictional total number of patterns from the unknown multinomial distribution
+    int i;
+    
+    // p is the fictional total number of patterns from the unknown multinomial distribution or equals to the number of all possible patterns for a given taxon number
+    int p;
+    if(Params::getInstance().estimator_p){          // p is a parameter defined by the user
+        p = Params::getInstance().estimator_p;
+    } else if (Params::getInstance().aln_file_JS){  // p equals to all possible site patterns 4^#sp
+        p = 1;
+        for(i = 0; i < this->getNSeq(); i++){
+            p = p * 4;                              // 4 is the number of nucleotides, make it general afterwards
+        }
+    } else {                                        // set p to some value
+        p = this->getNSite() * this->getNSite() * this->getNSite();
+    }
+    
+    cout<<"Total number p of different site patterns in the alignment: "<<p<<endl;
+    
+    // Set nptn to the number of patterns of the input alignment (since afterwards it might be extended to all possible site patterns)
+    int nptn = nptn_orgn, nsite = nsite_orgn;
+    
+    // Number of patterns for which compute James-Stein estimates: either = nptn_orgn, or to all possible site patterns
+    int nptnJS;
+    if(Params::getInstance().aln_file_JS){
+        nptnJS = p;
+    } else {
+        nptnJS = nptn;
+    }
     
     // Pattern counts
-    int nptn = size(), nsite = getNSite();
     IntVector ptn_freq;
-    ptn_freq.resize(nptn,-1);
     getPatternFreq(ptn_freq);
     
     // Lambda - shrinkage intensity: in [0 (no shrinkage), 1 (full shrinkage)]
     double lambda = 0.0, sum_ml = 0.0, sum_t_ml = 0.0;
-    double* target = new double[p];
+    double target[p];
+    int targetType = 0; // 0 for uniform, 1 for star tree
     
-    // Maximum likelihood estimates for observed patterns
-    double* ptn_freq_ml = new double[nptn];
+    if(targetType==0){ // uniform target
+        for(i = 0; i<nptn; i++){
+            target[i]=1.0/p;
+        }
+        if(Params::getInstance().aln_file_JS){
+            for(i = nptn; i<p; i++){
+                target[i]=1.0/p;
+            }
+        }
+    } else if(targetType==1){
+        IQTree tree;
+        tree.aln = this;
+        tree.generateRandomTree(STAR_TREE);
+        tree.printTree(cout, WT_BR_LEN+WT_NEWLINE);
+    }
     
+    exit(0);
+    // Maximum likelihood estimates
+    double ptn_freq_ml[nptn];
+    
+    
+    // Computing Lambda ------------------------------------------------------------------------
     // For observed patterns
     for(i = 0; i<nptn; i++){
         ptn_freq_ml[i]=(double)ptn_freq[i]/(double)nsite;
         //cout<<"Pattern "<<i+1<<": ML = "<<ptn_freq_ml[i]<<"; counts = "<<ptn_freq[i]<<"; nsite = "<<nsite<<"; ml/nsite = "<< (double)ptn_freq[i]/(double)nsite<<endl;
-        target[i]=1.0/p;                            // uniform target; must be improved
         sum_ml   = sum_ml + ptn_freq_ml[i]*ptn_freq_ml[i];
         sum_t_ml = sum_t_ml + (target[i]-ptn_freq_ml[i])*(target[i]-ptn_freq_ml[i]);
     }
     // For unobserved patterns
-    for(i = 0; i<p; i++){
-        target[i]=1.0/p;                            // uniform target; must be improved
+    if(Params::getInstance().aln_file_JS){
+        for(i = nptn; i<p; i++){
+            ptn_freq_ml[i]=(double)ptn_freq[i];
+        }
+    }
+    
+    for(i = nptn; i<p; i++){
         sum_t_ml = sum_t_ml + target[i]*target[i];
     }
     
@@ -3577,32 +3672,51 @@ void Alignment::computePatternProbJS(double *ptn_freq_JS){
     if(lambda>1)
         lambda = 1;
     
+    // end --------------------------------------------------------------------------------------
+    
     double ml = 0.0, js = 0.0;
+    
+    // scaling coeficient for JS formular
+    int coef = nsite;
+    
     // Compute James-Stein estimates
-    for(i = 0; i<nptn; i++){
-        ptn_freq_JS[i] = (lambda * target[i] + (1 - lambda)*ptn_freq_ml[i])*nsite;
-        cout<<"Pattern "<<i+1<<": ML = "<<ptn_freq_ml[i]<<"; JS = "<<ptn_freq_JS[i]/nsite<<endl;
+    for(i = 0; i<nptnJS; i++){
+        ptn_freq_JS[i] = (lambda * target[i] + (1 - lambda)*ptn_freq_ml[i])*coef;
+        cout<<"Pattern "<<i+1<<": ML = "<<std::setprecision(6)<<ptn_freq_ml[i]<<"; JS = "<<std::setprecision(6)<<ptn_freq_JS[i]/coef<<endl;
         ml = ml + ptn_freq_ml[i];
         js = js + ptn_freq_JS[i];
     }
-    cout<<"Total : ML = "<< ml <<"; JS = "<< js / nsite <<endl;
+    cout<<"Total : ML = "<< ml <<"; JS = "<< js / coef <<endl;
     
+}
+
+void Alignment::expandAlignmentJS(Alignment *aln_expanded) {
     
+    //Alignment aln_expanded = Alignment(Params::getInstance().aln_file_JS, Params::getInstance().sequence_type, Params::getInstance().intype);
     
-    delete [] target;
-    delete [] ptn_freq_ml;
+    int site_id = this->getNSite();
+    int nsite = this->getNSite();
+    Pattern ptn;
     
-    // Since one can use relative log-likelihood, which is independent of the alignment length, we don't care about the length anymore
-    /*
-    // New alignment length: computed only from the observed patterns
-    int new_aln_len = 0;
-    for(i = 0; i<nptn; i++){
-        new_aln_len = new_aln_len + ptn_freq_JS[i];
+    cout<<"Starting expantion of original alignment..."<<endl;
+    
+    cout<<"Alignment length before expansion : "<<this->getNSite()<<endl;
+    
+    PatternIntMap::iterator pat_it;
+    for(iterator it = aln_expanded->begin(); it != aln_expanded->end(); it++){
+        if(addOnlyNewPattern((*it), site_id)){
+            //cout<<"added a new unobserved pattern... with site_id = "<<site_id<<endl;
+            site_id = site_id + 1;
+            pat_it = pattern_index.find((*it));
+            at(pat_it->second).frequency = 0;
+        }
     }
-    // get the numerator of new_aln_len as the length of the new alignment
-     */
     
+    cout<<"Alignment length after expansion : "<<this->getNSite()<<endl;
+    cout<<"Expanded original alignment by "<< this->getNSite() - nsite <<" additional site patterns."<<endl;
+    //assert(this->getNSite() - nsite == site_id - nsite - 1);
     
+    //delete aln_expanded;
 }
 
 void Alignment::createAlignmentJS(Alignment *aln) {

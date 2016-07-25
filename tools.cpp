@@ -838,6 +838,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     
     params.estimator_analysis=false;
     params.estimator_JS=false;
+    params.aln_file_JS=NULL;
     params.estimator_p = 0;
     params.estimator_ml = false;
     params.estimator_ptn_prob_file = NULL;
@@ -2384,6 +2385,13 @@ void parseArg(int argc, char *argv[], Params &params) {
             }
             if (strcmp(argv[cnt], "-estJS") == 0) {
                 params.estimator_JS = true;
+                continue;
+            }
+            if (strcmp(argv[cnt], "-estJSaln") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -estJSaln <file with complete alignment>";
+                params.aln_file_JS = argv[cnt];
                 continue;
             }
             if (strcmp(argv[cnt], "-estML") == 0) {

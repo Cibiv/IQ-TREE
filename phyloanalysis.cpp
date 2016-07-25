@@ -1688,11 +1688,11 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 	}
     
     // Estimator analysis. Here, to analyse the initial tree without any tree search or optimization
-    if (params.estimator_analysis){
+    /*if (params.estimator_analysis){
         iqtree.initializeAllPartialLh();
         estimatorAnalysis(&params, iqtree.aln, &iqtree);
         exit(0);
-    }
+    }*/
 
     // degree of freedom
     cout << endl;
@@ -2523,6 +2523,14 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
 		alignment->concatenateAlignment(&aln);
 	}
 
+    // For analysis with James-Stein estimator. Exanding original alignment with unobserved site patterns.
+    if (params.aln_file_JS) {
+        Alignment aln(params.aln_file_JS, params.sequence_type, params.intype);
+        cout << "Expanding " << params.aln_file << " with unobserved site patterns..." << endl;
+        alignment->expandAlignmentJS(&aln);
+    }
+    // end
+    
     if (params.compute_seq_identity_along_tree) {
         if (!params.user_file)
             outError("Please supply a user tree file!");

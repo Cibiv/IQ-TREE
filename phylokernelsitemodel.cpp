@@ -657,6 +657,7 @@ double PhyloTree::computeSitemodelLikelihoodBranchEigen(PhyloNeighbor *dad_branc
             }
         }
         cout << endl;
+                cout << "Tree log-likelihood : "<<tree_lh<<endl;
         tree_lh = current_it->lh_scale_factor + current_it_back->lh_scale_factor;
         for (ptn = 0; ptn < nptn; ptn++) {
             if (isnan(_pattern_lh[ptn]) || isinf(_pattern_lh[ptn])) {

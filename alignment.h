@@ -89,6 +89,17 @@ public:
      */
     bool addPattern(Pattern &pat, int site, int freq = 1);
 
+    /**
+     add a pattern into the alignment only if it is different from all the other patterns in this alignment
+     @param pat the pattern
+     @param site the site index of the pattern from the alignment
+     @param freq frequency of pattern
+     @return TRUE if pattern contains only gaps or unknown char.
+     In that case, the pattern won't be added.
+     */
+    bool addOnlyNewPattern(Pattern &pat, int site, int freq = 1);
+    
+    
 	/**
 		determine if the pattern is constant. update the is_const variable.
 	*/
@@ -689,6 +700,13 @@ public:
     void computePatternProbJS(double *ptn_freq_JS);
     
     /**
+            for James-Stein estimator:
+            expand original alignment by unobserved site patterns
+     */
+    
+    void expandAlignmentJS(Alignment* aln_expand);
+    
+    /**
             create a modified alignment according to James-Stein counts/frequencies
             @param aln "template" alignment
      */
@@ -725,6 +743,13 @@ protected:
 	 * @param sequence_type user-defined sequence type
 	 */
 	void initCodon(char *gene_code_id);
+    
+    /**
+     *      For James-Stein estimator: number of patterns during the input (afterwards aln will be expanded to contain all possible patterns)
+     */
+    
+    int nptn_orgn;
+    int nsite_orgn;
 
 };
 

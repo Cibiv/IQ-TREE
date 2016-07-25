@@ -1522,6 +1522,12 @@ public:
     bool estimator_JS;
     
     /**
+     *  tests with JS estimator:
+     *  file containing an alignment with all possible site patterns for given taxon number
+     */
+    char* aln_file_JS;
+    
+    /**
      *  use ML estimator for pattern probabilities with relative likelihood (multiplication with ptobability instead of counts)
      */
     bool estimator_ml;

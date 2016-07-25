@@ -547,6 +547,8 @@ void PhyloTree::computePtnFreq() {
             aln->readPatternProbEstimator(ptn_freq);
         } else {
             aln->computePatternProbJS(ptn_freq);
+            this->clearAllPartialLH();
+            this->computeAllPartialLh();
         }
     } else {
         for (ptn = 0; ptn < nptn; ptn++)
@@ -555,6 +557,7 @@ void PhyloTree::computePtnFreq() {
     
     for (ptn = nptn; ptn < maxptn; ptn++)
         ptn_freq[ptn] = 0.0;
+    
 }
 
 void PhyloTree::computePtnInvar() {
@@ -1318,6 +1321,7 @@ double PhyloTree::computeLikelihoodBranchEigen(PhyloNeighbor *dad_branch, PhyloN
             }
         }
         cout << endl;
+        cout << "Tree log-likelihood : "<<tree_lh<<endl;
         tree_lh = current_it->lh_scale_factor + current_it_back->lh_scale_factor;
         for (ptn = 0; ptn < orig_nptn; ptn++) {
             if (isnan(_pattern_lh[ptn]) || isinf(_pattern_lh[ptn])) {
