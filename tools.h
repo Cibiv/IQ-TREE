@@ -1521,11 +1521,23 @@ public:
      */
     bool estimator_JS;
     
+    
+    /**
+     *  for James-Stein: all site patterns will be printed only once
+     */
+    bool patternsOnlyJS;
+    
     /**
      *  tests with JS estimator:
      *  file containing an alignment with all possible site patterns for given taxon number
      */
     char* aln_file_JS;
+    
+    /**
+     *  tests with JS estimator:
+     *  file containing a tree for computing targets
+     */
+    char* tree_file_JS;
     
     /**
      *  use ML estimator for pattern probabilities with relative likelihood (multiplication with ptobability instead of counts)
@@ -1541,6 +1553,28 @@ public:
      *  file containing pattern probabilities, will be used instead of counts in likelihood computations
      */
     char* estimator_ptn_prob_file;
+    
+    /**
+     *  for the James-Stein tests: Write the extended alignment to file *.extended.aln
+     */
+    
+    bool wExAln_JS;
+    
+    /**
+     *  for James-Stein estimator: file containing targets for site pattern probabilities
+     */
+    char* targets_JS;
+    
+    /**
+     *  for the James-Stein tests: Write site pattern frequencies (= ML estimates) for the extended alignment
+     */
+    
+    bool wspf_JS;
+    
+    /**
+     *  file containing site pattern ML estimates
+     */
+    char* ML_estimator_ptn_prob_file;
 
     /**********************************************/
     /**** variables for ultra-fast bootstrap ******/

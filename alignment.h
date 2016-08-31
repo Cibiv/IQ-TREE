@@ -691,7 +691,7 @@ public:
             read pattern probabilities from the user file
             @param ptn_freq (OUT) the vector of pattern probabilities
      */
-    void readPatternProbEstimator(double *ptn_freq);
+    void readPatternProbEstimator(double *ptn_freq, const char* infile);
     
     /**
             compute pattern probabilities with James-Stein estimator

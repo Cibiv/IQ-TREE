@@ -16,6 +16,9 @@
 #include <sstream>
 #include "model/rategamma.h"
 #include "gsl/mygsl.h"
+#include "phylotesting.h"
+#include "phylosupertreeplen.h"
+#include "phyloanalysis.h"
 
 
 using namespace std;
@@ -3526,9 +3529,9 @@ Alignment* Alignment::shrinkageEstimator(const char* outFile){
 }
 
 
-void Alignment::readPatternProbEstimator(double *ptn_freq){
+void Alignment::readPatternProbEstimator(double *ptn_freq, const char* infile){
     
-    const char* infile=Params::getInstance().estimator_ptn_prob_file;
+    //const char* infile=Params::getInstance().estimator_ptn_prob_file;
     ifstream in;
     
     double sum=0.0;
@@ -3540,7 +3543,7 @@ void Alignment::readPatternProbEstimator(double *ptn_freq){
         ptn_freq[ptn]=0.0;
     }
     
-    cout<<"Reading site pattern probabilities from file: "<<infile<<endl;
+    //cout<<"Reading site pattern probabilities from file: "<<infile<<endl;
     try {
         in.exceptions(ios::failbit | ios::badbit);
         in.open(infile);
@@ -3572,7 +3575,7 @@ void Alignment::readPatternProbEstimator(double *ptn_freq){
         }
         for(int ptn = 0; ptn<this->size();ptn++){
             ptn_freq[ptn]=(double)ptn_freq[ptn]/(double)sum;
-            cout<<"The site pattern probability for Pattern "<<ptn<<" is set to "<<ptn_freq[ptn]<<endl;
+            cout<<"The site pattern probability for Pattern "<<ptn+1<<" is set to "<<std::setprecision(10)<<ptn_freq[ptn]<<endl;
         }
         // end -------------------------------------------------
         in.close();
@@ -3591,7 +3594,11 @@ void Alignment::computePatternProbJS(double *ptn_freq_JS){
     
     int i;
     
-    // p is the fictional total number of patterns from the unknown multinomial distribution or equals to the number of all possible patterns for a given taxon number
+    //-----------------------------------------------------------------------------------------------
+    /*  
+        p is the fictional total number of patterns from the unknown multinomial distribution
+        or equals to the number of all possible patterns for a given taxon number
+     */
     int p;
     if(Params::getInstance().estimator_p){          // p is a parameter defined by the user
         p = Params::getInstance().estimator_p;
@@ -3601,10 +3608,12 @@ void Alignment::computePatternProbJS(double *ptn_freq_JS){
             p = p * 4;                              // 4 is the number of nucleotides, make it general afterwards
         }
     } else {                                        // set p to some value
-        p = this->getNSite() * this->getNSite() * this->getNSite();
+        p = this->getNSite() * this->getNSite();
     }
     
     cout<<"Total number p of different site patterns in the alignment: "<<p<<endl;
+    
+    //-----------------------------------------------------------------------------------------------
     
     // Set nptn to the number of patterns of the input alignment (since afterwards it might be extended to all possible site patterns)
     int nptn = nptn_orgn, nsite = nsite_orgn;
@@ -3617,60 +3626,102 @@ void Alignment::computePatternProbJS(double *ptn_freq_JS){
         nptnJS = nptn;
     }
     
-    // Pattern counts
-    IntVector ptn_freq;
-    getPatternFreq(ptn_freq);
+    //-----------------------------------------------------------------------------------------------
     
     // Lambda - shrinkage intensity: in [0 (no shrinkage), 1 (full shrinkage)]
     double lambda = 0.0, sum_ml = 0.0, sum_t_ml = 0.0;
     double target[p];
-    int targetType = 0; // 0 for uniform, 1 for star tree
     
-    if(targetType==0){ // uniform target
+    cout<<"Original number of patterns = "<<nptn<<endl;
+    if(Params::getInstance().targets_JS){
+        cout<<"JS targets are read from "<<Params::getInstance().targets_JS<<endl;
+        this->readPatternProbEstimator(target,Params::getInstance().targets_JS);
+        double sum_target = 0.0;
+        for(i = 0; i<p; i++){
+        //   cout<<"Target ["<<i+1<<"] = "<<std::setprecision(6)<<target[i]<<endl;
+            sum_target = sum_target + target[i];
+        }
+        cout<<"Target sum = "<<sum_target<<endl;
+    } else {
+        cout<<"JS target is set to uniform..."<<endl;
         for(i = 0; i<nptn; i++){
-            target[i]=1.0/p;
+            target[i]=1.0/((double)p);
+        }
+        for(i = nptn; i<p; i++){
+            target[i]=1.0/((double)p);
+        }
+    }
+
+    // Maximum likelihood estimates
+    double ptn_freq_ml[nptnJS];
+    
+    if(Params::getInstance().ML_estimator_ptn_prob_file){
+        readPatternProbEstimator(ptn_freq_ml, Params::getInstance().ML_estimator_ptn_prob_file);
+    } else {
+        // Pattern counts
+        IntVector ptn_freq;
+        getPatternFreq(ptn_freq);
+        
+        for(i = 0; i<nptn; i++){
+            ptn_freq_ml[i]=(double)ptn_freq[i]/(double)nsite;
         }
         if(Params::getInstance().aln_file_JS){
             for(i = nptn; i<p; i++){
-                target[i]=1.0/p;
+                ptn_freq_ml[i]=(double)ptn_freq[i];
             }
         }
-    } else if(targetType==1){
-        IQTree tree;
-        tree.aln = this;
-        tree.generateRandomTree(STAR_TREE);
-        tree.printTree(cout, WT_BR_LEN+WT_NEWLINE);
     }
     
-    exit(0);
-    // Maximum likelihood estimates
-    double ptn_freq_ml[nptn];
     
-    
-    // Computing Lambda ------------------------------------------------------------------------
-    // For observed patterns
-    for(i = 0; i<nptn; i++){
-        ptn_freq_ml[i]=(double)ptn_freq[i]/(double)nsite;
-        //cout<<"Pattern "<<i+1<<": ML = "<<ptn_freq_ml[i]<<"; counts = "<<ptn_freq[i]<<"; nsite = "<<nsite<<"; ml/nsite = "<< (double)ptn_freq[i]/(double)nsite<<endl;
-        sum_ml   = sum_ml + ptn_freq_ml[i]*ptn_freq_ml[i];
-        sum_t_ml = sum_t_ml + (target[i]-ptn_freq_ml[i])*(target[i]-ptn_freq_ml[i]);
-    }
-    // For unobserved patterns
-    if(Params::getInstance().aln_file_JS){
-        for(i = nptn; i<p; i++){
-            ptn_freq_ml[i]=(double)ptn_freq[i];
+    if(Params::getInstance().targets_JS){
+        double meanTarget = 1.0/(double)p;
+        double meanML = 1.0/(double)nptn;
+        double var = 0.0, cov = 0.0;
+        
+        double numerator = 0.0, denominator = 0.0;
+        for(i = 0; i<p; i++){
+            var = var + 1/(double)(nsite-1)*ptn_freq_ml[i]*(1-ptn_freq_ml[i]);
+            cov = cov + 1/(double)nsite*(target[i]-meanTarget)*(ptn_freq_ml[i]-meanML);
+            //cout<<"t-meanT = "<<target[i]-meanTarget<<"; ml-meanML = "<<ptn_freq_ml[i]-meanML<<endl;
+            //numerator = numerator + 1/(double)(nsite-1)*ptn_freq_ml[i]*(1-ptn_freq_ml[i]) + 1/(double)nsite*(target[i]-meanTarget)*(ptn_freq_ml[i]-meanML);
+            denominator = denominator + (target[i]-ptn_freq_ml[i])*(target[i]-ptn_freq_ml[i]);
         }
-    }
+        numerator = var + cov;
+        cout<<"var = "<<var<<"; cov = "<<std::setprecision(10)<<cov<<"; Num = "<<numerator<<"; Den = "<<denominator<<endl;
+        lambda = numerator / denominator;
+        
+        
+    } else {
+        // For observed patterns
+        for(i = 0; i<nptn; i++){
+            sum_ml   = sum_ml + ptn_freq_ml[i]*ptn_freq_ml[i];
+            sum_t_ml = sum_t_ml + (target[i]-ptn_freq_ml[i])*(target[i]-ptn_freq_ml[i]);
+            //cout<<"(1)= "<<std::setprecision(6)<<ptn_freq_ml[i]<<"; SumML = "<<std::setprecision(6)<<sum_ml<<"; (2)="<<std::setprecision(6)<<(target[i]-ptn_freq_ml[i])<<"; SumTML = "<<std::setprecision(6)<<sum_t_ml<<endl;
+        }
+        // For unobserved patterns
+        for(i = nptn; i<p; i++){
+            sum_t_ml = sum_t_ml + target[i]*target[i];
+            //cout<<"sumTML = "<<sum_t_ml<<"; target "<<i<<" = "<<std::setprecision(6)<<target[i]<<endl;
+        }
     
-    for(i = nptn; i<p; i++){
-        sum_t_ml = sum_t_ml + target[i]*target[i];
-    }
+        cout<<"SumML = "<<std::setprecision(6)<<sum_ml<<"; SumTML = "<<std::setprecision(6)<<sum_t_ml<<endl;
     
-    lambda = (1-sum_ml)/((nsite-1)*sum_t_ml);
+        // Computing Lambda ------------------------------------------------------------------------
+        lambda = (1-sum_ml)/((nsite-1)*sum_t_ml);
+        //cout<<"(1-sum_ml) = "<<(1-sum_ml)<<"; ((nsite-1)*sum_t_ml) = "<<((nsite-1)*sum_t_ml)<<endl;
+    }
+        
+        
+        
     cout<<"Lambda = "<<lambda<<endl;
     
-    if(lambda>1)
+    if(lambda>1){
         lambda = 1;
+        cout<<"Set lambda to "<<lambda<<endl;
+    } else if(lambda <0){
+        lambda = 0;
+        cout<<"Set lambda to "<<0<<endl;
+    }
     
     // end --------------------------------------------------------------------------------------
     
@@ -3682,7 +3733,7 @@ void Alignment::computePatternProbJS(double *ptn_freq_JS){
     // Compute James-Stein estimates
     for(i = 0; i<nptnJS; i++){
         ptn_freq_JS[i] = (lambda * target[i] + (1 - lambda)*ptn_freq_ml[i])*coef;
-        cout<<"Pattern "<<i+1<<": ML = "<<std::setprecision(6)<<ptn_freq_ml[i]<<"; JS = "<<std::setprecision(6)<<ptn_freq_JS[i]/coef<<endl;
+        cout<<"Pattern "<<i+1<<": ML = "<<std::setprecision(6)<<ptn_freq_ml[i]<<"; JS = "<<std::setprecision(6)<<ptn_freq_JS[i]/coef<<"; Target = "<<target[i]<<endl;
         ml = ml + ptn_freq_ml[i];
         js = js + ptn_freq_JS[i];
     }
@@ -3714,6 +3765,50 @@ void Alignment::expandAlignmentJS(Alignment *aln_expanded) {
     
     cout<<"Alignment length after expansion : "<<this->getNSite()<<endl;
     cout<<"Expanded original alignment by "<< this->getNSite() - nsite <<" additional site patterns."<<endl;
+    
+    
+    if(Params::getInstance().wspf_JS){
+        string ML_est_file = Params::getInstance().out_prefix;
+        ML_est_file += ".ML_est";
+        try {
+            ofstream out;
+            out.exceptions(ios::failbit | ios::badbit);
+            out.open(ML_est_file.c_str());
+            out << 1 << " " << this->getNSite()<< endl;
+            out << "ML_estimates   ";
+            
+            int site, site_id, ptn_id;
+            
+            for (site = 0; site < this->getNSite(); site++){
+                site_id = site;
+                ptn_id = this->getPatternID(site_id);
+                out << " " << (double)at(ptn_id).frequency/(double)nsite_orgn;
+            }
+            
+            out << endl;
+            out.close();
+            cout << "ML estimates of pattern freuencies (per site) printed to " << ML_est_file.c_str() << endl;
+        } catch (ios::failure) {
+            outError(ERR_WRITE_OUTPUT, ML_est_file.c_str());
+        }
+
+    }
+    
+    if(Params::getInstance().wExAln_JS){
+        string outfile = Params::getInstance().out_prefix;
+        outfile += ".extended.aln";
+        this->printPhylip(outfile.c_str());
+    }
+    
+    if(Params::getInstance().patternsOnlyJS){
+        for(iterator it = this->begin(); it != this->end(); it++)
+            (*it).frequency = 1;
+        string outfile = Params::getInstance().out_prefix;
+        outfile += ".patternsOnly";
+        this->printPhylip(outfile.c_str());
+        
+    }
+    
     //assert(this->getNSite() - nsite == site_id - nsite - 1);
     
     //delete aln_expanded;
@@ -3788,4 +3883,6 @@ void Alignment::createAlignmentPatternsOnly(Alignment *aln) {
     buildSeqStates();
     
 }
+
+
 

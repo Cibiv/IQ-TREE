@@ -544,7 +544,7 @@ void PhyloTree::computePtnFreq() {
                 cout<<"Frequency: Pattern "<<ptn+1<<" = "<< ptn_freq[ptn]<<endl;
             }
         } else if(params->estimator_ptn_prob_file){
-            aln->readPatternProbEstimator(ptn_freq);
+            aln->readPatternProbEstimator(ptn_freq,params->estimator_ptn_prob_file);
         } else {
             aln->computePatternProbJS(ptn_freq);
             this->clearAllPartialLH();

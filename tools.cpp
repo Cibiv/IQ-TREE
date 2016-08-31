@@ -836,12 +836,18 @@ void parseArg(int argc, char *argv[], Params &params) {
 	params.upper_bound_NNI = false;
 	params.upper_bound_frac = 0.0;
     
-    params.estimator_analysis=false;
-    params.estimator_JS=false;
-    params.aln_file_JS=NULL;
+    params.estimator_analysis = false;
+    params.estimator_JS = false;
+    params.aln_file_JS = NULL;
+    params.tree_file_JS = NULL;
     params.estimator_p = 0;
     params.estimator_ml = false;
     params.estimator_ptn_prob_file = NULL;
+    params.wspf_JS = false;
+    params.ML_estimator_ptn_prob_file = NULL;
+    params.wExAln_JS = false;
+    params.targets_JS = NULL;
+    params.patternsOnlyJS = false;
 
     params.gbo_replicates = 0;
 	params.ufboot_epsilon = 0.5;
@@ -2387,11 +2393,27 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.estimator_JS = true;
                 continue;
             }
+            if (strcmp(argv[cnt], "-wExAlnJS") == 0) {
+                params.wExAln_JS = true;
+                continue;
+            }
+            if (strcmp(argv[cnt], "-alnJSptn") == 0) {
+                params.patternsOnlyJS = true;
+                continue;
+            }
+            
             if (strcmp(argv[cnt], "-estJSaln") == 0) {
                 cnt++;
                 if (cnt >= argc)
                     throw "Use -estJSaln <file with complete alignment>";
                 params.aln_file_JS = argv[cnt];
+                continue;
+            }
+            if (strcmp(argv[cnt], "-estJStarget") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -estJStarget <file with JS targets>";
+                params.targets_JS = argv[cnt];
                 continue;
             }
             if (strcmp(argv[cnt], "-estML") == 0) {
@@ -2412,6 +2434,25 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.estimator_ptn_prob_file = argv[cnt];
                 continue;
             }
+            if (strcmp(argv[cnt], "-ML_est_ptn_freq") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -ML_est_ptn_freq <file>";
+                params.ML_estimator_ptn_prob_file = argv[cnt];
+                continue;
+            }
+            if (strcmp(argv[cnt], "-wspf_JS") == 0) {
+                params.wspf_JS = true;
+                continue;
+            }
+            if (strcmp(argv[cnt], "-estJStree") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -estJStree <file with tree for JS target estimates>";
+                params.tree_file_JS = argv[cnt];
+                continue;
+            }
+            
 			if (strcmp(argv[cnt], "-ecoR") == 0) {
 				cnt++;
 				if (cnt >= argc)
