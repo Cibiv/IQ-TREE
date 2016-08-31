@@ -43,6 +43,21 @@
 #define SPRNG
 #include "sprng/sprng.h"
 
+// redefine assertion
+inline void _my_assert(const char* expression, const char *func, const char* file, int line)
+{
+    char *sfile = (char*)strrchr(file, '/');
+    if (!sfile) sfile = (char*)file; else sfile++;
+    cerr << "Assertion (" << expression << ") failed, function " << func << ", file " << sfile << ", line " << line << endl;
+    abort();
+}
+ 
+#ifdef NDEBUG
+#define ASSERT(EXPRESSION) ((void)0)
+#else
+#define ASSERT(EXPRESSION) ((EXPRESSION) ? (void)0 : _my_assert(#EXPRESSION, __func__, __FILE__, __LINE__))
+#endif
+
 
 #define USE_HASH_MAP
 
@@ -395,7 +410,7 @@ struct NNIInfo {
 };
 
 enum LikelihoodKernel {
-	LK_NORMAL, LK_SSE, LK_EIGEN, LK_EIGEN_SSE
+	LK_EIGEN, LK_EIGEN_SSE
 };
 
 enum LhMemSave {
@@ -405,6 +420,18 @@ enum LhMemSave {
 enum SiteLoglType {
     WSL_NONE, WSL_SITE, WSL_RATECAT, WSL_MIXTURE, WSL_MIXTURE_RATECAT
 };
+
+enum SiteFreqType {
+    WSF_NONE, WSF_POSTERIOR_MEAN, WSF_POSTERIOR_MAX
+};
+
+const int BRLEN_OPTIMIZE = 0; // optimize branch lengths
+const int BRLEN_FIX      = 1; // fix branch lengths
+const int BRLEN_SCALE    = 2; // scale branch lengths
+
+const int OUT_LOG       = 1; // .log file written or not
+const int OUT_TREEFILE  = 2; // .treefile file written or not
+const int OUT_IQTREE    = 4; // .iqtree file written or not
 
 /** maximum number of newton-raphson steps for NNI branch evaluation */
 extern int NNI_MAX_NR_STEP;
@@ -429,20 +456,18 @@ private:
 public:
 
     /**
-    *  Fast and accurate optimiation for alpha and p_invar
-    */
-    bool fai;
-
-	/**
-	 *  Use random restart strategy for estimating alpha and p_invar
-	 */
-	bool testAlpha;
-
-    /**
      *  Restart the optimization of alpha and pinvar from different starting
      *  pinv values (supercedes the option testAlpha
      */
-    bool test_param;
+    bool opt_gammai;
+
+    /**
+     *  A faster version of opt_gammai using a heuristic similar to binary search.
+     *  Thus, one does not need to perform 10 independent trials as in opt_gammai.
+     */
+    bool opt_gammai_fast;
+
+    bool opt_gammai_keep_bran;
 
     /**
      *  Automatic adjust the log-likelihood espilon using some heuristic
@@ -656,6 +681,9 @@ public:
             alignment file name
      */
     char *aln_file;
+
+    /** true if sequential phylip format is used, default: false (interleaved format) */
+    bool phylip_sequential_format;
 
     /**
             file containing multiple trees to evaluate at the end
@@ -1164,6 +1192,9 @@ public:
     /** TRUE to optimize mixture model weights */
     bool optimize_mixmodel_weight;
 
+    /** TRUE to always optimize rate matrix even if user parameters are specified in e.g. GTR{1,2,3,4,5} */
+    bool optimize_rate_matrix;
+
     /**
             TRUE to store transition matrix into a hash table for computation efficiency
      */
@@ -1217,9 +1248,16 @@ public:
     string optimize_alg;
 
     /**
-            TRUE if you want to fix branch lengths during model optimization
+     *  Optimization algorithm for +I+G
      */
-    bool fixed_branch_length;
+    string optimize_alg_gammai;
+
+    /**
+            BRLEN_OPTIMIZE optimize branch lengths during model optimization
+            BRLEN_FIX      fix branch lengths during model optimization
+            BRLEN_SCALE    scale all branch lengths by the same factor during model optimization
+     */
+    int fixed_branch_length;
 
     /** minimum branch length for optimization, default 0.000001 */
     double min_branch_length;
@@ -1342,16 +1380,25 @@ public:
     SiteLoglType print_site_lh;
 
     /**
+        control printing posterior probability of each site belonging to a rate/mixture categories
+        same meaning as print_site_lh, but results are printed to .siteprob file
+        WSL_RATECAT: print site probability per rate category
+        WSL_MIXTURE: print site probability per mixture class
+        WSL_MIXTURE_RATECAT: print site probability per mixture class per rate category
+    */
+    SiteLoglType print_site_prob;
+
+    /**
         0: print nothing
         1: print site state frequency vectors
     */
-    int print_site_state_freq;
+    SiteFreqType print_site_state_freq;
 
     /** TRUE to print site-specific rates, default: FALSE */
     bool print_site_rate;
 
-    /* 1: print site posterior probability */
-    int print_site_posterior;
+    /* 1: print site posterior probability for many trees during tree search */
+    int print_trees_site_posterior;
 
     /**
             TRUE to print tree log-likelihood
@@ -1693,6 +1740,11 @@ public:
      */
     char *site_freq_file;
 
+    /**
+        user tree file used to estimate site-specific state frequency model 
+    */
+    char *tree_freq_file;
+
     /** number of threads for OpenMP version     */
     int num_threads;
 
@@ -1754,7 +1806,7 @@ public:
     /** true to ignore checkpoint file */
     bool ignore_checkpoint;
     /** number of quartets for likelihood mapping */
-    int lmap_num_quartets;
+    int64_t lmap_num_quartets;
 
     /**
             file containing the cluster information for clustered likelihood mapping
@@ -1768,6 +1820,13 @@ public:
 
     /** true if ignoring the "finished" flag in checkpoint file */
     bool force_unfinished;
+
+    /** control output files to be written
+     * OUT_LOG
+     * OUT_TREEFILE
+     * OUT_IQTREE
+     */
+    int suppress_output_flags;
 
 };
 
@@ -1917,8 +1976,7 @@ const char ERR_WRITE_OUTPUT[] = "Cannot write to file ";
 const char ERR_NO_K[] = "You must specify the number of taxa in the PD set.";
 const char ERR_TOO_SMALL_K[] = "Size of PD-set must be at least the size of initial set.";
 const char ERR_NO_BUDGET[] = "Total budget is not specified or less than zero.";
-const char ERR_TOO_SMALL_BUDGET[] = "Not enough budget to conserve the inital set of taxa.";
-
+const char ERR_TOO_SMALL_BUDGET[] = "Not enough budget to conserve the initial set of taxa.";
 const char ERR_INTERNAL[] = "Internal error, pls contact authors!";
 
 /*--------------------------------------------------------------*/

@@ -122,12 +122,20 @@ public:
     int buildPattern(StrVector &sequences, char *sequence_type, int nseq, int nsite);
 
     /**
-            read the alignment in PHYLIP format
+            read the alignment in PHYLIP format (interleaved)
             @param filename file name
             @param sequence_type type of the sequence, either "BIN", "DNA", "AA", or NULL
             @return 1 on success, 0 on failure
      */
     int readPhylip(char *filename, char *sequence_type);
+
+    /**
+            read the alignment in sequential PHYLIP format
+            @param filename file name
+            @param sequence_type type of the sequence, either "BIN", "DNA", "AA", or NULL
+            @return 1 on success, 0 on failure
+     */
+    int readPhylipSequential(char *filename, char *sequence_type);
 
     /**
             read the alignment in FASTA format
@@ -553,13 +561,13 @@ public:
             compute empirical rates between state pairs
             @param rates (OUT) vector of size num_states*(num_states-1)/2 for the rates
      */
-    virtual void computeEmpiricalRate(double *rates);
+    virtual void computeDivergenceMatrix(double *rates);
 
     /**
             compute non-reversible empirical rates between state pairs
             @param rates (OUT) vector of size num_states*(num_states-1) for the rates
      */
-    virtual void computeEmpiricalRateNonRev(double *rates);
+    virtual void computeDivergenceMatrixNonRev(double *rates);
 
     /**
             count the fraction of constant sites in the alignment, update the variable frac_const_sites
@@ -596,6 +604,11 @@ public:
             fraction of constant sites
      */
     double frac_const_sites;
+    
+    /**
+            fraction of invariant sites, incl. const sites and site like G-S-GG-GGGG
+     */
+    double frac_invariant_sites;
 
     /** number of informative sites */
     int num_informative_sites;
@@ -618,6 +631,14 @@ public:
 	char *genetic_code;
 
     vector<vector<int> > seq_states; // state set for each sequence in the alignment
+
+    /* for site-specific state frequency model with Huaichun, Edward, Andrew */
+    
+    /* site to model ID map */
+    IntVector site_model;
+    
+    /** site to state frequency vector */
+    vector<double*> site_state_freq;
 
     /**
      * @return true if data type is SEQ_CODON and state is a stop codon
@@ -718,6 +739,16 @@ public:
      */
     void createAlignmentPatternsOnly(Alignment *aln);
     
+
+	/**
+	 * read site specific state frequency vectors from a file to create corresponding model
+     * update site_model and site_state_freq variables for this class
+	 * @param aln input alignment
+	 * @param site_freq_file file name
+     * @return TRUE if alignment needs to be changed, FALSE otherwise
+	 */
+	bool readSiteStateFreq(const char* site_freq_file);
+
 
 protected:
 

@@ -102,8 +102,7 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree, ModelsBlock *models_
 	is_storing = false;
 	joint_optimize = params.optimize_model_rate_joint;
 	fused_mix_rate = false;
-
-	string model_str = params.model_name;
+    string model_str = params.model_name;
 	string rate_str;
 
 	try {
@@ -111,12 +110,12 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree, ModelsBlock *models_
 
 	if (model_str == "") {
 		if (tree->aln->seq_type == SEQ_DNA) model_str = "HKY";
-		else if (tree->aln->seq_type == SEQ_PROTEIN) model_str = "WAG";
+		else if (tree->aln->seq_type == SEQ_PROTEIN) model_str = "LG";
 		else if (tree->aln->seq_type == SEQ_BINARY) model_str = "GTR2";
 		else if (tree->aln->seq_type == SEQ_CODON) model_str = "GY";
 		else if (tree->aln->seq_type == SEQ_MORPH) model_str = "MK";
 		else model_str = "JC";
-		outWarning("Default model may be under-fitting. Use option '-m TEST' to select best-fit model.");
+		outWarning("Default model "+model_str + " may be under-fitting. Use option '-m TEST' to determine the best-fit model.");
 	}
 
 	/********* preprocessing model string ****************/
@@ -211,7 +210,13 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree, ModelsBlock *models_
     }
 
     // then normal frequency
-	posfreq = rate_str.find("+F");
+    if (rate_str.find("+FO") != string::npos)
+        posfreq = rate_str.find("+FO");
+    else if (rate_str.find("+Fo") != string::npos)
+        posfreq = rate_str.find("+Fo");
+    else
+        posfreq = rate_str.find("+F");
+        
     bool optimize_mixmodel_weight = params.optimize_mixmodel_weight;
 
 	if (posfreq != string::npos) {
@@ -252,9 +257,10 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree, ModelsBlock *models_
             else
                 freq_type = FREQ_EQUAL;
 		} else if (freq_str == "+FO" || freq_str == "+Fo") {
-            if (freq_type == FREQ_MIXTURE)
-                outError("Mixture frequency with optimized frequency is not allowed");
-            else
+            if (freq_type == FREQ_MIXTURE) {
+                freq_params = "optimize," + freq_params;
+                optimize_mixmodel_weight = true;                
+            } else
                 freq_type = FREQ_ESTIMATE;
 		} else if (freq_str == "+F1x4" || freq_str == "+F1X4") {
             if (freq_type == FREQ_MIXTURE)
@@ -277,7 +283,7 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree, ModelsBlock *models_
 
 	/******************** initialize model ****************************/
 
-	if (!params.site_freq_file) {
+	if (tree->aln->site_state_freq.empty()) {
 		if (model_str.substr(0, 3) == "MIX" || freq_type == FREQ_MIXTURE) {
 			string model_list;
 			if (model_str.substr(0, 3) == "MIX") {
@@ -304,24 +310,15 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree, ModelsBlock *models_
 		model = new ModelSet(model_str.c_str(), tree);
 		ModelSet *models = (ModelSet*)model; // assign pointer for convenience
 		models->init((params.freq_type != FREQ_UNKNOWN) ? params.freq_type : FREQ_EMPIRICAL);
-		IntVector site_model;
-		vector<double*> freq_vec;
-		bool aln_changed = readSiteFreq(tree->aln, params.site_freq_file, site_model, freq_vec);
-        if (aln_changed) {
-            cout << "Regrouping alignment sites..." << endl;
-            tree->aln->regroupSitePattern(freq_vec.size(), site_model);
-            //tree->aln->ungroupSitePattern();
-            tree->setAlignment(tree->aln);
-        }
 		int i;
 		models->pattern_model_map.resize(tree->aln->getNPattern(), -1);
 		for (i = 0; i < tree->aln->getNSite(); i++) {
-			models->pattern_model_map[tree->aln->getPatternID(i)] = site_model[i];
+			models->pattern_model_map[tree->aln->getPatternID(i)] = tree->aln->site_model[i];
 			//cout << "site " << i << " ptn " << tree->aln->getPatternID(i) << " -> model " << site_model[i] << endl;
 		}
 		double *state_freq = new double[model->num_states];
 		double *rates = new double[model->getNumRateEntries()];
-		for (i = 0; i < freq_vec.size(); i++) {
+		for (i = 0; i < tree->aln->site_state_freq.size(); i++) {
 			ModelGTR *modeli;
 			if (i == 0) {
 				modeli = (ModelGTR*)createModel(model_str, models_block, (params.freq_type != FREQ_UNKNOWN) ? params.freq_type : FREQ_EMPIRICAL, "", tree, true);
@@ -332,21 +329,18 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree, ModelsBlock *models_
 				modeli->setStateFrequency(state_freq);
 				modeli->setRateMatrix(rates);
 			}
-			if (freq_vec[i])
-				modeli->setStateFrequency (freq_vec[i]);
+			if (tree->aln->site_state_freq[i])
+				modeli->setStateFrequency (tree->aln->site_state_freq[i]);
 
 			modeli->init(FREQ_USER_DEFINED);
 			models->push_back(modeli);
 		}
 		delete [] rates;
 		delete [] state_freq;
-		cout << "Alignment is divided into " << models->size() << " partitions with " << tree->aln->getNPattern() << " patterns" << endl;
-		for (vector<double*>::reverse_iterator it = freq_vec.rbegin(); it != freq_vec.rend(); it++)
-			if (*it) delete [] (*it);
-            
+
         // delete information of the old alignment
-        tree->aln->ordered_pattern.clear();
-        tree->deleteAllPartialLh();
+//        tree->aln->ordered_pattern.clear();
+//        tree->deleteAllPartialLh();
 	}
     
 //	if (model->isMixture())
@@ -363,8 +357,17 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree, ModelsBlock *models_
 		tree->aln->buildSeqStates(true);
 //		if (unobserved_ptns.size() <= 0)
 //			outError("Invalid use of +ASC because all constant patterns are observed in the alignment");
-		if (unobserved_ptns.size() < tree->aln->getNumNonstopCodons())
-			outError("Invalid use of +ASC because constant patterns are observed in the alignment");
+		if (tree->aln->frac_invariant_sites > 0) {
+            cerr << tree->aln->frac_invariant_sites*tree->aln->getNSite() << " invariant sites are observed in the alignment (see below)" << endl;
+            for (Alignment::iterator pit = tree->aln->begin(); pit != tree->aln->end(); pit++)
+                if (pit->isInvariant()) {
+                    string pat_str = "";
+                    for (Pattern::iterator it = pit->begin(); it != pit->end(); it++)
+                        pat_str += tree->aln->convertStateBackStr(*it);
+                    cerr << pat_str << " is invariant site pattern" << endl;
+                }
+            outError("Invalid use of +ASC in the presence of invariant sites");
+        }
 		cout << "Ascertainment bias correction: " << unobserved_ptns.size() << " unobservable constant patterns"<< endl;
 		rate_str = rate_str.substr(0, posasc) + rate_str.substr(posasc+4);
 	}
@@ -472,57 +475,57 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree, ModelsBlock *models_
 		//string rate_str = model_str.substr(pos);
 		if (posI != string::npos && posG != string::npos) {
 			site_rate = new RateGammaInvar(num_rate_cats, gamma_shape, params.gamma_median,
-					p_invar_sites, params.optimize_model_rate_joint, tree);
+					p_invar_sites, params.optimize_alg_gammai, tree, false);
 		} else if (posI != string::npos && posR != string::npos) {
-			site_rate = new RateFreeInvar(num_rate_cats, gamma_shape, freerate_params, p_invar_sites, !fused_mix_rate, params.optimize_alg, tree);
+			site_rate = new RateFreeInvar(num_rate_cats, gamma_shape, freerate_params, !fused_mix_rate, p_invar_sites, params.optimize_alg, tree);
 		} else if (posI != string::npos) {
 			site_rate = new RateInvar(p_invar_sites, tree);
 		} else if (posG != string::npos) {
 			site_rate = new RateGamma(num_rate_cats, gamma_shape, params.gamma_median, tree);
 		} else if (posR != string::npos) {
 			site_rate = new RateFree(num_rate_cats, gamma_shape, freerate_params, !fused_mix_rate, params.optimize_alg, tree);
-		} else if ((posX = rate_str.find("+M")) != string::npos) {
-			tree->setLikelihoodKernel(LK_NORMAL);
-			params.rate_mh_type = true;
-			if (rate_str.length() > posX+2 && isdigit(rate_str[posX+2])) {
-				num_rate_cats = convert_int(rate_str.substr(posX+2).c_str());
-				if (num_rate_cats < 0) outError("Wrong number of rate categories");
-			} else num_rate_cats = -1;
-			if (num_rate_cats >= 0)
-				site_rate = new RateMeyerDiscrete(num_rate_cats, params.mcat_type, 
-					params.rate_file, tree, params.rate_mh_type);
-			else
-				site_rate = new RateMeyerHaeseler(params.rate_file, tree, params.rate_mh_type);
-			site_rate->setTree(tree);
-		} else if ((posX = rate_str.find("+D")) != string::npos) {
-			tree->setLikelihoodKernel(LK_NORMAL);
-			params.rate_mh_type = false;
-			if (rate_str.length() > posX+2 && isdigit(rate_str[posX+2])) {
-				num_rate_cats = convert_int(rate_str.substr(posX+2).c_str());
-				if (num_rate_cats < 0) outError("Wrong number of rate categories");
-			} else num_rate_cats = -1;
-			if (num_rate_cats >= 0)
-				site_rate = new RateMeyerDiscrete(num_rate_cats, params.mcat_type, 
-					params.rate_file, tree, params.rate_mh_type);
-			else
-				site_rate = new RateMeyerHaeseler(params.rate_file, tree, params.rate_mh_type);
-			site_rate->setTree(tree);
-		} else if ((posX = rate_str.find("+NGS")) != string::npos) {
-			tree->setLikelihoodKernel(LK_NORMAL);
-			if (rate_str.length() > posX+4 && isdigit(rate_str[posX+4])) {
-				num_rate_cats = convert_int(rate_str.substr(posX+4).c_str());
-				if (num_rate_cats < 0) outError("Wrong number of rate categories");
-			} else num_rate_cats = -1;
-			site_rate = new NGSRateCat(tree, num_rate_cats);
-			site_rate->setTree(tree);
-		} else if ((posX = rate_str.find("+NGS")) != string::npos) {
-			tree->setLikelihoodKernel(LK_NORMAL);
-			if (rate_str.length() > posX+4 && isdigit(rate_str[posX+4])) {
-				num_rate_cats = convert_int(rate_str.substr(posX+4).c_str());
-				if (num_rate_cats < 0) outError("Wrong number of rate categories");
-			} else num_rate_cats = -1;
-			site_rate = new NGSRate(tree);
-			site_rate->setTree(tree);
+//		} else if ((posX = rate_str.find("+M")) != string::npos) {
+//			tree->setLikelihoodKernel(LK_NORMAL);
+//			params.rate_mh_type = true;
+//			if (rate_str.length() > posX+2 && isdigit(rate_str[posX+2])) {
+//				num_rate_cats = convert_int(rate_str.substr(posX+2).c_str());
+//				if (num_rate_cats < 0) outError("Wrong number of rate categories");
+//			} else num_rate_cats = -1;
+//			if (num_rate_cats >= 0)
+//				site_rate = new RateMeyerDiscrete(num_rate_cats, params.mcat_type, 
+//					params.rate_file, tree, params.rate_mh_type);
+//			else
+//				site_rate = new RateMeyerHaeseler(params.rate_file, tree, params.rate_mh_type);
+//			site_rate->setTree(tree);
+//		} else if ((posX = rate_str.find("+D")) != string::npos) {
+//			tree->setLikelihoodKernel(LK_NORMAL);
+//			params.rate_mh_type = false;
+//			if (rate_str.length() > posX+2 && isdigit(rate_str[posX+2])) {
+//				num_rate_cats = convert_int(rate_str.substr(posX+2).c_str());
+//				if (num_rate_cats < 0) outError("Wrong number of rate categories");
+//			} else num_rate_cats = -1;
+//			if (num_rate_cats >= 0)
+//				site_rate = new RateMeyerDiscrete(num_rate_cats, params.mcat_type, 
+//					params.rate_file, tree, params.rate_mh_type);
+//			else
+//				site_rate = new RateMeyerHaeseler(params.rate_file, tree, params.rate_mh_type);
+//			site_rate->setTree(tree);
+//		} else if ((posX = rate_str.find("+NGS")) != string::npos) {
+//			tree->setLikelihoodKernel(LK_NORMAL);
+//			if (rate_str.length() > posX+4 && isdigit(rate_str[posX+4])) {
+//				num_rate_cats = convert_int(rate_str.substr(posX+4).c_str());
+//				if (num_rate_cats < 0) outError("Wrong number of rate categories");
+//			} else num_rate_cats = -1;
+//			site_rate = new NGSRateCat(tree, num_rate_cats);
+//			site_rate->setTree(tree);
+//		} else if ((posX = rate_str.find("+NGS")) != string::npos) {
+//			tree->setLikelihoodKernel(LK_NORMAL);
+//			if (rate_str.length() > posX+4 && isdigit(rate_str[posX+4])) {
+//				num_rate_cats = convert_int(rate_str.substr(posX+4).c_str());
+//				if (num_rate_cats < 0) outError("Wrong number of rate categories");
+//			} else num_rate_cats = -1;
+//			site_rate = new NGSRate(tree);
+//			site_rate->setTree(tree);
 		} else if ((posX = rate_str.find("+K")) != string::npos) {
 			if (rate_str.length() > posX+2 && isdigit(rate_str[posX+2])) {
 				num_rate_cats = convert_int(rate_str.substr(posX+2).c_str());
@@ -594,193 +597,36 @@ int ModelFactory::getNParameters() {
 	int df = model->getNDim() + model->getNDimFreq() + site_rate->getNDim() + site_rate->phylo_tree->branchNum;
 	return df;
 }
-bool ModelFactory::readSiteFreq(Alignment *aln, char* site_freq_file, IntVector &site_model, vector<double*> &freq_vec)
-{
-	cout << "Reading site-specific state frequency file " << site_freq_file << " ..." << endl;
-	site_model.resize(aln->getNSite(), -1);
-    int i;
-    IntVector pattern_to_site; // vector from pattern to the first site
-    pattern_to_site.resize(aln->getNPattern(), -1);
-    for (i = 0; i < aln->getNSite(); i++)
-        if (pattern_to_site[aln->getPatternID(i)] == -1)
-            pattern_to_site[aln->getPatternID(i)] = i;
-            
-    bool aln_changed = false;
-    
-	try {
-		ifstream in;
-		in.exceptions(ios::failbit | ios::badbit);
-		in.open(site_freq_file);
-		double freq;
-		string site_spec;
-		int specified_sites = 0;
-		in.exceptions(ios::badbit);
-		for (int model_id = 0; !in.eof(); model_id++) {
-			// remove the failbit
-			in >> site_spec;
-			if (in.eof()) break;
-			IntVector site_id;
-			extractSiteID(aln, site_spec.c_str(), site_id);
-			specified_sites += site_id.size();
-			if (site_id.size() == 0) throw "No site ID specified";
-			for (IntVector::iterator it = site_id.begin(); it != site_id.end(); it++) {
-				if (site_model[*it] != -1) throw "Duplicated site ID";
-				site_model[*it] = freq_vec.size();
-			}
-			double *site_freq_entry = new double[aln->num_states];
-			double sum = 0;
-			for (i = 0; i < aln->num_states; i++) {
-				in >> freq;
-				if (freq <= 0.0 || freq >= 1.0) throw "Invalid frequency entry";
-				site_freq_entry[i] = freq;
-				sum += freq;
-			}
-			if (fabs(sum-1.0) > 1e-4) {
-                if (fabs(sum-1.0) > 1e-3)
-                    outWarning("Frequencies of site " + site_spec + " do not sum up to 1 and will be normalized");
-                sum = 1.0/sum;
-                for (i = 0; i < aln->num_states; i++) 
-                    site_freq_entry[i] *= sum;
-            }
-			aln->convfreq(site_freq_entry); // regularize frequencies (eg if some freq = 0)
-            
-            // 2016-02-01: now check for equality of sites with same site-pattern and same freq
-            int prev_site = pattern_to_site[aln->getPatternID(site_id[0])];
-            if (site_id.size() == 1 && prev_site < site_id[0] && site_model[prev_site] != -1) {
-                // compare freq with prev_site
-                bool matched_freq = true;
-                double *prev_freq = freq_vec[site_model[prev_site]];
-                for (i = 0; i < aln->num_states; i++) {
-                    if (site_freq_entry[i] != prev_freq[i]) {
-                        matched_freq = false;
-                        break;
-                    }
-                }
-                if (matched_freq) {
-                    site_model[site_id[0]] = site_model[prev_site];
-                } else
-                    aln_changed = true;
-            }
-            
-            if (site_model[site_id[0]] == freq_vec.size())
-                freq_vec.push_back(site_freq_entry);
-            else
-                delete [] site_freq_entry;
-		}
-		if (specified_sites < site_model.size()) {
-            aln_changed = true;
-			// there are some unspecified sites
-			cout << site_model.size() - specified_sites << " unspecified sites will get default frequencies" << endl;
-			for (i = 0; i < site_model.size(); i++)
-				if (site_model[i] == -1) 
-					site_model[i] = freq_vec.size();
-			freq_vec.push_back(NULL);
-		}
-		in.clear();
-		// set the failbit again
-		in.exceptions(ios::failbit | ios::badbit);
-		in.close();
-	} catch (const char* str) {
-		outError(str);
-	} catch (string str) {
-		outError(str);
-	} catch(ios::failure) {
-		outError(ERR_READ_INPUT);
-	}
-    return aln_changed;
-}
 
 double ModelFactory::initGTRGammaIParameters(RateHeterogeneity *rate, ModelSubst *model, double initAlpha,
                                            double initPInvar, double *initRates, double *initStateFreqs)  {
 
-    RateGammaInvar* rateGammaInvar = dynamic_cast<RateGammaInvar*>(rate);
-    ModelGTR* modelGTR = dynamic_cast<ModelGTR*>(model);
+    RateHeterogeneity* rateGammaInvar = rate;
+    ModelGTR* modelGTR = (ModelGTR*)(model);
     modelGTR->setRateMatrix(initRates);
     modelGTR->setStateFrequency(initStateFreqs);
     rateGammaInvar->setGammaShape(initAlpha);
     rateGammaInvar->setPInvar(initPInvar);
     modelGTR->decomposeRateMatrix();
-    rateGammaInvar->computeRates();
     site_rate->phylo_tree->clearAllPartialLH();
     return site_rate->phylo_tree->computeLikelihood();
 }
 
 double ModelFactory::optimizeParametersOnly(double gradient_epsilon) {
-    double logl;
-    if (Params::getInstance().fai && dynamic_cast<RateGammaInvar*>(site_rate) != NULL
-        && dynamic_cast<ModelGTR*>(model) != NULL) {
-        cout << "Optimize substitutional and site rates with restart ..." << endl;
-        PhyloTree* tree = site_rate->phylo_tree;
-        double initAlpha = 0.1;
-        double maxInitAlpha = 1.0;
-        double alphaStep = 0.1;
-        double bestLogl = -DBL_MAX;
-        double bestAlpha = 0.0;
-        double bestPInvar = 0.0;
-        double initPInvar = site_rate->getPInvar();
-        int numRateEntries = model->getNumRateEntries();
-        double *initRates = new double[numRateEntries];
-        double *bestRates = new double[numRateEntries];
-        model->getRateMatrix(initRates);
-        int numStates = model->num_states;
-        double *initStateFreqs = new double[numStates];
-        model->getStateFrequency(initStateFreqs);
-        double *bestStateFreqs =  new double[numStates];
-        DoubleVector initBranchLengths;
-        DoubleVector bestBranchLengths;
-        tree->saveBranchLengths(initBranchLengths);
-
-        while (initAlpha <= maxInitAlpha) {
-            tree->restoreBranchLengths(initBranchLengths);
-            double initLogl = initGTRGammaIParameters(site_rate, model, initAlpha, initPInvar, initRates, initStateFreqs);
-            if (joint_optimize) {
-                logl = optimizeAllParameters(gradient_epsilon);
-            } else {
-                model->optimizeParameters(gradient_epsilon);
-                site_rate->optimizeParameters(gradient_epsilon);
-                logl = tree->optimizeAllBranches(1);
-            }
-            RateGammaInvar* rateGammaInvar = dynamic_cast<RateGammaInvar*>(site_rate);
-            ModelGTR* modelGTR = dynamic_cast<ModelGTR*>(model);
-            double curAlpha = rateGammaInvar->getGammaShape();
-            double curPInvar = rateGammaInvar->getPInvar();
-            if (logl > bestLogl) {
-                bestLogl = logl;
-                bestAlpha = curAlpha;
-                bestPInvar = curPInvar;
-                modelGTR->getRateMatrix(bestRates);
-                modelGTR->getStateFrequency(bestStateFreqs);
-                tree->saveBranchLengths(bestBranchLengths);
-            }
-            if (verbose_mode >= VB_MED) {
-                cout << "Init. alpha = " << initAlpha << " / Init. PInvar = " << initPInvar << " / Init. Logl = " <<
-                initLogl << " / Est. alpha = " << curAlpha
-                << "/ Est. pinv = " << curPInvar << " / Final Logl = " << logl << endl;
-            }
-            initAlpha = initAlpha + alphaStep;
-        }
-        cout << "Best alpha = " << bestAlpha << " / best p_invar = " << bestPInvar << endl;
-        tree->restoreBranchLengths(bestBranchLengths);
-        logl = initGTRGammaIParameters(site_rate, model, bestAlpha, bestPInvar, bestRates, bestStateFreqs);
-        delete [] initRates;
-        delete [] bestRates;
-        delete [] initStateFreqs;
-        delete [] bestStateFreqs;
-    } else {
-        /* Optimize substitutional and heterogeneity rates independetly */
-        if (!joint_optimize) {
-            double model_lh = model->optimizeParameters(gradient_epsilon);
-            double rate_lh = site_rate->optimizeParameters(gradient_epsilon);
-            if (rate_lh == 0.0)
-                logl = model_lh;
-            else
-                logl = rate_lh;
-        } else {
-            /* Optimize substitutional and heterogeneity rates jointly using BFGS */
-            logl = optimizeAllParameters(gradient_epsilon);
-        }
-    }
-    return logl;
+	double logl;
+	/* Optimize substitution and heterogeneity rates independently */
+	if (!joint_optimize) {
+		double model_lh = model->optimizeParameters(gradient_epsilon);
+		double rate_lh = site_rate->optimizeParameters(gradient_epsilon);
+		if (rate_lh == 0.0)
+			logl = model_lh;
+		else
+			logl = rate_lh;
+	} else {
+		/* Optimize substitution and heterogeneity rates jointly using BFGS */
+		logl = optimizeAllParameters(gradient_epsilon);
+	}
+	return logl;
 }
 
 double ModelFactory::optimizeAllParameters(double gradient_epsilon) {
@@ -821,6 +667,8 @@ double ModelFactory::optimizeAllParameters(double gradient_epsilon) {
     model->decomposeRateMatrix();
     site_rate->phylo_tree->clearAllPartialLH();
 
+    score = site_rate->phylo_tree->computeLikelihood();
+
     delete [] bound_check;
     delete [] lower_bound;
     delete [] upper_bound;
@@ -829,28 +677,21 @@ double ModelFactory::optimizeAllParameters(double gradient_epsilon) {
     return score;
 }
 
-double ModelFactory::optimizeParametersGammaInvar(bool fixed_len, bool write_info, double logl_epsilon, double gradient_epsilon) {
-	PhyloTree *tree = site_rate->getTree();
-
-	RateGammaInvar* site_rates = dynamic_cast<RateGammaInvar*>(tree->getRate());
-	if (site_rates == NULL) {
-//		outError("The model must be +I+G");
-        // model is not +I+G, call conventional function instead
-		return optimizeParameters(fixed_len, write_info, logl_epsilon, gradient_epsilon);
-	}
-
+double ModelFactory::optimizeParametersGammaInvar(int fixed_len, bool write_info, double logl_epsilon, double gradient_epsilon) {
+    if (!site_rate->isGammai())
+        return optimizeParameters(fixed_len, write_info, logl_epsilon, gradient_epsilon);
+        
+	double begin_time = getRealTime();
+        
+    PhyloTree *tree = site_rate->getTree();
 	double frac_const = tree->aln->frac_const_sites;
-	if (fixed_len) {
-		tree->setCurScore(tree->computeLikelihood());
-	} else {
-		tree->optimizeAllBranches(1);
-	}
-
+    tree->setCurScore(tree->computeLikelihood());
 
 	/* Back up branch lengths and substitutional rates */
-	DoubleVector lenvec;
+	DoubleVector initBranLens;
 	DoubleVector bestLens;
-	tree->saveBranchLengths(lenvec);
+	tree->saveBranchLengths(initBranLens);
+    bestLens = initBranLens;
 	int numRateEntries = tree->getModel()->getNumRateEntries();
 	double *rates = new double[numRateEntries];
 	double *bestRates = new double[numRateEntries];
@@ -861,66 +702,100 @@ double ModelFactory::optimizeParametersGammaInvar(bool fixed_len, bool write_inf
 
 	/* Best estimates found */
 	double *bestStateFreqs =  new double[numStates];
-	double bestLogl = tree->getCurScore();
+	double bestLogl = -DBL_MAX;
 	double bestAlpha = 0.0;
 	double bestPInvar = 0.0;
 
-	double testInterval = (frac_const - MIN_PINVAR*2) / 10;
+	double testInterval = (frac_const - MIN_PINVAR * 2) / 9;
 	double initPInv = MIN_PINVAR;
-	double initAlpha = site_rates->getGammaShape();
+	double initAlpha = site_rate->getGammaShape();
 
-    if (write_info)
-        cout << "testInterval: " << testInterval << endl;
+    if (Params::getInstance().opt_gammai_fast) {
+        initPInv = frac_const/2;
+        bool stop = false;
+        while(!stop) {
+            if (write_info) {
+                cout << endl;
+                cout << "Testing with init. pinv = " << initPInv << " / init. alpha = "  << initAlpha << endl;
+            }
 
-	// Now perform testing different inital p_inv values
-	while (initPInv <= frac_const) {
-        if (write_info) {
-            cout << endl;
-            cout << "Testing with init. pinv = " << initPInv << " / init. alpha = "  << initAlpha << endl;
+            vector<double> estResults = optimizeGammaInvWithInitValue(fixed_len, logl_epsilon, gradient_epsilon, tree, site_rate, rates, state_freqs,
+                                                                   initPInv, initAlpha, initBranLens);
+
+
+            if (write_info) {
+                cout << "Est. p_inv: " << estResults[0] << " / Est. gamma shape: " << estResults[1]
+                << " / Logl: " << estResults[2] << endl;
+            }
+
+            if (estResults[2] > bestLogl) {
+                bestLogl = estResults[2];
+                bestAlpha = estResults[1];
+                bestPInvar = estResults[0];
+                bestLens.clear();
+                tree->saveBranchLengths(bestLens);
+                tree->getModel()->getRateMatrix(bestRates);
+                tree->getModel()->getStateFrequency(bestStateFreqs);
+                if (estResults[0] < initPInv) {
+                    initPInv = estResults[0] - testInterval;
+                    if (initPInv < 0.0)
+                        initPInv = 0.0;
+                } else {
+                    initPInv = estResults[0] + testInterval;
+                    if (initPInv > frac_const)
+                        initPInv = frac_const;
+                }
+                //cout << "New initPInv = " << initPInv << endl;
+            }  else {
+                stop = true;
+            }
         }
-		tree->restoreBranchLengths(lenvec);
-		((ModelGTR*) tree->getModel())->setRateMatrix(rates);
-		((ModelGTR*) tree->getModel())->setStateFrequency(state_freqs);
-		tree->getModel()->decomposeRateMatrix();
-		site_rates->setPInvar(initPInv);
-		site_rates->setGammaShape(initAlpha);
-		site_rates->computeRates();
-		tree->clearAllPartialLH();
-		optimizeParameters(fixed_len, write_info, logl_epsilon, gradient_epsilon);
-		double estAlpha = tree->getRate()->getGammaShape();
-		double estPInv = tree->getRate()->getPInvar();
-		double logl = tree->getCurScore();
-        if (write_info) {
-            cout << "Est. alpha: " << estAlpha << " / Est. pinv: " << estPInv
-            << " / Logl: " << logl << endl;
+    } else {
+        // Now perform testing different initial p_inv values
+        while (initPInv <= frac_const) {
+            if (write_info) {
+                cout << endl;
+                cout << "Testing with init. pinv = " << initPInv << " / init. alpha = "  << initAlpha << endl;
+            }
+            vector<double> estResults; // vector of p_inv, alpha and logl
+            if (Params::getInstance().opt_gammai_keep_bran)
+                estResults = optimizeGammaInvWithInitValue(fixed_len, logl_epsilon, gradient_epsilon, tree, site_rate, rates, state_freqs,
+                                                                          initPInv, initAlpha, bestLens);
+            else
+                estResults = optimizeGammaInvWithInitValue(fixed_len, logl_epsilon, gradient_epsilon, tree, site_rate, rates, state_freqs,
+                                                                      initPInv, initAlpha, initBranLens);
+            if (write_info) {
+                cout << "Est. p_inv: " << estResults[0] << " / Est. gamma shape: " << estResults[1]
+                << " / Logl: " << estResults[2] << endl;
+            }
+
+            initPInv = initPInv + testInterval;
+
+            if (estResults[2] > bestLogl) {
+                bestLogl = estResults[2];
+                bestAlpha = estResults[1];
+                bestPInvar = estResults[0];
+                bestLens.clear();
+                tree->saveBranchLengths(bestLens);
+                tree->getModel()->getRateMatrix(bestRates);
+                tree->getModel()->getStateFrequency(bestStateFreqs);
+            }
         }
-		initPInv = initPInv + testInterval;
+    }
 
-		if (tree->getCurScore() > bestLogl) {
-			bestLogl = logl;
-			bestAlpha = estAlpha;
-			bestPInvar = estPInv;
-			bestLens.clear();
-			tree->saveBranchLengths(bestLens);
-			tree->getModel()->getRateMatrix(bestRates);
-			tree->getModel()->getStateFrequency(bestStateFreqs);
-		}
-	}
-
-	site_rates->setGammaShape(bestAlpha);
-//	site_rates->setFixGammaShape(false);
-	site_rates->setPInvar(bestPInvar);
-//	site_rates->setFixPInvar(false);
+    site_rate->setGammaShape(bestAlpha);
+    site_rate->setPInvar(bestPInvar);
 	((ModelGTR*) tree->getModel())->setRateMatrix(bestRates);
 	((ModelGTR*) tree->getModel())->setStateFrequency(bestStateFreqs);
 	tree->restoreBranchLengths(bestLens);
 	tree->getModel()->decomposeRateMatrix();
-	site_rates->computeRates();
+
 	tree->clearAllPartialLH();
 	tree->setCurScore(tree->computeLikelihood());
+    assert(fabs(tree->getCurScore() - bestLogl) < 1.0);
     if (write_info) {    
         cout << endl;
-        cout << "Best initial alpha: " << bestAlpha << " / initial pinv: " << bestPInvar << " / ";
+        cout << "Best p_inv: " << bestPInvar << " / best gamma shape: " << bestAlpha << " / ";
         cout << "Logl: " << tree->getCurScore() << endl;
     }
 
@@ -929,6 +804,10 @@ double ModelFactory::optimizeParametersGammaInvar(bool fixed_len, bool write_inf
 	delete [] bestRates;
 	delete [] bestStateFreqs;
     
+	double elapsed_secs = getRealTime() - begin_time;
+	if (write_info)
+		cout << "Parameters optimization took " << elapsed_secs << " sec" << endl;
+    
     // updating global variable is not safe!
 //	Params::getInstance().testAlpha = false;
     
@@ -936,8 +815,31 @@ double ModelFactory::optimizeParametersGammaInvar(bool fixed_len, bool write_inf
     return tree->getCurScore();
 }
 
+vector<double> ModelFactory::optimizeGammaInvWithInitValue(int fixed_len, double logl_epsilon, double gradient_epsilon,
+                                                 PhyloTree *tree, RateHeterogeneity *site_rates, double *rates,
+                                                 double *state_freqs, double initPInv, double initAlpha,
+                                                 DoubleVector &lenvec) {
+    tree->restoreBranchLengths(lenvec);
+    ((ModelGTR*) tree->getModel())->setRateMatrix(rates);
+    ((ModelGTR*) tree->getModel())->setStateFrequency(state_freqs);
+    tree->getModel()->decomposeRateMatrix();
+    site_rates->setPInvar(initPInv);
+    site_rates->setGammaShape(initAlpha);
+    tree->clearAllPartialLH();
+    optimizeParameters(fixed_len, false, logl_epsilon, gradient_epsilon);
 
-double ModelFactory::optimizeParameters(bool fixed_len, bool write_info,
+    vector<double> estResults;
+    double estPInv = tree->getRate()->getPInvar();
+    double estAlpha = tree->getRate()->getGammaShape();
+    double logl = tree->getCurScore();
+    estResults.push_back(estPInv);
+    estResults.push_back(estAlpha);
+    estResults.push_back(logl);
+    return estResults;
+}
+
+
+double ModelFactory::optimizeParameters(int fixed_len, bool write_info,
                                         double logl_epsilon, double gradient_epsilon) {
 	assert(model);
 	assert(site_rate);
@@ -950,19 +852,9 @@ double ModelFactory::optimizeParameters(bool fixed_len, bool write_info,
 	assert(tree);
 
 	stopStoringTransMatrix();
-        // modified by Thomas Wong on Sept 11, 15
-        // no optimization of branch length in the first round
-        cur_lh = tree->computeLikelihood();
-        /*
-	if (fixed_len || tree->params->num_param_iterations == 0)
-		cur_lh = tree->computeLikelihood();
-	else {
-        if (!Params::getInstance().testAlpha && !Params::getInstance().fai)
-		    cur_lh = tree->optimizeAllBranches(1);
-        else
-            cur_lh = tree->computeLikelihood();
-	}
-        */
+    // modified by Thomas Wong on Sept 11, 15
+    // no optimization of branch length in the first round
+    cur_lh = tree->computeLikelihood();
     tree->setCurScore(cur_lh);
 	if (verbose_mode >= VB_MED || write_info) 
 		cout << "1. Initial log-likelihood: " << cur_lh << endl;
@@ -979,70 +871,61 @@ double ModelFactory::optimizeParameters(bool fixed_len, bool write_info,
 	//bool optimize_rate = true;
 //	double gradient_epsilon = min(logl_epsilon, 0.01); // epsilon for parameters starts at epsilon for logl
 	for (i = 2; i < tree->params->num_param_iterations; i++) {
-//        if (gradient_epsilon < 0.001)
-//            gradient_epsilon = 0.001;
-		/*
-		double model_lh = model->optimizeParameters(param_epsilon);
-		double rate_lh = 0.0;
-		if (optimize_rate) {
-			rate_lh = site_rate->optimizeParameters(param_epsilon);
-			if (rate_lh < model_lh+1e-6 && model_lh != 0.0) optimize_rate = false;
-		}
-		if (model_lh == 0.0 && rate_lh == 0.0) {
-			if (!fixed_len) cur_lh = tree->optimizeAllBranches(100, logl_epsilon);
-			break;
-		}
-		double new_lh = (rate_lh != 0.0) ? rate_lh : model_lh;
-		*/
         double new_lh;
 
-        if (Params::getInstance().fai && i > 2) {
-            Params::getInstance().fai = false;
-        }
-
-                // changed to opimise edge length first, and then Q,W,R inside the loop by Thomas on Sept 11, 15
-		if (!fixed_len)
+        // changed to opimise edge length first, and then Q,W,R inside the loop by Thomas on Sept 11, 15
+		if (fixed_len == BRLEN_OPTIMIZE)
 			new_lh = tree->optimizeAllBranches(min(i,3), logl_epsilon);  // loop only 3 times in total (previously in v0.9.6 5 times)
-
+        else if (fixed_len == BRLEN_SCALE) {
+            double scaling = 1.0;
+            new_lh = tree->optimizeTreeLengthScaling(MIN_BRLEN_SCALE, scaling, MAX_BRLEN_SCALE, gradient_epsilon);
+        }
         new_lh = optimizeParametersOnly(gradient_epsilon);
 
 		if (new_lh == 0.0) {
-			if (!fixed_len) cur_lh = tree->optimizeAllBranches(100, logl_epsilon);
+            if (fixed_len == BRLEN_OPTIMIZE)
+                cur_lh = tree->optimizeAllBranches(100, logl_epsilon);
+            else if (fixed_len == BRLEN_SCALE) {
+                double scaling = 1.0;
+                cur_lh = tree->optimizeTreeLengthScaling(MIN_BRLEN_SCALE, scaling, MAX_BRLEN_SCALE, gradient_epsilon);
+            }
 			break;
 		}
 		if (verbose_mode >= VB_MED) {
 			model->writeInfo(cout);
 			site_rate->writeInfo(cout);
+            if (fixed_len == BRLEN_SCALE)
+                cout << "Scaled tree length: " << tree->treeLength() << endl;
 		}
 		if (new_lh > cur_lh + logl_epsilon) {
-			if (Params::getInstance().testAlpha && Params::getInstance().testAlphaEpsAdaptive) {
-				if (i == 3) {
-					double newEpsilon = (new_lh - cur_lh) * 0.01;
-					if (newEpsilon > defaultEpsilon) {
-						logl_epsilon = newEpsilon;
-						cout << "Estimate model parameters with new epsilon = " << logl_epsilon << endl;
-					}
-				}
-			}
-
-//			if (gradient_epsilon > (new_lh - cur_lh) * logl_epsilon)
-//				gradient_epsilon = (new_lh - cur_lh) * logl_epsilon;
 			cur_lh = new_lh;
 			if (verbose_mode >= VB_MED || write_info)
 				cout << i << ". Current log-likelihood: " << cur_lh << endl;
 		} else {
 			site_rate->classifyRates(new_lh);
-			if (!fixed_len) cur_lh = tree->optimizeAllBranches(100, logl_epsilon);
-				break;
+            if (fixed_len == BRLEN_OPTIMIZE)
+                cur_lh = tree->optimizeAllBranches(100, logl_epsilon);
+            else if (fixed_len == BRLEN_SCALE) {
+                double scaling = 1.0;
+                cur_lh = tree->optimizeTreeLengthScaling(MIN_BRLEN_SCALE, scaling, MAX_BRLEN_SCALE, gradient_epsilon);
+            }
+            break;
 		}
 	}
 
 	// normalize rates s.t. branch lengths are #subst per site
-    double mean_rate = site_rate->rescaleRates();
-    if (mean_rate != 1.0) {
-		tree->scaleLength(mean_rate);
-		tree->clearAllPartialLH();
+//    if (Params::getInstance().optimize_alg_gammai != "EM") 
+    {
+        double mean_rate = site_rate->rescaleRates();
+        if (mean_rate != 1.0) {
+            if (fixed_len == BRLEN_FIX)
+                outError("Fixing branch lengths not supported under specified site rate model");
+            tree->scaleLength(mean_rate);
+            tree->clearAllPartialLH();
+        }
     }
+    
+
     
 	if (verbose_mode >= VB_MED || write_info)
 		cout << "Optimal log-likelihood: " << cur_lh << endl;
@@ -1055,6 +938,8 @@ double ModelFactory::optimizeParameters(bool fixed_len, bool write_info,
 	if (verbose_mode <= VB_MIN && write_info) {
 		model->writeInfo(cout);
 		site_rate->writeInfo(cout);
+        if (fixed_len == BRLEN_SCALE)
+            cout << "Scaled tree length: " << tree->treeLength() << endl;
 	}
 	double elapsed_secs = getRealTime() - begin_time;
 	if (write_info)

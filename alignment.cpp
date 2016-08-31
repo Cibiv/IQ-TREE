@@ -60,6 +60,7 @@ Alignment::Alignment()
 {
     num_states = 0;
     frac_const_sites = 0.0;
+    frac_invariant_sites = 0.0;
 //    codon_table = NULL;
     genetic_code = NULL;
 //    non_stop_codon = NULL;
@@ -336,6 +337,7 @@ void Alignment::checkGappySeq(bool force_error) {
 Alignment::Alignment(char *filename, char *sequence_type, InputType &intype) : vector<Pattern>() {
     num_states = 0;
     frac_const_sites = 0.0;
+    frac_invariant_sites = 0.0;
 //    codon_table = NULL;
     genetic_code = NULL;
 //    non_stop_codon = NULL;
@@ -355,7 +357,10 @@ Alignment::Alignment(char *filename, char *sequence_type, InputType &intype) : v
             readFasta(filename, sequence_type);
         } else if (intype == IN_PHYLIP) {
             cout << "Phylip format detected" << endl;
-            readPhylip(filename, sequence_type);
+            if (Params::getInstance().phylip_sequential_format)
+                readPhylipSequential(filename, sequence_type);
+            else
+                readPhylip(filename, sequence_type);
         } else if (intype == IN_CLUSTAL) {
             cout << "Clustal format detected" << endl;
             readClustal(filename, sequence_type);
@@ -619,8 +624,9 @@ void Alignment::extractDataBlock(NxsCharactersBlock *data_block) {
 	determine if the pattern is constant. update the is_const variable.
 */
 void Alignment::computeConst(Pattern &pat) {
-    pat.is_const = false;
-    pat.is_informative = false;
+    bool is_const = true;
+    bool is_invariant = false;
+    bool is_informative = false;
     // critical fix: const_char was set wrongly to num_states in some data type (binary, codon),
     // causing wrong log-likelihood computation for +I or +I+G model
     if (STATE_UNKNOWN == num_states)
@@ -634,8 +640,8 @@ void Alignment::computeConst(Pattern &pat) {
     	state_app[j] = 1;
 
     // number of appearance for each state, to compute is_informative
-    int *num_app = new int[num_states];
-    memset(num_app, 0, num_states*sizeof(int));
+    size_t *num_app = new size_t[num_states];
+    memset(num_app, 0, num_states*sizeof(size_t));
 
     for (Pattern::iterator i = pat.begin(); i != pat.end(); i++) {
     	StateBitset this_app;
@@ -643,43 +649,48 @@ void Alignment::computeConst(Pattern &pat) {
     	state_app &= this_app;
         if (*i < num_states) { 
             num_app[(int)(*i)]++;
-            continue;
+        } else if (*i != STATE_UNKNOWN) {
+            // ambiguous characters
+            is_const = false;
         }
-        if (*i == STATE_UNKNOWN) continue;
-        for (j = 0; j < num_states; j++)
-            if (this_app[j])
-                num_app[j]++;
     }
-    int count = 0;
-    pat.num_chars = 0;
+    int count = 0; // number of states with >= 2 appearances
+    pat.num_chars = 0; // number of states with >= 1 appearance
     for (j = 0; j < num_states; j++) if (num_app[j]) {
         pat.num_chars++;
         if (num_app[j] >= 2) {
             count++;
         }
     }
+
     // at least 2 states, each appearing at least twice
-    if (count >= 2) pat.is_informative = true;
+    is_informative = (count >= 2);
+
+    // compute is_const
+    is_const = is_const && (pat.num_chars <= 1); 
+    if (is_const) {
+        if (pat.num_chars == 0) // all-gap pattern
+            pat.const_char = num_states;
+        else {
+            // pat.num_chars is 1
+            for (j = 0; j < num_states; j++)
+                if (num_app[j]) {
+                    pat.const_char = j;
+                    break;
+                }
+        }
+    }
+
     delete [] num_app;
-    
-    count = state_app.count();
-    if (count == 0) {
-    	return;
-    }
-    if (count == num_states) {
-    	// all-gap pattern
-    	pat.is_const = true;
-    	pat.const_char = num_states;
-    	return;
-    }
-    if (count == 1) {
-    	for (j = 0; j < num_states; j++)
-    		if (state_app.test(j)) {
-    			pat.is_const = true;
-    			pat.const_char = j;
-    			return;
-    		}
-    }
+
+    // compute is_invariant
+    is_invariant = (state_app.count() >= 1);
+    assert(is_invariant >= is_const);
+
+    pat.flag = 0;
+    if (is_const) pat.flag |= PAT_CONST;
+    if (is_invariant) pat.flag |= PAT_INVARIANT;
+    if (is_informative) pat.flag |= PAT_INFORMATIVE;
 }
 
 
@@ -786,13 +797,13 @@ void Alignment::orderPatternByNumChars() {
     UINT sum = 0;
     memset(pars_lower_bound, 0, (maxi+1)*sizeof(UINT));
     for (ptn = 0; ptn < nptn; ptn++) {
-        num_chars[ptn] =  -at(ptn).num_chars + (!at(ptn).is_informative)*1024;
+        num_chars[ptn] =  -at(ptn).num_chars + (!at(ptn).isInformative())*1024;
         ptn_order[ptn] = ptn;
     }
     quicksort(num_chars, 0, nptn-1, ptn_order);
     ordered_pattern.clear();
     for (ptn = 0, site = 0, i = 0; ptn < nptn; ptn++) {
-        if (!at(ptn_order[ptn]).is_informative)
+        if (!at(ptn_order[ptn]).isInformative())
             break;
         ordered_pattern.push_back(at(ptn_order[ptn]));
         int freq = ordered_pattern.back().frequency;
@@ -1511,6 +1522,76 @@ int Alignment::readPhylip(char *filename, char *sequence_type) {
     return buildPattern(sequences, sequence_type, nseq, nsite);
 }
 
+int Alignment::readPhylipSequential(char *filename, char *sequence_type) {
+
+    StrVector sequences;
+    ostringstream err_str;
+    ifstream in;
+    int line_num = 1;
+    // set the failbit and badbit
+    in.exceptions(ios::failbit | ios::badbit);
+    in.open(filename);
+    int nseq = 0, nsite = 0;
+    int seq_id = 0;
+    string line;
+    // remove the failbit
+    in.exceptions(ios::badbit);
+    num_states = 0;
+
+    for (; !in.eof(); line_num++) {
+        getline(in, line);
+        line = line.substr(0, line.find_first_of("\n\r"));
+        if (line == "") continue;
+
+        //cout << line << endl;
+        if (nseq == 0) { // read number of sequences and sites
+            istringstream line_in(line);
+            if (!(line_in >> nseq >> nsite))
+                throw "Invalid PHYLIP format. First line must contain number of sequences and sites";
+            //cout << "nseq: " << nseq << "  nsite: " << nsite << endl;
+            if (nseq < 3)
+                throw "There must be at least 3 sequences";
+            if (nsite < 1)
+                throw "No alignment columns";
+
+            seq_names.resize(nseq, "");
+            sequences.resize(nseq, "");
+
+        } else { // read sequence contents
+            if (seq_id >= nseq)
+                throw "Line " + convertIntToString(line_num) + ": Too many sequences detected";
+                
+            if (seq_names[seq_id] == "") { // cut out the sequence name
+                string::size_type pos = line.find_first_of(" \t");
+                if (pos == string::npos) pos = 10; //  assume standard phylip
+                seq_names[seq_id] = line.substr(0, pos);
+                line.erase(0, pos);
+            }
+            for (string::iterator it = line.begin(); it != line.end(); it++) {
+                if ((*it) <= ' ') continue;
+                if (isalnum(*it) || (*it) == '-' || (*it) == '?'|| (*it) == '.' || (*it) == '*' || (*it) == '~')
+                    sequences[seq_id].append(1, toupper(*it));
+                else {
+                    err_str << "Line " << line_num <<": Unrecognized character " << *it;
+                    throw err_str.str();
+                }
+            }
+            if (sequences[seq_id].length() > nsite)
+                throw ("Line " + convertIntToString(line_num) + ": Sequence " + seq_names[seq_id] + " is too long (" + convertIntToString(sequences[seq_id].length()) + ")");
+            if (sequences[seq_id].length() == nsite) {
+                seq_id++;
+            }                
+        }
+        //sequences.
+    }
+    in.clear();
+    // set the failbit again
+    in.exceptions(ios::failbit | ios::badbit);
+    in.close();
+
+    return buildPattern(sequences, sequence_type, nseq, nsite);
+}
+
 int Alignment::readFasta(char *filename, char *sequence_type) {
 
     StrVector sequences;
@@ -1848,7 +1929,7 @@ int Alignment::buildRetainingSites(const char *aln_site_list, IntVector &kept_si
     }
     if (exclude_const_sites) {
         for (j = 0; j < kept_sites.size(); j++)
-        	if (at(site_pattern[j]).is_const)
+        	if (at(site_pattern[j]).isConst())
         		kept_sites[j] = 0;
 
     }
@@ -2269,6 +2350,13 @@ void Alignment::createBootstrapAlignment(Alignment *aln, IntVector* pattern_freq
         pattern_freq->resize(0);
         pattern_freq->resize(aln->getNPattern(), 0);
     }
+    
+    if (!aln->site_state_freq.empty()) {
+        // resampling also the per-site state frequency vector
+        if (aln->site_state_freq.size() != aln->getNPattern() || spec)
+            outError("Unsupported bootstrap feature, pls contact the developers");
+    }
+    
 	IntVector site_vec;
     if (!spec) {
 		// standard bootstrap
@@ -2276,7 +2364,14 @@ void Alignment::createBootstrapAlignment(Alignment *aln, IntVector* pattern_freq
 			int site_id = random_int(nsite);
 			int ptn_id = aln->getPatternID(site_id);
 			Pattern pat = aln->at(ptn_id);
+            int nptn = getNPattern();
 			addPattern(pat, site);
+            if (!aln->site_state_freq.empty() && getNPattern() > nptn) {
+                // a new pattern is added, copy state frequency vector
+                double *state_freq = new double[num_states];
+                memcpy(state_freq, aln->site_state_freq[ptn_id], num_states*sizeof(double));
+                site_state_freq.push_back(state_freq);
+            }
 			if (pattern_freq) ((*pattern_freq)[ptn_id])++;
 		}
     } else if (strncmp(spec, "GENESITE,", 9) == 0) {
@@ -2347,6 +2442,10 @@ void Alignment::createBootstrapAlignment(Alignment *aln, IntVector* pattern_freq
     		begin_site += site_vec[part];
     		out_site += site_vec[part+1];
     	}
+    }
+    if (!aln->site_state_freq.empty()) {
+        site_model = site_pattern;
+        assert(site_state_freq.size() == getNPattern());
     }
     verbose_mode = save_mode;
     countConstSite();
@@ -2548,13 +2647,17 @@ void Alignment::copyAlignment(Alignment *aln) {
 void Alignment::countConstSite() {
     int num_const_sites = 0;
     num_informative_sites = 0;
+    int num_invariant_sites = 0;
     for (iterator it = begin(); it != end(); it++) {
-        if ((*it).is_const) 
+        if ((*it).isConst()) 
             num_const_sites += (*it).frequency;
-        if (it->is_informative)
+        if (it->isInformative())
             num_informative_sites += it->frequency;
+        if (it->isInvariant())
+            num_invariant_sites += it->frequency;
     }
     frac_const_sites = ((double)num_const_sites) / getNSite();
+    frac_invariant_sites = ((double)num_invariant_sites) / getNSite();
 }
 
 string Alignment::getUnobservedConstPatterns() {
@@ -2594,6 +2697,10 @@ Alignment::~Alignment()
         delete [] pars_lower_bound;
         pars_lower_bound = NULL;
     }
+    for (vector<double*>::reverse_iterator it = site_state_freq.rbegin(); it != site_state_freq.rend(); it++)
+        if (*it) delete [] (*it);
+    site_state_freq.clear();
+    site_model.clear();
 }
 
 double Alignment::computeObsDist(int seq1, int seq2) {
@@ -3187,7 +3294,7 @@ void Alignment::computeCodonFreq(StateFreqType freq, double *state_freq, double 
 	convfreq(state_freq);
 }
 
-void Alignment::computeEmpiricalRate (double *rates) {
+void Alignment::computeDivergenceMatrix(double *rates) {
     int i, j, k;
     assert(rates);
     int nseqs = getNSeq();
@@ -3228,8 +3335,8 @@ void Alignment::computeEmpiricalRate (double *rates) {
         for (j = i+1; j < num_states; j++) {
             rates[k++] = (pair_rates[i*num_states+j] + pair_rates[j*num_states+i]) / last_rate;
             // BIG WARNING: zero rates might cause numerical instability!
-            if (rates[k-1] <= 0.0001) rates[k-1] = 0.01;
-            if (rates[k-1] > 100.0) rates[k-1] = 50.0;
+//            if (rates[k-1] <= 0.0001) rates[k-1] = 0.01;
+//            if (rates[k-1] > 100.0) rates[k-1] = 50.0;
         }
     rates[k-1] = 1;
     if (verbose_mode >= VB_MAX) {
@@ -3246,11 +3353,11 @@ void Alignment::computeEmpiricalRate (double *rates) {
     delete [] pair_rates;
 }
 
-void Alignment::computeEmpiricalRateNonRev (double *rates) {
+void Alignment::computeDivergenceMatrixNonRev (double *rates) {
     double *rates_mat = new double[num_states*num_states];
     int i, j, k;
 
-    computeEmpiricalRate(rates);
+    computeDivergenceMatrix(rates);
 
     for (i = 0, k = 0; i < num_states-1; i++)
         for (j = i+1; j < num_states; j++)
