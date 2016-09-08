@@ -52,14 +52,23 @@ public:
      *      @param foundALL - bool variable to track whether all taxa of interest were found in subset A
      *      @param foundSOME - bool variable to track whether at least some of the taxa of interest were found in A
      */
-    void checkClade(vector<string> *taxaSplit, bool *foundALL, bool *foundSOME);
+    void checkClade(vector<int> *taxaSplit, bool *foundALL, bool *foundSOME);
     
     /**
      *      Set details about the smallest clade that contains all taxa from the list
      *      @param tree - input tree on which we perform the clade analysis
      *      @param taxaSplit - current smallest clade
      */
-    void setMinClade(IQTree *tree, vector<string> *taxaSplit);
+    void setMinClade(IQTree *tree, vector<int> *taxaSplit);
+    
+    /**
+     *      Print the results: 
+     *      - smallest clade containing all taxa of interest (subtree)
+     *      - its size
+     *      - list of species on this clade
+     *      - is it the smallest possible clade? (i.e. clade contains only species of interest)
+     */
+    void printResultsCA();
 
     
 private:
@@ -73,6 +82,11 @@ private:
      *      IDs of Species to analyse the clade for
      */
     vector<int> taxaNameID;
+    
+    /**
+     *      The number of Species to analyse the clade for
+     */
+    int taxaNameNUM = NULL;
     
     /**
      *      The size of the smallest clade containing all species of interest

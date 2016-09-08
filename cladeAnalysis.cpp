@@ -26,8 +26,9 @@ void CladeAnalysis::initCladeAnalysis(IQTree* tree){
     // Reading taxa to search the clade for
     readInputTaxa(Params::getInstance().clade_analysis_infile);
     
+    taxaNameNUM = taxaName.size();
     // Check whether all the taxa from the list are present on the tree
-    for(int i = 0; i < taxaName.size(); i++){
+    for(int i = 0; i < taxaNameNUM; i++){
         if(!tree->findLeafName(taxaName[i])){
             cout<<"ERROR: Taxon "<<taxaName[i]<<" is not present on the tree!!"<<endl;
             cout<<"Check the spelling. Stopping this analysis."<<endl;
@@ -56,12 +57,8 @@ void CladeAnalysis::startCladeAnalysis(IQTree* tree){
     vector<int> taxaA, taxaB;
     int taxaAsize = 0, taxaBsize = 0;
     
-    bool foundALL = FALSE;
-    bool foundSOME = FALSE;
-    
-    string taxa_set;
-    for(i = 0; i < tree->leafNum; i++)
-        taxa_set.push_back(0);
+    bool foundALL = false;
+    bool foundSOME = false;
     
     for(i = 0; i != branch1.size(); i++){
         tree->getTaxaID(taxaA,branch1[i],branch2[i]);
@@ -74,51 +71,21 @@ void CladeAnalysis::startCladeAnalysis(IQTree* tree){
         if(taxaAsize > 1 && taxaBsize > 1){
             
             if(taxaAsize <= taxaBsize){
-                checkClade(taxaA, &foundALL, &foundSOME);
+                checkClade(&taxaA, &foundALL, &foundSOME);
             } else {
-                checkClade(taxaB, &foundALL, &foundSOME);
+                checkClade(&taxaB, &foundALL, &foundSOME);
             }
             
             if(taxaAsize >= taxaNameNUM){
                 if(taxaAsize < minCladeSize){
-                                        if(foundALL){
-                        minCladeSize = taxaAsize;
-                        minCladeSpecies = taxaAname;
-                        for(i = 0; i < taxaAsize; i++)
-                            taxa_set[taxaA[i]]=1;
-                        ((MTree*)tree)->copyTree(&minCladeSubtree, taxa_set);
-                        for(i = 0; i < taxaAsize; i++)
-                            taxa_set[taxaA[i]]=0;
+                    if(foundALL){
+
                     }
                     
                 }
             }
             
             if(!foundALL && taxaBsize >= taxaNameNUM && taxaBsize < minCladeSize){
-                i = 0;
-                foundALL = TRUE;
-                while(foundALL && i<taxaNameNUM){
-                    foundALL = FALSE;
-                    for(j = 0; j < taxaBsize; j++){
-                        if(strcmp(taxaName[i].c_str(),taxaBname[j].c_str()) == 0){
-                            foundALL = TRUE;
-                            cout<<"Found species "<<i<<": "<<taxaName[i]<<endl;
-                            break;
-                        }
-                    }
-                    if(!foundALL)
-                        cout<<" ---> Did not find species "<<i<<": "<<taxaName[i]<<endl;
-                    i++;
-                }
-                if(foundALL){
-                    minCladeSize = taxaBsize;
-                    minCladeSpecies = taxaBname;
-                    for(i = 0; i < taxaBsize; i++)
-                        taxa_set[taxaB[i]]=1;
-                    ((MTree*)tree)->copyTree(&minCladeSubtree, taxa_set);
-                    for(i = 0; i < taxaBsize; i++)
-                        taxa_set[taxaB[i]]=0;
-                }
                 
                 
             }
@@ -159,8 +126,51 @@ void CladeAnalysis::readInputTaxa(istream &in) {
         cout<<taxaName.at(i)<<endl;
 }
 
-void CladeAnalysis::checkClade(vector<string> *taxaSplit, bool *foundALL, bool *foundSOME){
+void CladeAnalysis::checkClade(vector<int> *taxaSplit, bool *foundALL, bool *foundSOME){
+    int i = 0, j = 0;
+    int taxaSplitSize = taxaSplit->size();
+    
+    *foundALL = true;
+    
+    //  We continue checking all species in taxaSplit till either:
+    //  (i)     so far we found all taxa: foundALL = true, or
+    //  (ii)    so far all taxa are not present in the split (foundALL = false, so far), but we don't know if some other is still present (foundSOME = false, so far)
+    
+    while(i < taxaNameNUM && (*foundALL || (!(*foundALL) && !(*foundSOME)))){
+        *foundALL = false;
+        for(j = 0; j < taxaSplitSize; j++){
+            if(taxaNameID[i] == taxaSplit->at(j)){
+                *foundALL = true;
+                *foundSOME = true;
+                cout<<"Found species "<<i<<": name = "<<taxaName[i]<<"; id = "<<taxaNameID[i]<<endl;
+                break;
+            }
+        }
+        if(!(*foundALL))
+            cout<<" ---> Did not find species "<<i<<": name = "<<taxaName[i]<<"; id = "<<taxaNameID[i]<<endl;
+        
+        // For control only
+        cout<<"Species "<<i<<": foundALL = "<<*foundALL<<"; foundSOME"<<*foundSOME<<endl;
+        
+        i++;
+    }
+
 }
 
-void CladeAnalysis::setMinClade(IQTree *tree, vector<string> *taxaSplit){
+void CladeAnalysis::setMinClade(IQTree *tree, vector<int> *taxaSplit){
+    int i;
+    
+    minCladeSize = taxaSplit->size();
+    for(i = 0; i < minCladeSize; i++){
+        minCladeSpecies.push_back(tree->findNodeID(taxaSplit->at(i))->name);
+    }
+    string taxa_set;
+    for(i = 0; i < tree->leafNum; i++)
+        taxa_set.push_back(0);
+    for(i = 0; i < minCladeSize; i++)
+        taxa_set[taxaSplit->at(i)]=1;
+    ((MTree*)tree)->copyTree(this, taxa_set);
+}
+
+void CladeAnalysis::printResultsCA(){
 }
