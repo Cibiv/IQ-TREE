@@ -1559,6 +1559,15 @@ public:
 	 */
 	double upper_bound_frac;
     
+    
+    /**********************************************/
+    /****** variables for clade analysis **********/
+    /**
+     *  infile for clade analysis, contains list of taxa to be used for the analysis
+     */
+    const char *clade_analysis_infile;
+    
+    
     /**********************************************/
     /****** variables for estimator analysis *******/
     bool estimator_analysis;

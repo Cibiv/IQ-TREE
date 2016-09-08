@@ -840,6 +840,8 @@ void parseArg(int argc, char *argv[], Params &params) {
 	params.upper_bound_NNI = false;
 	params.upper_bound_frac = 0.0;
     
+    params.clade_analysis_infile = NULL;
+    
     params.estimator_analysis = false;
     params.estimator_JS = false;
     params.aln_file_JS = NULL;
@@ -2457,6 +2459,15 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.upper_bound_frac = convert_double(argv[cnt]);
                 continue;
 			}
+            
+            if (strcmp(argv[cnt], "-cladeAls") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -cladeAls <list_taxa_file>";
+                params.clade_analysis_infile = argv[cnt];
+                continue;
+            }
+            
             if (strcmp(argv[cnt], "-estAls") == 0) {
                 params.estimator_analysis = true;
                 continue;

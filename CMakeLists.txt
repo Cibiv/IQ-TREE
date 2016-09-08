@@ -362,6 +362,7 @@ endif()
 add_executable(iqtree
 alignment.cpp
 alignmentpairwise.cpp
+cladeAnalysis.cpp
 circularnetwork.cpp
 eigendecomposition.cpp
 greedy.cpp
