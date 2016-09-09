@@ -42,13 +42,11 @@ void CladeAnalysis::initCladeAnalysis(IQTree* tree){
 
 void CladeAnalysis::startCladeAnalysis(IQTree* tree){
     
-    int i, j;
+    int i;
     
     cout<<"========================================================="<<endl;
     cout<<"         Starting Clade analysis.."<<endl;
     cout<<"========================================================="<<endl;
-    
-    int taxaNameNUM = taxaName.size();
     
     NodeVector branch1, branch2;
     tree->getBranches(branch1, branch2);
@@ -69,31 +67,26 @@ void CladeAnalysis::startCladeAnalysis(IQTree* tree){
         
         // We consider only non-trivial splits
         if(taxaAsize > 1 && taxaBsize > 1){
-            
             if(taxaAsize <= taxaBsize){
                 checkClade(&taxaA, &foundALL, &foundSOME);
+                if(foundALL && taxaAsize < minCladeSize){
+                    setMinClade(tree, &taxaA);
+                } else if (!foundSOME && taxaBsize < minCladeSize) {
+                    setMinClade(tree, &taxaB);
+                }
             } else {
                 checkClade(&taxaB, &foundALL, &foundSOME);
-            }
-            
-            if(taxaAsize >= taxaNameNUM){
-                if(taxaAsize < minCladeSize){
-                    if(foundALL){
-
-                    }
-                    
+                if(foundALL && taxaBsize < minCladeSize){
+                    setMinClade(tree, &taxaB);
+                } else if (!foundSOME && taxaAsize < minCladeSize) {
+                    setMinClade(tree, &taxaA);
                 }
             }
-            
-            if(!foundALL && taxaBsize >= taxaNameNUM && taxaBsize < minCladeSize){
-                
-                
-            }
-
-            
-        }// END of We consider only non-trivial splits
+        }
     }
     
+    printResultsCA();
+    exit(0);
     
 }
 
@@ -160,7 +153,16 @@ void CladeAnalysis::checkClade(vector<int> *taxaSplit, bool *foundALL, bool *fou
 void CladeAnalysis::setMinClade(IQTree *tree, vector<int> *taxaSplit){
     int i;
     
+    assert(taxaSplit->size()<minCladeSize);
+    
+    cout<<"Updating minClade...-------------------------------"<<endl;
+    cout<<"     old size of minClade = "<<minCladeSize<<endl;
+    
     minCladeSize = taxaSplit->size();
+    
+    cout<<"     new size of minClade = "<<minCladeSize<<endl;
+    cout<<"---------------------------------------------------"<<endl;
+    
     for(i = 0; i < minCladeSize; i++){
         minCladeSpecies.push_back(tree->findNodeID(taxaSplit->at(i))->name);
     }
@@ -173,4 +175,55 @@ void CladeAnalysis::setMinClade(IQTree *tree, vector<int> *taxaSplit){
 }
 
 void CladeAnalysis::printResultsCA(){
+    
+    string out_file = Params::getInstance().out_prefix;
+    out_file += ".ca.details";
+    
+    ofstream out;
+    out.exceptions(ios::failbit | ios::badbit);
+    out.open((char*)out_file.c_str(),std::ofstream::out);
+    out<<"minCladeSize "<<minCladeSize<<" minPossible "<<taxaNameNUM<<" ? "<<minPossible()<<endl;
+    out.close();
+    
+    out_file = Params::getInstance().out_prefix;
+    out_file += ".ca.minClade.subtree";
+    this->printTree((char*)out_file.c_str());
+    
+    if(!minPossible()){
+        out_file = Params::getInstance().out_prefix;
+        out_file += ".ca.minClade.species";
+        out.open((char*)out_file.c_str(),std::ofstream::out);
+    
+        for(int i = 0; i < minCladeSpecies.size(); i++){
+            out<<minCladeSpecies.at(i)<<endl;
+        }
+    
+        out.close();
+    }
+    
 }
+
+bool CladeAnalysis::minPossible(){
+    if(minCladeSize == taxaNameNUM){
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

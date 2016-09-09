@@ -69,6 +69,11 @@ public:
      *      - is it the smallest possible clade? (i.e. clade contains only species of interest)
      */
     void printResultsCA();
+    
+    /**
+     *      Checks whether minCladeSize = taxaNameNUM, i.e. whether clade contains only species of interest
+     */
+    bool minPossible();
 
     
 private:
