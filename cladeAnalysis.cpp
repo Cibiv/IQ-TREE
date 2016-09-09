@@ -176,6 +176,8 @@ void CladeAnalysis::setMinClade(IQTree *tree, vector<int> *taxaSplit){
 
 void CladeAnalysis::printResultsCA(){
     
+    bool found = false;
+    int i, j = 0;
     string out_file = Params::getInstance().out_prefix;
     out_file += ".ca.details";
     
@@ -194,10 +196,18 @@ void CladeAnalysis::printResultsCA(){
         out_file += ".ca.minClade.species";
         out.open((char*)out_file.c_str(),std::ofstream::out);
     
-        for(int i = 0; i < minCladeSpecies.size(); i++){
-            out<<minCladeSpecies.at(i)<<endl;
+        for(i = 0; i < minCladeSpecies.size(); i++){
+            found = false;
+            
+            while(!found && j < taxaNameNUM){
+                if(this->findLeafName(minCladeSpecies.at(i))->id == taxaNameID.at(j))
+                    found = true;
+                j++;
+            
+            }
+            if(!found)
+                out<<minCladeSpecies.at(i)<<endl;
         }
-    
         out.close();
     }
     
