@@ -728,6 +728,12 @@ public:
     void expandAlignmentJS(Alignment* aln_expand);
     
     /**
+            print out frequencies of site patterns
+     */
+    
+    void printPtnFreq();
+    
+    /**
             create a modified alignment according to James-Stein counts/frequencies
             @param aln "template" alignment
      */

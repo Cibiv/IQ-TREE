@@ -8,18 +8,30 @@
 
 #include "cladeAnalysis.h"
 
+void runCladeAnalysis(){
+    // Clade analysis. To analyse the initial tree witout any tree search or optimization
+    cout<<"========================================================="<<endl;
+    cout<<"         Starting Clade analysis.."<<endl;
+    cout<<"========================================================="<<endl;
+    
+    MTree tree(Params::getInstance().user_file,Params::getInstance().is_rooted);
+    CladeAnalysis minClade(&tree);
+    minClade.startCladeAnalysis(&tree);
+};
+
 /**
  *  Here we are interested in analysis of clades. The input files are the tree and the list of taxa. The question is whether the taxa from the list form a separate clade or whether they are mixed with some other taxa, i.e. if a common anscestor is also an anscestor of some other taxa on the tree. As an output it would be nice to have yes/no and if no, the list of taxa that belong to the same clade.
  **/
 
-CladeAnalysis::CladeAnalysis(IQTree* tree) : MTree(){
+CladeAnalysis::CladeAnalysis(MTree* tree) : MTree(){
     initCladeAnalysis(tree);
 };
 
 CladeAnalysis::~CladeAnalysis(){
 };
 
-void CladeAnalysis::initCladeAnalysis(IQTree* tree){
+
+void CladeAnalysis::initCladeAnalysis(MTree* tree){
     
     minCladeSize = tree->leafNum;
     
@@ -40,13 +52,9 @@ void CladeAnalysis::initCladeAnalysis(IQTree* tree){
     
 };
 
-void CladeAnalysis::startCladeAnalysis(IQTree* tree){
+void CladeAnalysis::startCladeAnalysis(MTree* tree){
     
     int i;
-    
-    cout<<"========================================================="<<endl;
-    cout<<"         Starting Clade analysis.."<<endl;
-    cout<<"========================================================="<<endl;
     
     NodeVector branch1, branch2;
     tree->getBranches(branch1, branch2);
@@ -58,15 +66,24 @@ void CladeAnalysis::startCladeAnalysis(IQTree* tree){
     bool foundALL = false;
     bool foundSOME = false;
     
+    cout<<endl<<"Total number of taxa on the input tree:  "<<tree->leafNum<<endl;
+    cout<<"Total number of branches on the tree:    "<<branch1.size()<<endl<<endl;
+    
     for(i = 0; i != branch1.size(); i++){
+        taxaA.clear();
+        taxaB.clear();
+        
         tree->getTaxaID(taxaA,branch1[i],branch2[i]);
         tree->getTaxaID(taxaB,branch2[i],branch1[i]);
         
         taxaAsize = taxaA.size();
         taxaBsize = taxaB.size();
         
+        //cout<<"Current  clade "<<taxaAsize<<"|"<<taxaBsize<<"..."<<endl;
+        
         // We consider only non-trivial splits
         if(taxaAsize > 1 && taxaBsize > 1){
+            //cout<<"Checking clade "<<taxaAsize<<"|"<<taxaBsize<<"..."<<endl;
             if(taxaAsize <= taxaBsize){
                 checkClade(&taxaA, &foundALL, &foundSOME);
                 if(foundALL && taxaAsize < minCladeSize){
@@ -85,7 +102,13 @@ void CladeAnalysis::startCladeAnalysis(IQTree* tree){
         }
     }
     
-    printResultsCA();
+    cout<<"Checked all the clades! ++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
+    
+    if(minCladeSize != tree->leafNum){
+        printResultsCA();
+    }else{
+        cout<<"The minimal clade contains "<<tree->leafNum-1<<" taxa, i.e. trivial splits only!"<<endl;
+    }
     exit(0);
     
 }
@@ -128,29 +151,32 @@ void CladeAnalysis::checkClade(vector<int> *taxaSplit, bool *foundALL, bool *fou
     //  We continue checking all species in taxaSplit till either:
     //  (i)     so far we found all taxa: foundALL = true, or
     //  (ii)    so far all taxa are not present in the split (foundALL = false, so far), but we don't know if some other is still present (foundSOME = false, so far)
-    
+    cout<<"=================================================================================="<<endl;
+    cout<<"CHECKING clade ("<<taxaSplitSize<<")"<<endl;
     while(i < taxaNameNUM && (*foundALL || (!(*foundALL) && !(*foundSOME)))){
         *foundALL = false;
         for(j = 0; j < taxaSplitSize; j++){
             if(taxaNameID[i] == taxaSplit->at(j)){
                 *foundALL = true;
                 *foundSOME = true;
-                cout<<"Found species "<<i<<": name = "<<taxaName[i]<<"; id = "<<taxaNameID[i]<<endl;
+                //cout<<"Found species "<<i<<": name = "<<taxaName[i]<<"; id = "<<taxaNameID[i]<<endl;
                 break;
             }
         }
-        if(!(*foundALL))
-            cout<<" ---> Did not find species "<<i<<": name = "<<taxaName[i]<<"; id = "<<taxaNameID[i]<<endl;
+        //if(!(*foundALL))
+            //cout<<" ---> Did not find species "<<i<<": name = "<<taxaName[i]<<"; id = "<<taxaNameID[i]<<endl;
         
         // For control only
-        cout<<"Species "<<i<<": foundALL = "<<*foundALL<<"; foundSOME"<<*foundSOME<<endl;
+        //cout<<"Species "<<i<<": foundALL = "<<*foundALL<<"; foundSOME = "<<*foundSOME<<endl;
         
         i++;
     }
-
+    //cout<<"=================================================================================="<<endl;
+    cout<<"Results for current clade: foundALL = "<<*foundALL<<"; foundSOME = "<<*foundSOME<<endl;
+    cout<<"=================================================================================="<<endl;
 }
 
-void CladeAnalysis::setMinClade(IQTree *tree, vector<int> *taxaSplit){
+void CladeAnalysis::setMinClade(MTree *tree, vector<int> *taxaSplit){
     int i;
     
     assert(taxaSplit->size()<minCladeSize);

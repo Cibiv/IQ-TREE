@@ -53,7 +53,6 @@
 #include "timeutil.h"
 #include "upperbounds.h"
 #include "estimator.h"
-#include "cladeAnalysis.h"
 
 
 void reportReferences(Params &params, ofstream &out, string &original_model) {
@@ -1759,12 +1758,6 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
         estimatorAnalysis(&params, iqtree.aln, &iqtree);
         exit(0);
     }*/
-    
-    // Clade analysis. To analyse the initial tree witout any tree search or optimization
-    if(params.clade_analysis_infile){
-        CladeAnalysis minClade(&iqtree);
-        minClade.startCladeAnalysis(&iqtree);
-    }
 
     // degree of freedom
     cout << endl;
@@ -2783,6 +2776,11 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
 			((PhyloSuperTreePlen*) tree)->printNNIcasesNUM();
 		}
 	}
+    
+    if(params.estimator_JS or params.aln_file_JS){
+        tree->aln->printPtnFreq();
+    }
+    
     
     // 2015-09-22: bug fix, move this line to before deleting tree
     alignment = tree->aln;

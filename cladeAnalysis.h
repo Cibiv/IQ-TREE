@@ -10,7 +10,12 @@
 #define __iqtree__cladeAnalysis__
 
 #include <stdio.h>
-#include "iqtree.h"
+#include "mtree.h"
+
+/**
+ *      main function to run clade analysis
+ */
+void runCladeAnalysis();
 
 /**
  *      Analysis of Clades: Topology of the smallest clade subtree containing all species of interest
@@ -22,19 +27,19 @@ public:
     /**
      *      Constructor
      */
-     CladeAnalysis(IQTree* tree);
+     CladeAnalysis(MTree* tree);
     ~CladeAnalysis();
     
     /**
      *      Main function to start the analysis
      */
 
-    void startCladeAnalysis(IQTree* tree);
+    void startCladeAnalysis(MTree* tree);
     
     /**
      *      Initialize variables
      */
-    void initCladeAnalysis(IQTree* tree);
+    void initCladeAnalysis(MTree* tree);
 
     /**
      *      Reading input list of taxa to analyse the clade for
@@ -59,7 +64,7 @@ public:
      *      @param tree - input tree on which we perform the clade analysis
      *      @param taxaSplit - current smallest clade
      */
-    void setMinClade(IQTree *tree, vector<int> *taxaSplit);
+    void setMinClade(MTree *tree, vector<int> *taxaSplit);
     
     /**
      *      Print the results: 

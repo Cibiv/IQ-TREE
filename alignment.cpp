@@ -3950,6 +3950,15 @@ void Alignment::computePatternProbJS(double *ptn_freq_JS){
     
 }
 
+void Alignment::printPtnFreq() {
+    cout<<"Printing info about site pattern frequencies......"<<endl;
+    size_t nptn = (this)->getNPattern();
+    cout<<"Number of site patterns in the alignment: "<<nptn<<endl;
+    for (int ptn = 0; ptn < nptn; ptn++){
+        cout<<"Frequency: Pattern "<<ptn+1<<" = "<< (double)((*this)[ptn].frequency)<<endl;
+    }
+}
+
 void Alignment::expandAlignmentJS(Alignment *aln_expanded) {
     
     //Alignment aln_expanded = Alignment(Params::getInstance().aln_file_JS, Params::getInstance().sequence_type, Params::getInstance().intype);
