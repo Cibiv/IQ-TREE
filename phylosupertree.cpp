@@ -551,8 +551,9 @@ PhyloSuperTree::PhyloSuperTree(Params &params) :  IQTree() {
     
 #ifdef _OPENMP
     if (params.num_threads > size()) {
-        outWarning("More threads (" + convertIntToString(params.num_threads) + ") than number of partitions (" + convertIntToString(size()) + ") might not be necessary.");
-        outWarning("You are recommended to rerun with '-nt " + convertIntToString(size()) + "' and see if this is faster");
+        cout << "Info: multi-threading strategy over alignment sites" << endl;
+    } else {
+        cout << "Info: multi-threading strategy over partitions" << endl;
     }
 #endif
 	cout << endl;
@@ -568,34 +569,23 @@ void PhyloSuperTree::setParams(Params* params) {
 
 void PhyloSuperTree::initSettings(Params &params) {
 	IQTree::initSettings(params);
+    num_threads = (size() >= params.num_threads) ? params.num_threads : 1;
 	for (iterator it = begin(); it != end(); it++) {
 		(*it)->params = &params;
-		(*it)->setLikelihoodKernel(params.SSE);
+		(*it)->setLikelihoodKernel(params.SSE, (size() >= params.num_threads) ? 1 : params.num_threads);
 		(*it)->optimize_by_newton = params.optimize_by_newton;
 	}
 
 }
 
-void PhyloSuperTree::setLikelihoodKernel(LikelihoodKernel lk) {
-    PhyloTree::setLikelihoodKernel(lk);
+void PhyloSuperTree::setLikelihoodKernel(LikelihoodKernel lk, int num_threads) {
+    PhyloTree::setLikelihoodKernel(lk, (size() >= num_threads) ? num_threads : 1);
     for (iterator it = begin(); it != end(); it++)
-        (*it)->setLikelihoodKernel(lk);    
+        (*it)->setLikelihoodKernel(lk, (size() >= num_threads) ? 1 : num_threads);
 }
 
 void PhyloSuperTree::changeLikelihoodKernel(LikelihoodKernel lk) {
 	PhyloTree::changeLikelihoodKernel(lk);
-//	if ((sse == LK_EIGEN || sse == LK_EIGEN_SSE) && (lk == LK_NORMAL || lk == LK_SSE)) {
-//		// need to increase the memory usage when changing from new kernel to old kernel
-//        setLikelihoodKernel(lk);
-//        for (iterator it = begin(); it != end(); it++)
-//            (*it)->setLikelihoodKernel(lk);
-//		deleteAllPartialLh();
-//		initializeAllPartialLh();
-//		clearAllPartialLH();
-//    } else {
-//        for (iterator it = begin(); it != end(); it++)
-//            (*it)->setLikelihoodKernel(lk);
-//    }
 }
 
 string PhyloSuperTree::getTreeString() {
@@ -891,7 +881,7 @@ void PhyloSuperTree::clearAllPartialLH(bool make_null) {
     }
 }
 
-int PhyloSuperTree::computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad, int *branch_subst) {
+int PhyloSuperTree::computeParsimonyBranchObsolete(PhyloNeighbor *dad_branch, PhyloNode *dad, int *branch_subst) {
     int score = 0, part = 0;
     SuperNeighbor *dad_nei = (SuperNeighbor*)dad_branch;
     SuperNeighbor *node_nei = (SuperNeighbor*)(dad_branch->node->findNeighbor(dad));
@@ -967,7 +957,7 @@ double PhyloSuperTree::computeLikelihood(double *pattern_lh) {
 	} else {
         if (part_order.empty()) computePartitionOrder();
 		#ifdef _OPENMP
-		#pragma omp parallel for reduction(+: tree_lh) schedule(dynamic) if(ntrees >= params->num_threads)
+		#pragma omp parallel for reduction(+: tree_lh) schedule(dynamic) if(num_threads > 1)
 		#endif
 		for (int j = 0; j < ntrees; j++) {
             int i = part_order[j];
@@ -1028,7 +1018,7 @@ double PhyloSuperTree::optimizeAllBranches(int my_iterations, double tolerance, 
 	int ntrees = size();
     if (part_order.empty()) computePartitionOrder();
 	#ifdef _OPENMP
-	#pragma omp parallel for reduction(+: tree_lh) schedule(dynamic) if(ntrees >= params->num_threads)
+	#pragma omp parallel for reduction(+: tree_lh) schedule(dynamic) if(num_threads > 1)
 	#endif
 	for (int j = 0; j < ntrees; j++) {
         int i = part_order[j];
@@ -1123,6 +1113,26 @@ NNIMove PhyloSuperTree::getBestNNIForBran(PhyloNode *node1, PhyloNode *node2, NN
 		break;
 	}
 
+    // check for compatibility with constraint tree
+    bool nni_ok[2] = {true, true};
+    int nniid = 0;
+	FOR_NEIGHBOR(node2, node1, node2_it) {
+        NNIMove nni;
+        nni.node1 = node1;
+        nni.node2 = node2;
+        nni.node1Nei_it = node1->findNeighborIt(node1_nei->node);
+        nni.node2Nei_it = node2_it;
+        nni_ok[nniid++] = constraintTree.isCompatible(nni);
+    }
+    assert(nniid == 2);
+    myMove.node1 = myMove.node2 = NULL;
+    myMove.newloglh = -DBL_MAX;
+    // return if both NNIs do not satisfy constraint
+    if (!nni_ok[0] && !nni_ok[1]) {
+        assert(!nniMoves);
+        return myMove;
+    }
+
 	//double bestScore = optimizeOneBranch(node1, node2, false);
 
 	int ntrees = size(), part;
@@ -1131,7 +1141,7 @@ NNIMove PhyloSuperTree::getBestNNIForBran(PhyloNode *node1, PhyloNode *node2, NN
 
     if (part_order.empty()) computePartitionOrder();
 	#ifdef _OPENMP
-	#pragma omp parallel for reduction(+: nni_score1, nni_score2, local_totalNNIs, local_evalNNIs) private(part) schedule(dynamic) if(ntrees >= params->num_threads)
+	#pragma omp parallel for reduction(+: nni_score1, nni_score2, local_totalNNIs, local_evalNNIs) private(part) schedule(dynamic) if(num_threads>1)
 	#endif
 	for (int treeid = 0; treeid < ntrees; treeid++) {
         part = part_order_by_nptn[treeid];
@@ -1201,6 +1211,9 @@ NNIMove PhyloSuperTree::getBestNNIForBran(PhyloNode *node1, PhyloNode *node2, NN
 	totalNNIs += local_totalNNIs;
 	evalNNIs += local_evalNNIs;
 	double nni_scores[2] = {nni_score1, nni_score2};
+    
+    if (!nni_ok[0]) nni_scores[0] = -DBL_MAX;
+    if (!nni_ok[1]) nni_scores[1] = -DBL_MAX;
 
 	myMove.node1Nei_it = node1->findNeighborIt(node1_nei->node);
 	myMove.node1 = node1;
@@ -1221,8 +1234,9 @@ NNIMove PhyloSuperTree::getBestNNIForBran(PhyloNode *node1, PhyloNode *node2, NN
     //now setup pattern likelihoods per partition
 	double *save_lh_factor = new double [ntrees];
 	double *save_lh_factor_back = new double [ntrees];
-	int nnino = 0;
-	FOR_NEIGHBOR(node2, node1, node2_it) {
+	nniid = 0;
+	FOR_NEIGHBOR(node2, node1, node2_it) if (nni_ok[nniid]) 
+    {
 
 		// do the NNI
 		node2_nei = (SuperNeighbor*)(*node2_it);
@@ -1242,18 +1256,18 @@ NNIMove PhyloSuperTree::getBestNNIForBran(PhyloNode *node1, PhyloNode *node2, NN
 			if (!is_nni)
 				memcpy(at(part)->_pattern_lh, part_info[part].cur_ptnlh, at(part)->getAlnNPattern() * sizeof(double));
 			else
-				memcpy(at(part)->_pattern_lh, part_info[part].nniMoves[nnino].ptnlh, at(part)->getAlnNPattern() * sizeof(double));
+				memcpy(at(part)->_pattern_lh, part_info[part].nniMoves[nniid].ptnlh, at(part)->getAlnNPattern() * sizeof(double));
     		save_lh_factor[part] = at(part)->current_it->lh_scale_factor;
     		save_lh_factor_back[part] = at(part)->current_it_back->lh_scale_factor;
     		at(part)->current_it->lh_scale_factor = 0.0;
     		at(part)->current_it_back->lh_scale_factor = 0.0;
         }
         if (nniMoves) {
-        	nniMoves[nnino].newloglh = nni_scores[nnino];
-       		computePatternLikelihood(nniMoves[nnino].ptnlh, &nni_scores[nnino]);
+        	nniMoves[nniid].newloglh = nni_scores[nniid];
+       		computePatternLikelihood(nniMoves[nniid].ptnlh, &nni_scores[nniid]);
         }
         if (save_all_trees == 2)
-        	saveCurrentTree(nni_scores[nnino]);
+        	saveCurrentTree(nni_scores[nniid]);
 
         // restore information
         for (part = 0; part < ntrees; part++) {
@@ -1266,7 +1280,7 @@ NNIMove PhyloSuperTree::getBestNNIForBran(PhyloNode *node1, PhyloNode *node2, NN
         node1_nei->node->updateNeighbor(node2, node1);
         node2->updateNeighbor(node2_it, node2_nei);
         node2_nei->node->updateNeighbor(node1, node2);
-        nnino++;
+        nniid++;
 
 	}
 
@@ -1433,12 +1447,12 @@ PhyloTree *PhyloSuperTree::extractSubtree(IntVector &ids) {
 	return tree;
 }
 
-uint64_t PhyloSuperTree::getMemoryRequired(size_t ncategory) {
+uint64_t PhyloSuperTree::getMemoryRequired(size_t ncategory, bool full_mem) {
 //	uint64_t mem_size = PhyloTree::getMemoryRequired(ncategory);
 	// supertree does not need any memory for likelihood vectors!
 	uint64_t mem_size = 0;
 	for (iterator it = begin(); it != end(); it++)
-		mem_size += (*it)->getMemoryRequired(ncategory);
+		mem_size += (*it)->getMemoryRequired(ncategory, full_mem);
 	return mem_size;
 }
 

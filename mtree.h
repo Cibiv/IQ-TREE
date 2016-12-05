@@ -27,6 +27,7 @@
 #include <sstream>
 #include "hashsplitset.h"
 #include "splitset.h"
+//#include "candidateset.h"
 
 const char ROOT_NAME[] = "_root";
 
@@ -57,6 +58,23 @@ public:
     MTree(MTree &tree);
 
     /**
+     *      Constructor, read tree from string.
+     *      Taxa IDs are assigned according to the order in taxaNames
+     */
+    MTree(string& treeString, vector<string>& taxaNames, bool isRooted);
+
+    /**
+     *  Read tree from string assuming that the taxa names are numeric numbers
+     *  Leaf IDs are then assigned according to the number in the taxa names
+     */
+    MTree(string& treeString, bool isRooted);
+
+    /**
+     *   Assign taxa IDs according to the order in taxaNames
+     */
+    void assignIDs(vector<string>& taxaNames);
+
+    /**
             constructor
      */
     MTree();
@@ -75,6 +93,21 @@ public:
     virtual void copyTree(MTree *tree, string &taxa_set);
 
     Node* copyTree(MTree *tree, string &taxa_set, double &len, Node *node = NULL, Node *dad = NULL);
+
+    /**
+            In case of mulfurcating tree, extract a bifurcating subtree by randomly removing multifurcation
+            If the tree is bifurcating, nothing change
+            @param node the starting node, NULL to start from the root
+            @param dad dad of the node, used to direct the search
+     */
+    void extractBifurcatingSubTree(Node *node = NULL, Node *dad = NULL);
+
+
+    /**
+            In case of mulfurcating tree, randomly resolve multifurcating node to obtain strictly bifurcating tree
+            If the tree is bifurcating, nothing change
+     */
+    void resolveMultifurcation();
 
     /**
             initialize the tree from a NEWICK tree file
@@ -152,9 +185,6 @@ public:
             @param brtype type of branch to print
      */
     void printTree(ostream & out, int brtype = WT_BR_LEN);
-
-
-//    string getTreeString();
 
     /**
             print the tree to the output file in newick format
@@ -252,6 +282,13 @@ public:
             @param is_rooted (IN/OUT) true if tree is rooted
      */
     virtual void readTree(istream &in, bool &is_rooted);
+
+    /**
+            read the tree from a newick string
+            @param tree_string the tree string.
+            @param is_rooted (IN/OUT) true if tree is rooted
+     */
+    //virtual void readTreeString(string tree_string, bool is_rooted);
 
     /**
             parse the tree from the input file in newick format
@@ -358,9 +395,18 @@ public:
             get the descending taxa names below the node
             @param node the starting node, NULL to start from the root
             @param dad dad of the node, used to direct the search
-            @param taxname (OUT) taxa name
+            @param[out] taxname taxa name, with size equal leafNum and ordered with taxon ID
      */
     void getTaxaName(vector<string> &taxname, Node *node = NULL, Node *dad = NULL);
+
+    /**
+            get the descending taxa names below the node. different from getTaxaName() in that the
+            taxa are not ordered by ID at all!
+            @param node the starting node, NULL to start from the root
+            @param dad dad of the node, used to direct the search
+            @param[out] taxname taxa name
+     */
+    void getUnorderedTaxaName(vector<string> &taxname, Node *node, Node *dad);
 
     /**
             get the descending internal nodes below \a node
@@ -378,7 +424,7 @@ public:
             @param nodes2 (OUT) vector of the other end node of branch
             @param excludeSplits do not collect branches in here
      */
-    void getAllInnerBranches(vector<Node*> &nodes, vector<Node*> &nodes2, SplitGraph* excludeSplits = NULL, Node *node = NULL, Node *dad = NULL);
+    void generateNNIBraches(vector<Node*> &nodes, vector<Node*> &nodes2, SplitGraph* excludeSplits = NULL, Node *node = NULL, Node *dad = NULL);
 
     /**
             get all descending branches below the node
@@ -390,19 +436,21 @@ public:
     void getBranches(NodeVector &nodes, NodeVector &nodes2, Node *node = NULL, Node *dad = NULL);
 
     /**
+            get all inner branches below the node
+            @param branches the branches are stored here
+            @param node the starting node, NULL to start from the root
+            @param dad dad of the node, used to direct the search
+     */
+    void getInnerBranches(Branches& branches, Node *node = NULL, Node *dad = NULL);
+
+    /**
      *      get all descending internal branches below \a node and \a dad up to depth \a depth
      *      @param[in] depth collect all internal branches up to distance \a depth from the current branch
      *      @param[in] node one of the 2 nodes of the current branches
      *      @param[in] dad one of the 2 nodes of the current branches
-     *      @param[out] nodes1 contains one ends of the collected branches
-     *      @param[out] nodes2 contains the other ends of the collected branches
+     *      @param[out] surrBranches the resulting branches
      */
-    void getInnerBranches(NodeVector& nodes1, NodeVector& nodes2, int depth, Node *node, Node *dad);
-
-    /**
-     *  @brief check whether branch (node1, node2) exist in the branch vector (nodes1, node2)
-     */
-    bool branchExist(Node* node1, Node* node2, NodeVector& nodes1, NodeVector& nodes2);
+    void getSurroundingInnerBranches(Node *node, Node *dad, int depth, Branches &surrBranches);
 
     /**
      * @brief: check if the branch is internal
@@ -513,12 +561,42 @@ public:
     void convertSplits(SplitGraph &sg, Split *resp, NodeVector *nodes = NULL, Node *node = NULL, Node *dad = NULL);
 
     /**
+     * Initialize the hash stable splitBranchMap which contain mapping from split to branch
+     * @param resp (internal) set of taxa below node
+     * @param node the starting node, NULL to start from the root
+     * @param dad dad of the node, used to direct the search
+     */
+    void initializeSplitMap(Split *resp = NULL, Node *node = NULL, Node *dad = NULL);
+
+    /**
+    *   Generate a split for each neighbor node
+    */
+    void buildNodeSplit(Split *resp = NULL, Node *node = NULL, Node *dad = NULL);
+
+    /**
+     *  Get split graph based on split stored in nodes
+     */
+    void getSplits(SplitGraph &splits, Node* node = NULL, Node* dad = NULL);
+
+    /**
+    *   Update the Split-Branch map with the new split defined by a branch
+    *   @param node1 one end of the branch
+    *   @param node2 the other end
+    */
+    //void updateSplitMap(Node* node1, Node* node2);
+
+    /**
      * 		Generate a split defined by branch node1-node2
      * 		@param node1 one end of the branch
      * 		@param node2 one end of the branch
-     * 		@return a pointer to the split (the new split is allocated dynamically)
+     * 		@return the split
      */
     Split* getSplit(Node* node1, Node* node2);
+
+    /**
+     *  Slow version of getSplit, which traverses the tree to get the splits
+     */
+    Split* _getSplit(Node* node1, Node* node2);
 
     /**
      *  Check whehter the tree contains all splits in \a splits
@@ -636,7 +714,7 @@ public:
     /**
             number of leaves
      */
-    int leafNum;
+    unsigned int leafNum;
 
     /**
             total number of nodes in the tree
@@ -667,6 +745,11 @@ public:
     double len_scale;
 
     /**
+    *   Pointer to the global params
+    */
+    Params* params;
+
+    /**
             release the nemory.
             @param node the starting node, NULL to start from the root
             @param dad dad of the node, used to direct the search
@@ -675,7 +758,17 @@ public:
 
     void setExtendedFigChar();
 
+    /** set pointer of params variable */
+    virtual void setParams(Params* params) {
+        this->params = params;
+    };
+
 protected:
+    /**
+     * 		Hash stable mapping a split into branch.
+     * 		This data structure is generated when genSplitMap() is called.
+     */
+    unordered_map<Split*, Branch, hashfunc_Split> splitBranchMap;
 
     /**
             line number of the input file, used to output errors in input file

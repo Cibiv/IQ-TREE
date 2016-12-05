@@ -69,7 +69,7 @@ bool checkModelFile(string model_file, bool is_partitioned, vector<ModelInfo> &i
  @return name of best-fit-model
  */
 string testModel(Params &params, PhyloTree* in_tree, vector<ModelInfo> &model_info, ostream &fmodel,
-		ModelsBlock *models_block, string set_name = "", bool print_mem_usage = false);
+		ModelsBlock *models_block, int num_threads, string set_name = "", bool print_mem_usage = false);
 
 /**
  * print site log likelihoods to a fileExists
@@ -80,6 +80,17 @@ string testModel(Params &params, PhyloTree* in_tree, vector<ModelInfo> &model_in
  * @param linename name of the line, default "Site_Lh" if NULL
  */
 void printSiteLh(const char*filename, PhyloTree *tree, double *ptn_lh = NULL,
+		bool append = false, const char *linename = NULL);
+
+/**
+ * print partition log likelihoods to a file
+ * @param filename output file name
+ * @param tree phylogenetic tree
+ * @param ptn_lh pattern log-likelihoods, will be computed if NULL
+ * @param append TRUE to append to existing file, FALSE otherwise
+ * @param linename name of the line, default "Site_Lh" if NULL
+ */
+void printPartitionLh(const char*filename, PhyloTree *tree, double *ptn_lh = NULL,
 		bool append = false, const char *linename = NULL);
 
 /**
@@ -102,6 +113,14 @@ void printSiteProbCategory(const char*filename, PhyloTree *tree, SiteLoglType ws
  * @param tree phylogenetic tree
 */
 void printSiteStateFreq(const char*filename, PhyloTree *tree, double *state_freqs = NULL);
+
+/**
+    print ancestral sequences
+    @param filename output file name
+    @param tree phylogenetic tree
+    @param ast either AST_MARGINAL or AST_JOINT
+*/
+void printAncestralSequences(const char*filename, PhyloTree *tree, AncestralSeqType ast);
 
 /**
  * Evaluate user-trees with possibility of tree topology tests

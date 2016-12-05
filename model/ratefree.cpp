@@ -7,6 +7,7 @@
 
 #include "phylotree.h"
 #include "ratefree.h"
+#include "rateinvar.h"
 
 #include "model/modelfactory.h"
 #include "model/modelmixture.h"
@@ -209,7 +210,7 @@ double RateFree::optimizeParameters(double gradient_epsilon) {
 		cout << "Optimizing " << name << " model parameters by " << optimize_alg << " algorithm..." << endl;
 
     // TODO: turn off EM algorithm for +ASC model
-    if (optimize_alg.find("EM") != string::npos && phylo_tree->getModelFactory()->unobserved_ptns.empty())
+    if ((optimize_alg.find("EM") != string::npos && phylo_tree->getModelFactory()->unobserved_ptns.empty()) || getPInvar() <= MIN_PINVAR)
         return optimizeWithEM();
 
 	//if (freq_type == FREQ_ESTIMATE) scaleStateFreq(false);
@@ -457,9 +458,16 @@ double RateFree::optimizeWithEM() {
 //    double *lk_ptn = aligned_alloc<double>(nptn);
     double *new_prop = aligned_alloc<double>(nmix);
     PhyloTree *tree = new PhyloTree;
+
+    // attach memory to save space
+//    tree->central_partial_lh = phylo_tree->central_partial_lh;
+//    tree->central_scale_num = phylo_tree->central_scale_num;
+//    tree->central_partial_pars = phylo_tree->central_partial_pars;
+
     tree->copyPhyloTree(phylo_tree);
     tree->optimize_by_newton = phylo_tree->optimize_by_newton;
-    tree->setLikelihoodKernel(phylo_tree->sse);
+    tree->setParams(phylo_tree->params);
+    tree->setLikelihoodKernel(phylo_tree->sse, phylo_tree->num_threads);
     // initialize model
     ModelFactory *model_fac = new ModelFactory();
     model_fac->joint_optimize = phylo_tree->params->optimize_model_rate_joint;
@@ -543,7 +551,7 @@ double RateFree::optimizeWithEM() {
 
         new_pinvar = 1.0 - new_pinvar;
 
-        if (new_pinvar != 0.0) {
+        if (new_pinvar > 1e-4 && getPInvar() != 0.0) {
             converged = converged && (fabs(getPInvar()-new_pinvar) < 1e-4);
             setPInvar(new_pinvar);
 //            setOptimizePInvar(false);
@@ -564,8 +572,8 @@ double RateFree::optimizeWithEM() {
             tree->setModel(subst_model);
             subst_model->setTree(tree);
             model_fac->model = subst_model;
-            if (subst_model->isMixture())
-                tree->setLikelihoodKernel(phylo_tree->sse);
+            if (subst_model->isMixture() || subst_model->isSiteSpecificModel())
+                tree->setLikelihoodKernel(phylo_tree->sse, phylo_tree->num_threads);
 
                         
             // initialize likelihood
@@ -591,6 +599,11 @@ double RateFree::optimizeWithEM() {
         if (converged) break;
     }
     
+    // deattach memory
+//    tree->central_partial_lh = NULL;
+//    tree->central_scale_num = NULL;
+//    tree->central_partial_pars = NULL;
+
     delete tree;
     aligned_free(new_prop);
     return phylo_tree->computeLikelihood();

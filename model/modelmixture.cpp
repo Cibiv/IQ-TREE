@@ -14,7 +14,9 @@
 #include "modelmorphology.h"
 #include "modelset.h"
 #include "modelmixture.h"
-#include "phylokernelmixture.h"
+//#include "phylokernelmixture.h"
+
+using namespace std;
 
 const string builtin_mixmodels_definition =
 "#nexus\n\
@@ -1426,6 +1428,7 @@ double ModelMixture::optimizeWeights() {
             for (c = 0; c < nmix; c++) {
                 lk_ptn += this_lk_cat[c];
             }
+            assert(lk_ptn != 0.0);
             lk_ptn = phylo_tree->ptn_freq[ptn] / lk_ptn;
             for (c = 0; c < nmix; c++) {
                 new_prop[c] += this_lk_cat[c] * lk_ptn;
@@ -1435,9 +1438,14 @@ double ModelMixture::optimizeWeights() {
         double new_pinvar = 0.0;    
         for (c = 0; c < nmix; c++) {
             new_prop[c] /= phylo_tree->getAlnNSite();
+            // Make sure that probabilities do not get zero
+            if (new_prop[c] < 1e-10) new_prop[c] = 1e-10;
             // check for convergence
             converged = converged && (fabs(prop[c]-new_prop[c]) < 1e-4);
             ratio_prop[c] = new_prop[c] / prop[c];
+            if (std::isnan(ratio_prop[c])) {
+                cerr << "BUG: " << new_prop[c] << " " << prop[c] << " " << ratio_prop[c] << endl;
+            }
             prop[c] = new_prop[c];
             new_pinvar += prop[c];
         }
@@ -1474,7 +1482,8 @@ double ModelMixture::optimizeWithEM(double gradient_epsilon) {
     
     tree->copyPhyloTree(phylo_tree);
     tree->optimize_by_newton = phylo_tree->optimize_by_newton;
-    tree->setLikelihoodKernel(phylo_tree->sse);
+    tree->setParams(phylo_tree->params);
+    tree->setLikelihoodKernel(phylo_tree->sse, phylo_tree->num_threads);
     // initialize model
     ModelFactory *model_fac = new ModelFactory();
     model_fac->joint_optimize = phylo_tree->params->optimize_model_rate_joint;
@@ -1506,6 +1515,7 @@ double ModelMixture::optimizeWithEM(double gradient_epsilon) {
             for (c = 0; c < nmix; c++) {
                 lk_ptn += this_lk_cat[c];
             }
+            assert(lk_ptn != 0.0);
             lk_ptn = phylo_tree->ptn_freq[ptn] / lk_ptn;
             
             // transform _pattern_lh_cat into posterior probabilities of each category
@@ -1523,6 +1533,7 @@ double ModelMixture::optimizeWithEM(double gradient_epsilon) {
             double new_pinvar = 0.0;
             for (c = 0; c < nmix; c++) {
                 new_prop[c] = new_prop[c] / phylo_tree->getAlnNSite();
+                if (new_prop[c] < 1e-10) new_prop[c] = 1e-10;
                 // check for convergence
                 converged = converged && (fabs(prop[c]-new_prop[c]) < 1e-4);
                 prop[c] = new_prop[c];
@@ -1606,6 +1617,17 @@ double ModelMixture::optimizeParameters(double gradient_epsilon) {
         phylo_tree->clearAllPartialLH();
     }
 	return score;
+}
+
+bool ModelMixture::isUnstableParameters() {
+    int c, ncategory = size();
+    for (c = 0; c < ncategory; c++)
+        if (prop[c] < MIN_MIXTURE_PROP*0.1) {
+            outWarning("The mixture model might be overfitting because some mixture weights are estimated close to zero");
+            break;
+            return true;
+        }
+    return false;
 }
 
 void ModelMixture::decomposeRateMatrix() {

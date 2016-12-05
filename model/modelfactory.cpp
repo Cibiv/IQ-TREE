@@ -338,6 +338,8 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree, ModelsBlock *models_
 		delete [] rates;
 		delete [] state_freq;
 
+        models->joinEigenMemory();
+
         // delete information of the old alignment
 //        tree->aln->ordered_pattern.clear();
 //        tree->deleteAllPartialLh();
@@ -358,15 +360,21 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree, ModelsBlock *models_
 //		if (unobserved_ptns.size() <= 0)
 //			outError("Invalid use of +ASC because all constant patterns are observed in the alignment");
 		if (tree->aln->frac_invariant_sites > 0) {
-            cerr << tree->aln->frac_invariant_sites*tree->aln->getNSite() << " invariant sites are observed in the alignment (see below)" << endl;
-            for (Alignment::iterator pit = tree->aln->begin(); pit != tree->aln->end(); pit++)
-                if (pit->isInvariant()) {
-                    string pat_str = "";
-                    for (Pattern::iterator it = pit->begin(); it != pit->end(); it++)
-                        pat_str += tree->aln->convertStateBackStr(*it);
-                    cerr << pat_str << " is invariant site pattern" << endl;
-                }
-            outError("Invalid use of +ASC in the presence of invariant sites");
+//            cerr << tree->aln->frac_invariant_sites*tree->aln->getNSite() << " invariant sites observed in the alignment" << endl;
+//            for (Alignment::iterator pit = tree->aln->begin(); pit != tree->aln->end(); pit++)
+//                if (pit->isInvariant()) {
+//                    string pat_str = "";
+//                    for (Pattern::iterator it = pit->begin(); it != pit->end(); it++)
+//                        pat_str += tree->aln->convertStateBackStr(*it);
+//                    cerr << pat_str << " is invariant site pattern" << endl;
+//                }
+            if (!params.partition_file) {                
+                string varsites_file = ((string)params.out_prefix + ".varsites.phy");
+                tree->aln->printPhylip(varsites_file.c_str(), false, NULL, false, true);
+                cerr << "For your convenience alignment with variable sites printed to " << varsites_file << endl;
+            } 
+            outError("Invalid use of +ASC because of " + convertIntToString(tree->aln->frac_invariant_sites*tree->aln->getNSite()) +
+                " invariant sites in the alignment");
         }
 		cout << "Ascertainment bias correction: " << unobserved_ptns.size() << " unobservable constant patterns"<< endl;
 		rate_str = rate_str.substr(0, posasc) + rate_str.substr(posasc+4);
@@ -678,7 +686,7 @@ double ModelFactory::optimizeAllParameters(double gradient_epsilon) {
 }
 
 double ModelFactory::optimizeParametersGammaInvar(int fixed_len, bool write_info, double logl_epsilon, double gradient_epsilon) {
-    if (!site_rate->isGammai())
+    if (!site_rate->isGammai() || site_rate->isFixPInvar() || site_rate->isFixGammaShape() || site_rate->getTree()->aln->frac_const_sites == 0.0)
         return optimizeParameters(fixed_len, write_info, logl_epsilon, gradient_epsilon);
         
 	double begin_time = getRealTime();
@@ -844,7 +852,7 @@ double ModelFactory::optimizeParameters(int fixed_len, bool write_info,
 	assert(model);
 	assert(site_rate);
 
-    double defaultEpsilon = logl_epsilon;
+//    double defaultEpsilon = logl_epsilon;
 
 	double begin_time = getRealTime();
 	double cur_lh;
@@ -856,7 +864,7 @@ double ModelFactory::optimizeParameters(int fixed_len, bool write_info,
     // no optimization of branch length in the first round
     cur_lh = tree->computeLikelihood();
     tree->setCurScore(cur_lh);
-	if (verbose_mode >= VB_MED || write_info) 
+	if (write_info)
 		cout << "1. Initial log-likelihood: " << cur_lh << endl;
 
 	// For UpperBounds -----------
@@ -899,7 +907,7 @@ double ModelFactory::optimizeParameters(int fixed_len, bool write_info,
 		}
 		if (new_lh > cur_lh + logl_epsilon) {
 			cur_lh = new_lh;
-			if (verbose_mode >= VB_MED || write_info)
+			if (write_info)
 				cout << i << ". Current log-likelihood: " << cur_lh << endl;
 		} else {
 			site_rate->classifyRates(new_lh);

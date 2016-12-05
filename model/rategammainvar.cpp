@@ -136,7 +136,7 @@ double RateGammaInvar::optimizeParameters(double gradient_epsilon) {
 
 	if (optimize_alg.find("EM_RR") != string::npos) {
         return randomRestartOptimization(gradient_epsilon);
-    } else if (optimize_alg.find("Brent") != string::npos) {
+    } else if (optimize_alg.find("Brent") != string::npos || phylo_tree->aln->frac_const_sites == 0.0 || isFixPInvar() || isFixGammaShape()) {
 		double lh = phylo_tree->computeLikelihood();
 		cur_optimize = 0;
 		double gamma_lh = RateGamma::optimizeParameters(gradient_epsilon);
@@ -177,6 +177,7 @@ double RateGammaInvar::optimizeParameters(double gradient_epsilon) {
     } else {
         string errMsg = "Unknown optimization algorithm: " + optimize_alg;
         outError(errMsg.c_str());
+        return 0.0;
     }
 }
 
