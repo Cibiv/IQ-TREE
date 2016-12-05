@@ -54,6 +54,7 @@
 #include "model/modelset.h"
 #include "timeutil.h"
 #include "upperbounds.h"
+#include "MPIHelper.h"
 #include "estimator.h"
 
 
@@ -1775,6 +1776,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
     	UpperBounds(&params, iqtree.aln, &iqtree);
     	exit(0);
 	}
+    */
     
     // Estimator analysis. Here, to analyse the initial tree without any tree search or optimization
     /*if (params.estimator_analysis){
@@ -2712,6 +2714,15 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
 		alignment->concatenateAlignment(&aln);
 	}
 
+    if (params.constraint_tree_file) {
+        cout << "Reading constraint tree " << params.constraint_tree_file << "..." << endl;
+        tree->constraintTree.initConstraint(params.constraint_tree_file, alignment->getSeqNames());
+        if (params.start_tree == STT_PLL_PARSIMONY)
+            params.start_tree = STT_PARSIMONY;
+        else if (params.start_tree == STT_BIONJ)
+            outError("Constraint tree does not work with -t BIONJ");
+    
+    }
     // For analysis with James-Stein estimator. Exanding original alignment with unobserved site patterns.
     if (params.aln_file_JS) {
         Alignment aln(params.aln_file_JS, params.sequence_type, params.intype);

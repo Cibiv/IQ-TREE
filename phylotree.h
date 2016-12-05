@@ -706,7 +706,47 @@ public:
 
     bool ptn_freq_computed;
 
-    
+    /** vector size used by SIMD kernel */
+    size_t vector_size;
+
+    /** number of threads used for likelihood kernel */
+    int num_threads;
+
+
+    /****************************************************************************
+            helper functions for computing tree traversal
+     ****************************************************************************/
+
+
+    /**
+        compute traversal_info of a subtree
+    */
+    inline bool computeTraversalInfo(PhyloNeighbor *dad_branch, PhyloNode *dad, double* &buffer);
+
+
+    /**
+        compute traversal_info of both subtrees
+    */
+    template<class VectorClass, const int nstates>
+    void computeTraversalInfo(PhyloNode *node, PhyloNode *dad, bool compute_partial_lh);
+    template<class VectorClass>
+    void computeTraversalInfo(PhyloNode *node, PhyloNode *dad, bool compute_partial_lh);
+
+    /**
+        precompute info for models
+    */
+    template<class VectorClass, const int nstates>
+    void computePartialInfo(TraversalInfo &info, VectorClass* buffer);
+    template<class VectorClass>
+    void computePartialInfo(TraversalInfo &info, VectorClass* buffer);
+
+    /** 
+        sort neighbor in descending order of subtree size (number of leaves within subree)
+        @param node the starting node, NULL to start from the root
+        @param dad dad of the node, used to direct the search
+    */
+    void sortNeighborBySubtreeSize(PhyloNode *node, PhyloNode *dad);
+
     /****************************************************************************
             computing partial (conditional) likelihood of subtrees
      ****************************************************************************/
