@@ -2691,6 +2691,15 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
             alignment = alignment2;
         }*/
         
+        // For analysis with James-Stein estimator. Exanding original alignment with unobserved site patterns.
+        if (params.aln_file_JS) {
+            Alignment aln(params.aln_file_JS, params.sequence_type, params.intype);
+            cout << "Expanding " << params.aln_file << " with unobserved site patterns..." << endl;
+            alignment->expandAlignmentJS(&aln);
+        }
+        // end
+        
+        
 		tree = new IQTree(alignment);
 	}
 
@@ -2723,14 +2732,7 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
             outError("Constraint tree does not work with -t BIONJ");
     
     }
-    // For analysis with James-Stein estimator. Exanding original alignment with unobserved site patterns.
-    if (params.aln_file_JS) {
-        Alignment aln(params.aln_file_JS, params.sequence_type, params.intype);
-        cout << "Expanding " << params.aln_file << " with unobserved site patterns..." << endl;
-        alignment->expandAlignmentJS(&aln);
-    }
-    // end
-    
+   
     if (params.compute_seq_identity_along_tree) {
         if (!params.user_file)
             outError("Please supply a user tree file!");
@@ -2853,9 +2855,15 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
 		}
 	}
     
-    if(params.estimator_JS or params.aln_file_JS){
-        tree->aln->printPtnFreq();
-    }
+    /*if(params.estimator_JS or params.aln_file_JS){
+        //tree->aln->printPtnFreq();
+        
+        cout<<"In MAIN BEFORE DELETING EVERYTHING....."<<endl;
+        //(this)->aln->printPtnFreq();
+        for (int ptn = 0; ptn < tree->aln->getNPattern(); ptn++)
+            cout<<"Pattern "<<ptn<<" = "<<tree->ptn_freq[ptn]<<endl;
+        
+    }*/
     
     
     // 2015-09-22: bug fix, move this line to before deleting tree

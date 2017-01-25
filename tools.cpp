@@ -865,6 +865,8 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.wExAln_JS = false;
     params.targets_JS = NULL;
     params.patternsOnlyJS = false;
+    params.ptnFreqPerturb = false;
+    params.nni5_num_steps = 1;
 
     params.gbo_replicates = 0;
 	params.ufboot_epsilon = 0.5;
@@ -2574,6 +2576,23 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.wExAln_JS = true;
                 continue;
             }
+            
+            if (strcmp(argv[cnt], "-ptnFreqPerturb") == 0) {
+                params.ptnFreqPerturb = true;
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-nni_br_opt_steps") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -nni_br_opt_steps <num_of_optimization_steps>";
+                params.nni5_num_steps = convert_int(argv[cnt]);
+                if (params.nni5_num_steps < 1)
+                    outError("Positive -nni_br_opt_steps expected");
+                continue;
+            }
+            
+            
             if (strcmp(argv[cnt], "-alnJSptn") == 0) {
                 params.patternsOnlyJS = true;
                 continue;

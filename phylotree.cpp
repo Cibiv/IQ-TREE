@@ -3216,40 +3216,45 @@ NNIMove PhyloTree::getBestNNIForBran(PhyloNode *node1, PhyloNode *node2, NNIMove
                 ((PhyloNeighbor*)*saved_it[id])->size = 0;
         }
 
-		// clear partial likelihood vector
-		node12_it->clearPartialLh();
-		node21_it->clearPartialLh();
-
-		// compute the score of the swapped topology
-//		double saved_len = node1_nei->length;
-
-		int i=1;
-        if (params->nni5) {
-			FOR_NEIGHBOR(node1, node2, it)
-			{
-				((PhyloNeighbor*) (*it)->node->findNeighbor(node1))->clearPartialLh();
-				optimizeOneBranch(node1, (PhyloNode*) (*it)->node, false, NNI_MAX_NR_STEP);
-				nniMoves[cnt].newLen[i] = node1->findNeighbor((*it)->node)->length;
-				i++;
-			}
+        for (int step = 0; step < params->nni5_num_steps; step++) {
+            
+            // clear partial likelihood vector
+            node12_it->clearPartialLh();
             node21_it->clearPartialLh();
+
+            // compute the score of the swapped topology
+            // double saved_len = node1_nei->length;
+
+            int i=1;
+            if (params->nni5) {
+                FOR_NEIGHBOR(node1, node2, it)
+                {
+                    ((PhyloNeighbor*) (*it)->node->findNeighbor(node1))->clearPartialLh();
+                    optimizeOneBranch(node1, (PhyloNode*) (*it)->node, false, NNI_MAX_NR_STEP);
+                    nniMoves[cnt].newLen[i] = node1->findNeighbor((*it)->node)->length;
+                    i++;
+                }
+                node21_it->clearPartialLh();
+            }
+
+            optimizeOneBranch(node1, node2, false, NNI_MAX_NR_STEP);
+            nniMoves[cnt].newLen[0] = node1->findNeighbor(node2)->length;
+
+
+            if (params->nni5) {
+                FOR_NEIGHBOR(node2, node1, it)
+                {
+                    ((PhyloNeighbor*) (*it)->node->findNeighbor(node2))->clearPartialLh();
+                    optimizeOneBranch(node2, (PhyloNode*) (*it)->node, false, NNI_MAX_NR_STEP);
+                    //node2_lastnei = (PhyloNeighbor*) (*it);
+                    nniMoves[cnt].newLen[i] = node2->findNeighbor((*it)->node)->length;
+                    i++;
+                }
+                node12_it->clearPartialLh();
+            }
         }
-
-		optimizeOneBranch(node1, node2, false, NNI_MAX_NR_STEP);
-		nniMoves[cnt].newLen[0] = node1->findNeighbor(node2)->length;
-
-
-        if (params->nni5) {
-			FOR_NEIGHBOR(node2, node1, it)
-			{
-				((PhyloNeighbor*) (*it)->node->findNeighbor(node2))->clearPartialLh();
-				optimizeOneBranch(node2, (PhyloNode*) (*it)->node, false, NNI_MAX_NR_STEP);
-				//node2_lastnei = (PhyloNeighbor*) (*it);
-				nniMoves[cnt].newLen[i] = node2->findNeighbor((*it)->node)->length;
-				i++;
-			}
-			node12_it->clearPartialLh();
-		}
+        
+        
 		double score = computeLikelihoodFromBuffer();
         if (verbose_mode >= VB_DEBUG)
             cout << "NNI " << node1->id << " - " << node2->id << ": " << score << endl;

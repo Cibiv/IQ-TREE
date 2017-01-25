@@ -399,7 +399,7 @@ void PhyloTree::computePtnFreq() {
         } else {
             aln->computePatternProbJS(ptn_freq);
             this->clearAllPartialLH();
-            this->computeAllPartialLh();
+            //this->computeAllPartialLh();
         }
     } else {
         for (ptn = 0; ptn < nptn; ptn++)
@@ -408,6 +408,14 @@ void PhyloTree::computePtnFreq() {
     
     for (ptn = nptn; ptn < maxptn; ptn++)
         ptn_freq[ptn] = 0.0;
+    
+    
+    /*if(params->estimator_JS or params->aln_file_JS){
+        cout<<"In computePtnFreq() after all the settings....."<<endl;
+        //(this)->aln->printPtnFreq();
+        for (ptn = 0; ptn < nptn; ptn++)
+            cout<<"Pattern "<<ptn<<" = "<<ptn_freq[ptn]<<endl;
+    }*/
     
 }
 

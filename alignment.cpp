@@ -3687,7 +3687,7 @@ void Alignment::readPatternProbEstimator(double *ptn_freq, const char* infile){
         }
         for(int ptn = 0; ptn<this->size();ptn++){
             ptn_freq[ptn]=(double)ptn_freq[ptn]/(double)sum;
-            cout<<"The site pattern probability for Pattern "<<ptn+1<<" is set to "<<std::setprecision(10)<<ptn_freq[ptn]<<endl;
+            cout<<"The site pattern probability for Pattern "<<ptn+1<<" is set to "<<std::setprecision(10)<<ptn_freq[ptn]<<". The values are normalized."<<endl;
         }
         // end -------------------------------------------------
         in.close();
@@ -3953,6 +3953,11 @@ void Alignment::computePatternProbJS(double *ptn_freq_JS){
     }
     cout<<"Total : ML = "<< ml <<"; JS = "<< js / coef <<endl;
     
+    
+    
+    //cout<<"In computePatternProbJS() just set JS....."<<endl;
+    //(this)->printPtnFreq();
+    
 }
 
 void Alignment::printPtnFreq() {
@@ -4105,6 +4110,14 @@ void Alignment::createAlignmentPatternsOnly(Alignment *aln) {
     countConstSite();
     buildSeqStates();
     
+}
+
+void Alignment::ptnFreqPerturbation(double *ptn_freq) {
+    // Randomly pick two site patterns
+    // Exchange some portion between probabilities
+    // Exclude them from the list of waiting probabilities
+    // Parameter for "exchange"
+    // Parameter for percentage of site pattern pairs to be involved in perturbation: some (small perturbation) -> all (drastic perturbation)
 }
 
 

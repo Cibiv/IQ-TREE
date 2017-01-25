@@ -750,6 +750,12 @@ public:
      */
     void createAlignmentPatternsOnly(Alignment *aln);
     
+    /**
+            function does perturbation of pattern frequencies; 
+            it is used for analysis with JS estimator or to be precise to analyse 
+            sensitivity of true (expected) site pattern probabilities and MSE in tree reconstruction
+     */
+    void ptnFreqPerturbation(double *ptn_freq);
 
 	/**
 	 * read site specific state frequency vectors from a file to create corresponding model

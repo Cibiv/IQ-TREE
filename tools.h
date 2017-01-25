@@ -1734,7 +1734,20 @@ public:
      *  file containing site pattern ML estimates
      */
     char* ML_estimator_ptn_prob_file;
+    
+    
+    /**
+     *  flag to start pattern frequency perturbation
+     */
 
+    bool ptnFreqPerturb;
+    
+    /**
+     *  Number of steps for the loop evaluating 5 branches around NNI
+     */
+    int nni5_num_steps;
+    
+    
     /**********************************************/
     /**** variables for ultra-fast bootstrap ******/
 

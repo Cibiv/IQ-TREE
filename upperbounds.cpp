@@ -670,7 +670,11 @@ NNIMove getBestNNIForBranUB(PhyloNode *node1, PhyloNode *node2, PhyloTree *tree)
     clear_pl_lh[0] = clear_pl_lh[1] = clear_pl_lh[2] = clear_pl_lh[3] = 1;
 
     double* T1_partial_lh;
-    if(((PhyloNeighbor*) (*nniMoves[0].node1Nei_it))->get_partial_lh_computed() == 0){
+    
+    // Minh introduced some changes to partial likelihoods and now upperbounds won't work
+    
+    
+    /*if(((PhyloNeighbor*) (*nniMoves[0].node1Nei_it))->get_partial_lh_computed() == 0){
     	tree->computePartialLikelihood((PhyloNeighbor*) (*nniMoves[0].node1Nei_it), node1);
     	clear_pl_lh[0] = 0;
     }
@@ -697,6 +701,8 @@ NNIMove getBestNNIForBranUB(PhyloNode *node1, PhyloNode *node2, PhyloTree *tree)
     }
     T4_partial_lh = ((PhyloNeighbor*) (*nniMoves[1].node2Nei_it))->get_partial_lh();
 
+   
+    
     for(i = 0; i<nptn; i++){
     	score[0] = score[1] = score[2] = score[3] = 0.0;
     	// Sum over Gamma categories and over states
@@ -720,6 +726,9 @@ NNIMove getBestNNIForBranUB(PhyloNode *node1, PhyloNode *node2, PhyloTree *tree)
         assert(isnormal(L[0] + L[1] + L[2] + L[3]));
 
     }
+     
+     */
+     
 
 /*
     if(clear_pl_lh[0] == 0){
@@ -839,6 +848,9 @@ void sumFraction(PhyloNode *node1, PhyloNode *node2, PhyloTree *tree){
 
 //	int loglh = tree->computeLikelihood();
 
+    
+    
+    /***
     double* T1_partial_lh;
     if(nei1->get_partial_lh_computed() == 0){
     	tree->computePartialLikelihood(nei1, node1);
@@ -851,6 +863,8 @@ void sumFraction(PhyloNode *node1, PhyloNode *node2, PhyloTree *tree){
     }
     T2_partial_lh = nei2->get_partial_lh();
 
+     
+     **/
     double score[3];
     score[0] = score[1] = score[2] = 0.0;
 
@@ -869,6 +883,9 @@ void sumFraction(PhyloNode *node1, PhyloNode *node2, PhyloTree *tree){
     for(i = 0; i<nptn; i++){
     	score[0] = score[1] = score[2] = 0.0;
 
+        
+        /**
+        
     	// computing partial likelihoods
 		for(x = 0; x < nstates; x++){
 			plhx[x] = 0.0;
@@ -878,7 +895,8 @@ void sumFraction(PhyloNode *node1, PhyloNode *node2, PhyloTree *tree){
 				plhy[x]+= T2_partial_lh[i*nstates+j]*eigen[x*nstates+j];
 			}
 		}
-
+         */
+        
 		for(x = 0; x < nstates; x++){
 			for(y = 0; y < nstates; y++){
 				if(x == y){
