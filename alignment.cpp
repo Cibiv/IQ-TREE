@@ -711,7 +711,7 @@ void Alignment::computeConst(Pattern &pat) {
     }
 
     // at least 2 states, each appearing at least twice
-    is_informative = (count >= 2);
+    //is_informative = (count >= 2);
 
     // compute is_const
     /*
@@ -771,6 +771,8 @@ void Alignment::computeConst(Pattern &pat) {
         is_const = false;
         is_invariant = false;
     }
+
+    is_informative = !is_invariant;
 
     pat.flag = 0;
     if (is_const) pat.flag |= PAT_CONST;
