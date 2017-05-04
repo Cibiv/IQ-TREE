@@ -2336,6 +2336,15 @@ void PhyloTree::computeFuncDerv(double value, double &df, double &ddf) {
 }
 
 void PhyloTree::optimizeOneBranch(PhyloNode *node1, PhyloNode *node2, bool clearLH, int maxNRStep) {
+    
+    /* !!!!!!!!!! Olga: 
+        This is just for testing of James-Stein.
+        Fixing the topology and optimizing br lengths gives different score, compared to when proper inference is performed. 
+        For instance, the topology associated with long-branch-attraction has higher likelihood during inference, than when you fix the topology and opt branches only.
+        Comment out the below maxNRStep when this issue is resolved/understood
+     */
+    maxNRStep=100;
+    
     double negative_lh;
     current_it = (PhyloNeighbor*) node1->findNeighbor(node2);
     assert(current_it);

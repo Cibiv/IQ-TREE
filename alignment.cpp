@@ -3900,7 +3900,7 @@ void Alignment::computePatternProbJS(double *ptn_freq_JS){
             //numerator = numerator + 1/(double)(nsite-1)*ptn_freq_ml[i]*(1-ptn_freq_ml[i]) + 1/(double)nsite*(target[i]-meanTarget)*(ptn_freq_ml[i]-meanML);
             denominator = denominator + (target[i]-ptn_freq_ml[i])*(target[i]-ptn_freq_ml[i]);
         }
-        numerator = var + cov;
+        numerator = var - cov; // great!%$%&$ it should be -" though!
         cout<<"var = "<<var<<"; cov = "<<std::setprecision(10)<<cov<<"; Num = "<<numerator<<"; Den = "<<denominator<<endl;
         lambda = numerator / denominator;
         
@@ -3947,7 +3947,7 @@ void Alignment::computePatternProbJS(double *ptn_freq_JS){
     // Compute James-Stein estimates
     for(i = 0; i<nptnJS; i++){
         ptn_freq_JS[i] = (lambda * target[i] + (1 - lambda)*ptn_freq_ml[i])*coef;
-        cout<<"Pattern "<<i+1<<": ML = "<<std::setprecision(6)<<ptn_freq_ml[i]<<"; JS = "<<std::setprecision(6)<<ptn_freq_JS[i]/coef<<"; Target = "<<target[i]<<endl;
+        cout<<"Pattern "<<i+1<<": ML = "<<std::setprecision(10)<<ptn_freq_ml[i]<<"; JS = "<<std::setprecision(10)<<ptn_freq_JS[i]/coef<<"; Target = "<<std::setprecision(10)<<target[i]<<endl;
         ml = ml + ptn_freq_ml[i];
         js = js + ptn_freq_JS[i];
     }

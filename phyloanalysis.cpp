@@ -2062,7 +2062,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 	if (iqtree.isSuperTree())
 		((PhyloSuperTree*) &iqtree)->computeBranchLengths();
 
-	cout << "BEST SCORE FOUND : " << iqtree.getCurScore() << endl;
+	cout << "BEST SCORE FOUND : " << std::setprecision(15) << iqtree.getCurScore() << endl;
 
 	if (params.write_candidate_trees) {
 		printTrees(iqtree.getBestTrees(), params, ".imd_trees");
