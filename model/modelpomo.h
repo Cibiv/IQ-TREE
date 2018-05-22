@@ -185,7 +185,7 @@ class ModelPoMo : virtual public ModelMarkov
      *  \brief Normalize boundary frequencies so that they sum to 1.0.
      *
      */
-    void normalize_boundary_freqs(double * bfs);
+  void normalize_boundary_freqs(double * bfs, bool bf_check = true);
 
     /**
      *  \brief Check if boundary frequencies are within bounds.
@@ -229,6 +229,13 @@ class ModelPoMo : virtual public ModelMarkov
      * @param out Output file stream.
      */
     void report_model_params(ostream &out, bool reset_scale = true);
+
+  /**
+   * Report rate matrix.
+   *
+   * @param out Output file stream.
+   */
+  void report_rate_matrix(ostream& out);
 
     /**
      * Report the state frequencies to the output file stream 'out'.

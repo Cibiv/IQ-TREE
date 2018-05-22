@@ -610,7 +610,7 @@ bool ModelPoMo::isUnstableParameters() {
     return false;
 }
 
-void ModelPoMo::normalize_boundary_freqs(double * bfs) {
+void ModelPoMo::normalize_boundary_freqs(double * bfs, bool bf_check) {
     // Normalize frequencies so that they sum to 1.0.
     double sum = 0.0;
     for (int i = 0; i < n_alleles; i++)
@@ -623,7 +623,8 @@ void ModelPoMo::normalize_boundary_freqs(double * bfs) {
             std::cout << bfs[i] << " ";
         std::cout << std::endl;
     }
-    check_boundary_freqs(bfs);
+    if (bf_check)
+      check_boundary_freqs(bfs);
 }
 
 void ModelPoMo::check_boundary_freqs(double * bfs) {
@@ -633,13 +634,13 @@ void ModelPoMo::check_boundary_freqs(double * bfs) {
         if (bfs[i] < POMO_MIN_BOUNDARY_FREQ) {
             bfs[i] = POMO_MIN_BOUNDARY_FREQ;
             outWarning("A boundary state has very low frequency.");
-            cout << "Frequency set to." << POMO_MIN_BOUNDARY_FREQ;
+            cout << "To ensure numerical stability, the value has been reset to " << POMO_MIN_BOUNDARY_FREQ << endl;
             change = true;
         }
         if (bfs[i] > POMO_MAX_BOUNDARY_FREQ) {
             bfs[i] = POMO_MAX_BOUNDARY_FREQ;
             outWarning("A boundary state has very high frequency.");
-            cout << "Frequency set to." << POMO_MAX_BOUNDARY_FREQ;
+            cout << "To ensure numerical stability, the value has been reset to " << POMO_MAX_BOUNDARY_FREQ << endl;
             change = true;
         }
     }
@@ -707,7 +708,7 @@ ModelPoMo::estimateEmpiricalBoundaryStateFreqs(double * freq_boundary_states)
             }
         }
     }
-    normalize_boundary_freqs(freq_boundary_states);
+    normalize_boundary_freqs(freq_boundary_states, false);
     if (verbose_mode >= VB_MAX) {
         cout << "Empirical boundary state frequencies: ";
         for (int i = 0; i< n_alleles; i++)
@@ -889,7 +890,21 @@ void ModelPoMo::report_model_params(ostream &out, bool reset_scale) {
   else
     outError("It is undefined how the heterozygosity was determined.");
 
+  if (verbose_mode >= VB_MED)
+    report_rate_matrix(out);
+
   return;
+}
+
+
+void ModelPoMo::report_rate_matrix(ostream& out) {
+  out << "The rate matrix is:" << endl;
+  for (int i = 0; i < num_states; i++) {
+    for (int j = 0; j < num_states; j++) {
+      out << rate_matrix[i*num_states+j] << " ";
+    }
+    out << endl;
+  }
 }
 
 void ModelPoMo::rate_matrix_to_exchangeabilities(double *m, double *r) {
