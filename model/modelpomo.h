@@ -237,6 +237,13 @@ class ModelPoMo : virtual public ModelMarkov
    */
   void report_rate_matrix(ostream& out);
 
+  /**
+   * Report stationary freqeuncy vector.
+   *
+   * @param out Output file stream.
+   */
+  void report_state_freqs(ostream& out);
+
     /**
      * Report the state frequencies to the output file stream 'out'.
      *

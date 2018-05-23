@@ -298,6 +298,7 @@ void ModelPoMo::computeStateFreq () {
     // double * f = mutation_rate_matrix_asy;
     double * pi = freq_boundary_states;
     int n = n_alleles;
+    // cout << "The norm is: " << norm << endl;
 
     for (state = 0; state < num_states; state++) {
         if (isBoundary(state))
@@ -533,6 +534,12 @@ void ModelPoMo::normalizeMutationRates() {
 
     for (int i = 0; i < n_alleles; i++)
         for (int j = 0; j < n_alleles; j++) m[i*n_alleles+j] *= m_norm;
+
+    // Wed May 23 13:27:50 CEST 2018. IQ-TREE now stores the un-normalized
+    // stationary frequencies. I could recompute the stationary frequencies
+    // here, but this would slow down IQ-TREE. However, it ensures that the
+    // state frequencies are always correct. The likelihood is not affected.
+    // computeStateFreq();
 }
 
 void ModelPoMo::setScale(double new_scale) {
@@ -890,12 +897,13 @@ void ModelPoMo::report_model_params(ostream &out, bool reset_scale) {
   else
     outError("It is undefined how the heterozygosity was determined.");
 
-  if (verbose_mode >= VB_MED)
+  if (verbose_mode >= VB_MED) {
     report_rate_matrix(out);
+    report_state_freqs(out);
+  }
 
   return;
 }
-
 
 void ModelPoMo::report_rate_matrix(ostream& out) {
   out << "The rate matrix is:" << endl;
@@ -905,6 +913,14 @@ void ModelPoMo::report_rate_matrix(ostream& out) {
     }
     out << endl;
   }
+}
+
+void ModelPoMo::report_state_freqs(ostream& out) {
+  computeStateFreq();
+  out << "The stationary frequency vector is:" << endl;
+  for (int i = 0; i < num_states; i++)
+    out << state_freq[i] << " ";
+  out << endl;
 }
 
 void ModelPoMo::rate_matrix_to_exchangeabilities(double *m, double *r) {
