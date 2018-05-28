@@ -165,7 +165,7 @@ ModelFactory::ModelFactory(Params &params, string &model_name, PhyloTree *tree, 
 		else if (tree->aln->seq_type == SEQ_BINARY) model_str = "GTR2";
 		else if (tree->aln->seq_type == SEQ_CODON) model_str = "GY";
 		else if (tree->aln->seq_type == SEQ_MORPH) model_str = "MK";
-        else if (tree->aln->seq_type == SEQ_POMO) model_str = "HKY+P";
+    else if (tree->aln->seq_type == SEQ_POMO) model_str = "HKY+P";
 		else model_str = "JC";
         if (tree->aln->seq_type != SEQ_POMO)
             outWarning("Default model "+model_str + " may be under-fitting. Use option '-m TEST' to determine the best-fit model.");
@@ -198,15 +198,17 @@ ModelFactory::ModelFactory(Params &params, string &model_name, PhyloTree *tree, 
     //		model_str = nxsmodel->description;
     //	}
 
-    // Detect PoMo and throw error if sequence type is PoMo but +P is
-    // not given.  This makes the model string cleaner and
-    // compareable.
+    // Detect PoMo and throw error if sequence type is not counts file or if +P
+    // is not given. This makes the model string cleaner and compareable.
     string::size_type p_pos = posPOMO(model_str);
     bool pomo = (p_pos != string::npos);
 
     if ((p_pos == string::npos) &&
         (tree->aln->seq_type == SEQ_POMO))
-        outError("Provided alignment is exclusively used by PoMo but model string does not contain, e.g., \"+P\".");
+      outError("Provided alignment is exclusively used by PoMo but model string does not contain, e.g., \"+P\".");
+    if (pomo && (tree->aln->seq_type != SEQ_POMO))
+      // TODO: Support other input formats!!! (and a few more !!!)!!!
+      outError("Provided alignment not yet supported by PoMo; please use a counts file.");
 
     // Decompose model string into model_str and rate_str string.
 	size_t spec_pos = model_str.find_first_of("{+*");
