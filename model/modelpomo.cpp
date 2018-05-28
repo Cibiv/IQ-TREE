@@ -342,6 +342,10 @@ void ModelPoMo::updatePoMoStatesAndRateMatrix () {
     // harder to interpret although from a biological point of view they make
     // more sense (see also discussion below).
 
+    // TODO DOM: This step can be moved into the calculation above! See mail
+    // from Rui, where he observes that the number of events is N*H_P, where H_P
+    // is the heterozygosity of PoMo. Thu May 24 09:47:14 CEST 2018.
+
     // Normalize rate matrix such that one event happens per unit time.
     for (int i = 0; i < num_states; i++) {
         for (int j = 0; j < num_states; j++) {
@@ -906,6 +910,7 @@ void ModelPoMo::report_model_params(ostream &out, bool reset_scale) {
 }
 
 void ModelPoMo::report_rate_matrix(ostream& out) {
+  out << setprecision(8);
   out << "The rate matrix is:" << endl;
   for (int i = 0; i < num_states; i++) {
     for (int j = 0; j < num_states; j++) {
@@ -918,9 +923,11 @@ void ModelPoMo::report_rate_matrix(ostream& out) {
 void ModelPoMo::report_state_freqs(ostream& out) {
   computeStateFreq();
   out << "The stationary frequency vector is:" << endl;
+  out << setprecision(6);
   for (int i = 0; i < num_states; i++)
     out << state_freq[i] << " ";
   out << endl;
+  out << setprecision(4);
 }
 
 void ModelPoMo::rate_matrix_to_exchangeabilities(double *m, double *r) {

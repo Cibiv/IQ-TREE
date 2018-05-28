@@ -382,7 +382,7 @@ void ModelMarkov::writeInfo(ostream &out) {
 }
 
 void ModelMarkov::report_rates(ostream& out, string title, double *r) {
-  out << setprecision(5);
+  out << setprecision(8);
   if (is_reversible && num_states == 4) {
     out << title << ":";
     //out.precision(3);
