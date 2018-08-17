@@ -568,7 +568,6 @@ void ModelPoMo::normalizeMutationRates() {
       theta_bm = (1.0 - normc) / harmonic(N-1);
       cout << "theta_bm after normalization is " << theta_bm << endl;
     }
->>>>>>> latest
 }
 
 void ModelPoMo::setScale(double new_scale) {
