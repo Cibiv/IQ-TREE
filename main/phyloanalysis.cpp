@@ -656,12 +656,12 @@ void reportTree(ofstream &out, Params &params, PhyloTree &tree, double tree_lh, 
         if (params.num_bootstrap_samples && params.compute_ml_tree) {
             if (params.aLRT_replicates > 0 || params.aLRT_test || params.aBayes_test)
                 out << " /";
-            out << " standard " << ((params.jackknife_prop == 0.0) ? "bootstrap" : "jackknife") << " support (%)";
+            out << " standard " << RESAMPLE_NAME << " support (%)";
         }
         if (params.gbo_replicates) {
             if (params.aLRT_replicates > 0 || params.aLRT_test || params.aBayes_test)
                 out << " /";
-            out << " ultrafast " << ((params.jackknife_prop==0.0) ? "bootstrap" : "jackknife") << " support (%)";
+            out << " ultrafast " << RESAMPLE_NAME << " support (%)";
         }
         out << endl;
     }
@@ -820,7 +820,7 @@ void printOutfilesInfo(Params &params, IQTree &tree) {
     }
 
 	if (params.gbo_replicates) {
-        cout << endl << "Ultrafast " << ((params.jackknife_prop==0.0) ? "bootstrap" : "jackknife") << " approximation results written to:" << endl
+        cout << endl << "Ultrafast " << RESAMPLE_NAME << " approximation results written to:" << endl
 			 << "  Split support values:          " << params.out_prefix << ".splits.nex" << endl
 			 << "  Consensus tree:                " << params.out_prefix << ".contree" << endl;
 		if (params.print_ufboot_trees)
@@ -902,11 +902,11 @@ void reportPhyloAnalysis(Params &params, IQTree &tree, ModelCheckpoint &model_in
         if (params.num_bootstrap_samples > 0) {
             if (params.compute_ml_tree)
                 out << " + ";
-            out << "non-parametric " << ((params.jackknife_prop==0.0) ? "bootstrap" : "jackknife") << " (" << params.num_bootstrap_samples
+            out << "non-parametric " << RESAMPLE_NAME << " (" << params.num_bootstrap_samples
                     << " replicates)";
         }
         if (params.gbo_replicates > 0) {
-            out << " + ultrafast " << ((params.jackknife_prop==0.0) ? "bootstrap" : "jackknife") << " (" << params.gbo_replicates << " replicates)";
+            out << " + ultrafast " << RESAMPLE_NAME << " (" << params.gbo_replicates << " replicates)";
         }
 		out << endl;
 		out << "Random seed number: " << params.ran_seed << endl << endl;
@@ -1147,7 +1147,7 @@ void reportPhyloAnalysis(Params &params, IQTree &tree, ModelCheckpoint &model_in
 			out << "CONSENSUS TREE" << endl << "--------------" << endl << endl;
 			out << "Consensus tree is constructed from "
 					<< (params.num_bootstrap_samples ? params.num_bootstrap_samples : params.gbo_replicates)
-					<< ((params.jackknife_prop == 0.0) ? " bootstrap" : " jackknife") << " trees";
+					<< RESAMPLE_NAME << " trees";
             if (params.gbo_replicates || params.num_bootstrap_samples) {
                 out << endl << "Log-likelihood of consensus tree: " << fixed << tree.boot_consense_logl;
             }
@@ -1171,7 +1171,7 @@ void reportPhyloAnalysis(Params &params, IQTree &tree, ModelCheckpoint &model_in
 				out << " (strict consensus)";
 
 			out << endl << "Branch lengths are optimized by maximum likelihood on original alignment" << endl;
-			out << "Numbers in parentheses are " << ((params.jackknife_prop == 0.0) ? "bootstrap" : "jackknife") << " supports (%)" << endl << endl;
+			out << "Numbers in parentheses are " << RESAMPLE_NAME << " supports (%)" << endl << endl;
 
 			bool rooted = false;
 			MTree contree;
@@ -2460,7 +2460,7 @@ void runTreeReconstruction(Params &params, IQTree* &iqtree) {
         if (params.print_ufboot_trees)
             iqtree->writeUFBootTrees(params);
         
-        cout << endl << "Computing " << ((params.jackknife_prop == 0.0) ? "bootstrap" : "jackknife") << " consensus tree..." << endl;
+        cout << endl << "Computing " << RESAMPLE_NAME << " consensus tree..." << endl;
         string splitsfile = params.out_prefix;
         splitsfile += ".splits.nex";
         double weight_threshold = (params.split_threshold<1) ? params.split_threshold : (params.gbo_replicates-1.0)/params.gbo_replicates;
@@ -2937,9 +2937,12 @@ void runStandardBootstrap(Params &params, Alignment *alignment, IQTree *tree) {
 
     startTreeReconstruction(params, tree, *model_info);
     
+    // 2018-06-21: bug fix: alignment might be changed by -m ...MERGE
+    alignment = tree->aln;
+    
 	// do bootstrap analysis
 	for (int sample = bootSample; sample < params.num_bootstrap_samples; sample++) {
-		cout << endl << "===> START " << ((params.jackknife_prop==0.0) ? "BOOTSTRAP" : "JACKKNIFE") << " REPLICATE NUMBER "
+		cout << endl << "===> START " << RESAMPLE_NAME_UPPER << " REPLICATE NUMBER "
 				<< sample + 1 << endl << endl;
 
         // 2015-12-17: initialize random stream for creating bootstrap samples
@@ -2948,10 +2951,7 @@ void runStandardBootstrap(Params &params, Alignment *alignment, IQTree *tree) {
         init_random(params.ran_seed + sample);
 
 		Alignment* bootstrap_alignment;
-        if (Params::getInstance().jackknife_prop == 0.0)
-            cout << "Creating bootstrap alignment (seed: " << params.ran_seed+sample << ")..." << endl;
-        else
-            cout << "Creating jackknife alignment (seed: " << params.ran_seed+sample << ")..." << endl;
+        cout << "Creating " << RESAMPLE_NAME << " alignment (seed: " << params.ran_seed+sample << ")..." << endl;
 
 		if (alignment->isSuperAlignment())
 			bootstrap_alignment = new SuperAlignment;
@@ -3063,7 +3063,7 @@ void runStandardBootstrap(Params &params, Alignment *alignment, IQTree *tree) {
 	if (params.consensus_type == CT_CONSENSUS_TREE && MPIHelper::getInstance().isMaster()) {
 
 		cout << endl << "===> COMPUTE CONSENSUS TREE FROM " << params.num_bootstrap_samples
-            << ((params.jackknife_prop==0.0) ? " BOOTSTRAP" : " JACKKNIFE") << " TREES" << endl << endl;
+            << RESAMPLE_NAME_UPPER << " TREES" << endl << endl;
         string root_name = (params.root) ? params.root : alignment->getSeqName(0);
         const char* saved_root = params.root;
         params.root = root_name.c_str();
@@ -3091,7 +3091,7 @@ void runStandardBootstrap(Params &params, Alignment *alignment, IQTree *tree) {
                 optimizeConTree(params, tree);
             }
 
-            cout << endl << "===> ASSIGN " << ((params.jackknife_prop==0.0) ? " BOOTSTRAP" : " JACKKNIFE")
+            cout << endl << "===> ASSIGN " << RESAMPLE_NAME_UPPER
                 << " SUPPORTS TO THE TREE FROM ORIGINAL ALIGNMENT" << endl << endl;
             MExtTree ext_tree;
             assignBootstrapSupport(boottrees_name.c_str(), 0, 1e6,
@@ -3115,12 +3115,12 @@ void runStandardBootstrap(Params &params, Alignment *alignment, IQTree *tree) {
 		cout << endl;
 
     if (MPIHelper::getInstance().isMaster()) {
-        cout << "Total CPU time for " << ((params.jackknife_prop == 0.0) ? "bootstrap" : "jackknife") << ": " << (getCPUTime() - start_time) << " seconds." << endl;
-	cout << "Total wall-clock time for " << ((params.jackknife_prop == 0.0) ? "bootstrap" : "jackknife") << ": " << (getRealTime() - start_real_time) << " seconds." << endl << endl;
-	cout << "Non-parametric " << ((params.jackknife_prop == 0.0) ? "bootstrap" : "jackknife") << " results written to:" << endl;
+        cout << "Total CPU time for " << RESAMPLE_NAME << ": " << (getCPUTime() - start_time) << " seconds." << endl;
+	cout << "Total wall-clock time for " << RESAMPLE_NAME << ": " << (getRealTime() - start_real_time) << " seconds." << endl << endl;
+	cout << "Non-parametric " << RESAMPLE_NAME << " results written to:" << endl;
 	if (params.print_bootaln)
-		cout << ((params.jackknife_prop == 0.0) ? "  Bootstrap" : "  Jackknife") << " alignments:     " << params.out_prefix << ".bootaln" << endl;
-	cout << ((params.jackknife_prop == 0.0) ? "  Bootstrap" : "  Jackknife") << " trees:          " << params.out_prefix << ".boottrees" << endl;
+		cout << RESAMPLE_NAME_I << " alignments:     " << params.out_prefix << ".bootaln" << endl;
+	cout << RESAMPLE_NAME_I << " trees:          " << params.out_prefix << ".boottrees" << endl;
 	if (params.consensus_type == CT_CONSENSUS_TREE)
 		cout << "  Consensus tree:           " << params.out_prefix << ".contree" << endl;
 	cout << endl;
@@ -3133,10 +3133,7 @@ void convertAlignment(Params &params, IQTree *iqtree) {
 	if (params.num_bootstrap_samples || params.print_bootaln) {
 		// create bootstrap alignment
 		Alignment* bootstrap_alignment;
-        if (Params::getInstance().jackknife_prop == 0.0)
-            cout << "Creating bootstrap alignment..." << endl;
-        else
-            cout << "Creating jackknife alignment..." << endl;
+        cout << "Creating " << RESAMPLE_NAME << " alignment..." << endl;
 		if (alignment->isSuperAlignment())
 			bootstrap_alignment = new SuperAlignment;
 		else
@@ -3238,9 +3235,56 @@ void computeSiteFrequencyModel(Params &params, Alignment *alignment) {
 /**********************************************************
  * TOP-LEVEL FUNCTION
  ***********************************************************/
+
+IQTree *newIQTree(Params &params, Alignment *alignment) {
+    IQTree *tree;
+    if (alignment->isSuperAlignment()) {
+        if (params.partition_type == TOPO_UNLINKED) {
+            tree = new PhyloSuperTreeUnlinked((SuperAlignment*)alignment);
+        } else if(params.partition_type != BRLEN_OPTIMIZE){
+            // initialize supertree - Proportional Edges case
+            tree = new PhyloSuperTreePlen((SuperAlignment*)alignment, params.partition_type);
+        } else {
+            // initialize supertree stuff if user specifies partition file with -sp option
+            tree = new PhyloSuperTree((SuperAlignment*)alignment);
+        }
+        // this alignment will actually be of type SuperAlignment
+        //        alignment = tree->aln;
+        if (((PhyloSuperTree*)tree)->rescale_codon_brlen)
+            cout << "NOTE: Mixed codon and other data, branch lengths of codon partitions are rescaled by 3!" << endl;
+        
+    } else {
+        // allocate heterotachy tree if neccessary
+        int pos = posRateHeterotachy(alignment->model_name);
+        
+        if (params.num_mixlen > 1) {
+            tree = new PhyloTreeMixlen(alignment, params.num_mixlen);
+        } else if (pos != string::npos) {
+            tree = new PhyloTreeMixlen(alignment, 0);
+        } else
+            tree = new IQTree(alignment);
+    }
+
+    return tree;
+}
+
+/** get ID of bad or good symtest results */
+void getSymTestID(vector<SymTestResult> &res, set<int> &id, bool bad_res) {
+    if (bad_res) {
+        // get significant test ID
+        for (auto i = res.begin(); i != res.end(); i++)
+            if (i->pvalue < Params::getInstance().symtest_pcutoff)
+                id.insert(i - res.begin());
+    } else {
+        // get non-significant test ID
+        for (auto i = res.begin(); i != res.end(); i++)
+            if (i->pvalue >= Params::getInstance().symtest_pcutoff)
+                id.insert(i - res.begin());
+    }
+}
+
 void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
 	Alignment *alignment;
-	IQTree *tree;
 
     checkpoint->putBool("finished", false);
     checkpoint->setDumpInterval(params.checkpoint_dump_interval);
@@ -3249,20 +3293,6 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
 	if (params.partition_file) {
 		// Partition model analysis
         alignment = new SuperAlignment(params);
-        if (params.partition_type == TOPO_UNLINKED) {
-            tree = new PhyloSuperTreeUnlinked((SuperAlignment*)alignment);
-        } else if(params.partition_type != BRLEN_OPTIMIZE){
-			// initialize supertree - Proportional Edges case
-			tree = new PhyloSuperTreePlen((SuperAlignment*)alignment, params.partition_type);
-		} else {
-			// initialize supertree stuff if user specifies partition file with -sp option
-			tree = new PhyloSuperTree((SuperAlignment*)alignment);
-		}
-		// this alignment will actually be of type SuperAlignment
-//        alignment = tree->aln;
-        if (((PhyloSuperTree*)tree)->rescale_codon_brlen)
-            cout << "NOTE: Mixed codon and other data, branch lengths of codon partitions are rescaled by 3!" << endl;
-        
 	} else {
 		alignment = new Alignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
 
@@ -3287,18 +3317,50 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
         if (params.site_freq_file) {
             alignment->readSiteStateFreq(params.site_freq_file);
         }
-
-
-        // allocate heterotachy tree if neccessary
-        int pos = posRateHeterotachy(alignment->model_name);
-        
-        if (params.num_mixlen > 1) {
-            tree = new PhyloTreeMixlen(alignment, params.num_mixlen);
-        } else if (pos != string::npos) {
-            tree = new PhyloTreeMixlen(alignment, 0);
-        } else
-            tree = new IQTree(alignment);
 	}
+
+    if (params.symtest) {
+        double start_time = getRealTime();
+        cout << "Performing symmetry test... ";
+        ofstream out;
+        string filename = string(params.out_prefix) + ".symtest.csv";
+        out.open(filename.c_str());
+        out << "Name,SymSig,SymNon,SymPval,MarSig,MarNon,MarPval,IntSig,IntNon,IntPval" << endl;
+        vector<SymTestResult> sym, marsym, intsym;
+        alignment->doSymTest(sym, marsym, intsym, out);
+        out.close();
+        cout << getRealTime() - start_time << " seconds" << endl;
+        cout << "SymTest results written to " << filename << endl;
+        if (alignment->isSuperAlignment()) {
+            set<int> part_id;
+            if (params.symtest == 2) {
+                // remove bad loci
+                if (params.symtest_type == 0)
+                    getSymTestID(sym, part_id, true);
+                else if (params.symtest_type == 1)
+                    getSymTestID(marsym, part_id, true);
+                else
+                   getSymTestID(intsym, part_id, true);
+            } else if (params.symtest == 3) {
+                // remove good loci
+                if (params.symtest_type == 0)
+                    getSymTestID(sym, part_id, false);
+                else if (params.symtest_type == 1)
+                    getSymTestID(marsym, part_id, false);
+                else
+                    getSymTestID(intsym, part_id, false);
+            }
+            if (!part_id.empty()) {
+                cout << "Removing " << part_id.size()
+                << ((params.symtest == 2)? " bad" : " good") << " partitions (pvalue cutoff = "
+                     << params.symtest_pcutoff << ")..." << endl;
+                if (part_id.size() < alignment->getNSite())
+                    ((SuperAlignment*)alignment)->removePartitions(part_id);
+                else
+                    outError("Can't remove all partitions");
+            }
+        }
+    }
 
     if (params.print_aln_info) {
         string site_info_file = string(params.out_prefix) + ".alninfo";
@@ -3306,6 +3368,9 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
         cout << "Alignment sites statistics printed to " << site_info_file << endl;
     }
 
+    /*************** initialize tree ********************/
+    IQTree *tree = newIQTree(params, alignment);
+    
     tree->setCheckpoint(checkpoint);
     if (params.min_branch_length <= 0.0) {
         params.min_branch_length = 1e-6;
@@ -3633,7 +3698,7 @@ void assignBootstrapSupport(const char *input_trees, int burnin, int max_count,
 	// compute the percentage of appearance
 	//	printSplitSet(sg, hash_ss);
 	//sg.report(cout);
-    cout << "Creating " << ((params->jackknife_prop == 0.0) ? "bootstrap" : "jackknife") << " support values..." << endl;
+    cout << "Creating " << RESAMPLE_NAME << " support values..." << endl;
 	mytree.createBootstrapSupport(taxname, boot_trees, sg, hash_ss, params->support_tag);
 	//mytree.scaleLength(100.0/boot_trees.size(), true);
 	string out_file;

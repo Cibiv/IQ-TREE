@@ -17,8 +17,13 @@
 #include "model/rategamma.h"
 #include "gsl/mygsl.h"
 #include "utils/gzstream.h"
+#include <Eigen/LU>
+#ifdef USE_BOOST
+#include <boost/math/distributions/binomial.hpp>
+#endif
 
 using namespace std;
+using namespace Eigen;
 
 char symbols_protein[] = "ARNDCQEGHILKMFPSTWYVX"; // X for unknown AA
 char symbols_dna[]     = "ACGT";
@@ -532,18 +537,26 @@ int Alignment::readNexus(char *filename) {
 		return 0;
 	}
 
-    if (char_block->GetNTax() == 0) { char_block = data_block; }
-
-    if (char_block->GetNTax() == 0) {
-        outError("No data is given in the input file");
+    if (data_block->GetNTax() == 0 && char_block->GetNTax() == 0) {
+        outError("No DATA or CHARACTERS blocks found");
         return 0;
     }
-    if (verbose_mode >= VB_DEBUG)
-        char_block->Report(cout);
 
+    if (char_block->GetNTax() > 0) {
+        extractDataBlock(char_block);
+        if (verbose_mode >= VB_DEBUG)
+            char_block->Report(cout);
+    } else {
+        extractDataBlock(data_block);
+        if (verbose_mode >= VB_DEBUG)
+            data_block->Report(cout);
+    }
 
-    extractDataBlock(char_block);
-
+    delete trees_block;
+    delete char_block;
+    delete data_block;
+    delete assumptions_block;
+    delete taxa_block;
     return 1;
 }
 
@@ -674,14 +687,24 @@ void Alignment::extractDataBlock(NxsCharactersBlock *data_block) {
                 pat.push_back(STATE_UNKNOWN);
             else if (nstate == 1) {
                 pat.push_back(char_to_state[(int)data_block->GetState(seq, site, 0)]);
-            } else {
-                ASSERT(data_type != NxsCharactersBlock::dna || data_type != NxsCharactersBlock::rna || data_type != NxsCharactersBlock::nucleotide);
+            } else if (data_type == NxsCharactersBlock::dna || data_type == NxsCharactersBlock::rna || data_type == NxsCharactersBlock::nucleotide) {
+                // 2018-06-07: correctly interpret ambiguous nucleotide
                 char pat_ch = 0;
                 for (int state = 0; state < nstate; state++) {
                     pat_ch |= (1 << char_to_state[(int)data_block->GetState(seq, site, state)]);
                 }
                 pat_ch += 3;
                 pat.push_back(pat_ch);
+            } else {
+                // other ambiguous characters are treated as unknown
+                stringstream str;
+                str << "Sequence " << seq_names[seq] << " site " << site+1 << ": {";
+                for (int state = 0; state < nstate; state++) {
+                    str << data_block->GetState(seq, site, state);
+                }
+                str << "} treated as unknown character";
+                outWarning(str.str());
+                pat.push_back(STATE_UNKNOWN);
             }
         }
         num_gaps_only += addPattern(pat, site);
@@ -1103,6 +1126,7 @@ void Alignment::buildStateMap(char *map, SeqType seq_type) {
         map[(unsigned char)'J'] = 22; // I or L
         map[(unsigned char)'*'] = STATE_UNKNOWN; // stop codon
         map[(unsigned char)'U'] = STATE_UNKNOWN; // 21st amino acid
+        map[(unsigned char)'O'] = STATE_UNKNOWN; // 22nd amino acid
 
         return;
     case SEQ_MULTISTATE:
@@ -1191,6 +1215,7 @@ char Alignment::convertState(char state, SeqType seq_type) {
 		if (state == 'J') return 22;
         if (state == '*') return STATE_UNKNOWN; // stop codon
         if (state == 'U') return STATE_UNKNOWN; // 21st amino-acid
+        if (state == 'O') return STATE_UNKNOWN; // 22nd amino-acid
         loc = strchr(symbols_protein, state);
 
         if (!loc) return STATE_INVALID; // unrecognize character
@@ -2924,6 +2949,8 @@ void convert_range(const char *str, int &lower, int &upper, int &step_size, char
     //int d_save = d;
     upper = d;
     step_size = 1;
+    // skip blank chars
+    for (; *endptr == ' '; endptr++) {}
     if (*endptr != '-') return;
 
     // parse the upper bound of the range
@@ -2938,6 +2965,9 @@ void convert_range(const char *str, int &lower, int &upper, int &step_size, char
 
     //lower = d_save;
     upper = d;
+    // skip blank chars
+    for (; *endptr == ' '; endptr++) {}
+
     if (*endptr != '\\') return;
 
     // parse the step size of the range
@@ -3044,18 +3074,11 @@ void Alignment::createBootstrapAlignment(Alignment *aln, IntVector* pattern_freq
     if (!spec) {
 		// standard bootstrap
         int added_sites = 0;
-		for (site = 0; site < nsite; site++) {
-            int site_id;
-            if (Params::getInstance().jackknife_prop == 0.0) {
-                // bootstrap sampling with replacement
-                site_id = random_int(nsite);
-            } else {
-                // jacknife without replacement
-                if (random_double() < Params::getInstance().jackknife_prop)
-                    continue;
-                site_id = site;
-            }
-			int ptn_id = aln->getPatternID(site_id);
+        IntVector sample;
+        random_resampling(nsite, sample);
+		for (site = 0; site < nsite; site++)
+        for (int rep = 0; rep < sample[site]; rep++) {
+			int ptn_id = aln->getPatternID(site);
 			Pattern pat = aln->at(ptn_id);
             int nptn = getNPattern();
 			addPattern(pat, added_sites);
@@ -3165,26 +3188,16 @@ void Alignment::createBootstrapAlignment(int *pattern_freq, const char *spec, in
     if (Params::getInstance().jackknife_prop > 0.0 && spec)
         outError((string)"Unsupported jackknife with " + spec);
 
-    if (!spec ||  strncmp(spec, "SCALE=", 6) == 0) {
+    if (!spec) {
 
-        if (spec) {
-            double scale = convert_double(spec+6);
-            nsite = (int)round(scale * nsite);
-        }
         int nptn = getNPattern();
 
         if (nsite/8 < nptn || Params::getInstance().jackknife_prop > 0.0) {
-            int orig_nsite = getNSite();
-            for (site = 0; site < nsite; site++) {
-                int site_id;
-                if (Params::getInstance().jackknife_prop == 0.0)
-                    site_id = random_int(orig_nsite, rstream);
-                else {
-                    if (random_double() < Params::getInstance().jackknife_prop)
-                        continue;
-                    site_id = site;
-                }
-                int ptn_id = getPatternID(site_id);
+            IntVector sample;
+            random_resampling(nsite, sample, rstream);
+            for (site = 0; site < nsite; site++)
+            for (int rep = 0; rep < sample[site]; rep++) {
+                int ptn_id = getPatternID(site);
                 pattern_freq[ptn_id]++;
             }
         } else {
@@ -4173,80 +4186,183 @@ void Alignment::computeCodonFreq(StateFreqType freq, double *state_freq, double 
 	convfreq(state_freq);
 }
 
-void Alignment::computeDivergenceMatrix(double *rates) {
-    int i, j, k;
-    ASSERT(rates);
+void Alignment::computeDivergenceMatrix(double *pair_freq, double *state_freq, bool normalize) {
+    int i, j;
+    ASSERT(pair_freq);
     int nseqs = getNSeq();
-    unsigned *pair_rates = new unsigned[num_states*num_states];
-    memset(pair_rates, 0, sizeof(unsigned)*num_states*num_states);
-//    for (i = 0; i < num_states; i++) {
-//        pair_rates[i] = new double[num_states];
-//        memset(pair_rates[i], 0, sizeof(double)*num_states);
-//    }
+    memset(pair_freq, 0, sizeof(double)*num_states*num_states);
+    memset(state_freq, 0, sizeof(double)*num_states);
 
-    unsigned *state_freq = new unsigned[STATE_UNKNOWN+1];
+    uint64_t *site_state_freq = new uint64_t[STATE_UNKNOWN+1];
 
+    // count pair_freq over all sites
     for (iterator it = begin(); it != end(); it++) {
-        memset(state_freq, 0, sizeof(unsigned)*(STATE_UNKNOWN+1));
+        memset(site_state_freq, 0, sizeof(uint64_t)*(STATE_UNKNOWN+1));
         for (i = 0; i < nseqs; i++) {
-            state_freq[(int)it->at(i)]++;
+            site_state_freq[it->at(i)]++;
         }
         for (i = 0; i < num_states; i++) {
-            if (state_freq[i] == 0) continue;
-            pair_rates[i*num_states+i] += (state_freq[i]*(state_freq[i]-1)/2)*it->frequency;
+            if (site_state_freq[i] == 0) continue;
+            state_freq[i] += site_state_freq[i];
+            double *pair_freq_ptr = pair_freq + (i*num_states);
+            pair_freq_ptr[i] += (site_state_freq[i]*(site_state_freq[i]-1)/2)*it->frequency;
             for (j = i+1; j < num_states; j++)
-                pair_rates[i*num_states+j] += state_freq[i]*state_freq[j]*it->frequency;
+                pair_freq_ptr[j] += site_state_freq[i]*site_state_freq[j]*it->frequency;
         }
-//            int state1 = it->at(i);
-//            if (state1 >= num_states) continue;
-//            int *this_pair = pair_rates + state1*num_states;
-//            for (j = i+1; j < nseqs; j++) {
-//                int state2 = it->at(j);
-//                if (state2 < num_states) this_pair[state2] += it->frequency;
-//            }
-//        }
     }
 
-    k = 0;
-    double last_rate = pair_rates[(num_states-2)*num_states+num_states-1] + pair_rates[(num_states-1)*num_states+num_states-2];
-    if (last_rate == 0) last_rate = 1;
-    for (i = 0; i < num_states-1; i++)
-        for (j = i+1; j < num_states; j++) {
-            rates[k++] = (pair_rates[i*num_states+j] + pair_rates[j*num_states+i]) / last_rate;
-            // BIG WARNING: zero rates might cause numerical instability!
-//            if (rates[k-1] <= 0.0001) rates[k-1] = 0.01;
-//            if (rates[k-1] > 100.0) rates[k-1] = 50.0;
-        }
-    rates[k-1] = 1;
-    if (verbose_mode >= VB_MAX) {
-        cout << "Empirical rates: ";
-        for (k = 0; k < num_states*(num_states-1)/2; k++)
-            cout << rates[k] << " ";
-        cout << endl;
-    }
+    // symmerize pair_freq
+    for (i = 0; i < num_states; i++)
+        for (j = 0; j < num_states; j++)
+            pair_freq[j*num_states+i] = pair_freq[i*num_states+j];
 
-//    for (i = num_states-1; i >= 0; i--) {
-//        delete [] pair_rates[i];
-//    }
-    delete [] state_freq;
-    delete [] pair_rates;
+    if (normalize) {
+        double sum = 0.0;
+        for (i = 0; i < num_states; i++)
+            sum += state_freq[i];
+        sum = 1.0/sum;
+        for (i = 0; i < num_states; i++)
+            state_freq[i] *= sum;
+        for (i = 0; i < num_states; i++) {
+            sum = 0.0;
+            double *pair_freq_ptr = pair_freq + (i*num_states);
+            for (j = 0; j < num_states; j++)
+                sum += pair_freq_ptr[j];
+            sum = 1.0/sum;
+            for (j = 0; j < num_states; j++)
+                pair_freq_ptr[j] *= sum;
+        }
+    }
+    
+    delete [] site_state_freq;
 }
 
-void Alignment::computeDivergenceMatrixNonRev (double *rates) {
-    double *rates_mat = new double[num_states*num_states];
-    int i, j, k;
+double binomial_cdf(int x, int n, double p) {
+    ASSERT(p > 0.0 && p < 1.0 && x <= n && x >= 0);
+    double cdf = 0.0;
+    double b = 0;
+    double logp = log(p), log1p = log(1-p);
+    for (int k = 0; k < x; k++) {
+        if (k > 0)
+            b += log(n-k+1) - log(k);
+        
+        double log_pmf_k = b + k * logp + (n-k) * log1p;
+        cdf += exp(log_pmf_k);
+    }
+    if (cdf > 1.0) cdf = 1.0;
+    return 1.0-cdf;
+}
 
-    computeDivergenceMatrix(rates);
+void SymTestResult::computePvalue() {
+    if (significant_pairs <= 0) {
+        pvalue = 1.0;
+        return;
+    }
+#ifdef USE_BOOST
+    boost::math::binomial binom(included_pairs, Params::getInstance().symtest_pcutoff);
+    pvalue = cdf(complement(binom, significant_pairs-1));
+#else
+    pvalue = binomial_cdf(significant_pairs, included_pairs, Params::getInstance().symtest_pcutoff);
+#endif
+}
 
-    for (i = 0, k = 0; i < num_states-1; i++)
-        for (j = i+1; j < num_states; j++)
-            rates_mat[i*num_states+j] = rates_mat[j*num_states+i] = rates[k++];
+std::ostream& operator<<(std::ostream& stream, const SymTestResult& res) {
+    stream << res.significant_pairs << ","
+        << res.included_pairs - res.significant_pairs << ","
+    << res.pvalue;
+    return stream;
+}
 
-    for (i = 0, k = 0; i < num_states; i++)
-        for (j = 0; j < num_states; j++)
-            if (j != i) rates[k++] = rates_mat[i*num_states+j];
-	delete [] rates_mat;
+void Alignment::doSymTest(vector<SymTestResult> &vec_sym, vector<SymTestResult> &vec_marsym,
+                       vector<SymTestResult> &vec_intsym, ostream &out)
+{
+    int nseq = getNSeq();
 
+    const double chi2_cutoff = Params::getInstance().symtest_pcutoff;
+    
+    SymTestResult sym, marsym, intsym;
+
+    for (int seq1 = 0; seq1 < nseq; seq1++)
+        for (int seq2 = seq1+1; seq2 < nseq; seq2++) {
+            MatrixXd pair_freq = MatrixXd::Zero(num_states, num_states);
+            for (auto it = begin(); it != end(); it++) {
+                if (it->at(seq1) < num_states && it->at(seq2) < num_states)
+                    pair_freq(it->at(seq1), it->at(seq2)) += it->frequency;
+            }
+            
+            // performing test of symmetry
+            int i, j;
+            double chi2_sym = 0.0;
+            int df_sym = num_states*(num_states-1)/2;
+            bool applicable = true;
+            MatrixXd sum = (pair_freq + pair_freq.transpose());
+            ArrayXXd res = (pair_freq - pair_freq.transpose()).array().square() / sum.array();
+
+            for (i = 0; i < num_states; i++)
+                for (j = i+1; j < num_states; j++) {
+                    if (!std::isnan(res(i,j))) {
+                        chi2_sym += res(i,j);
+                    } else {
+                        if (Params::getInstance().symtest_keep_zero)
+                            applicable = false;
+                        df_sym--;
+                    }
+                }
+            if (df_sym == 0)
+                applicable = false;
+            
+            if (applicable) {
+                double pval_sym = chi2prob(df_sym, chi2_sym);
+                if (pval_sym < chi2_cutoff)
+                    sym.significant_pairs++;
+                sym.included_pairs++;
+            } else {
+                sym.excluded_pairs++;
+            }
+
+            // performing test of marginal symmetry
+            VectorXd row_sum = pair_freq.rowwise().sum().head(num_states-1);
+            VectorXd col_sum = pair_freq.colwise().sum().head(num_states-1);
+            VectorXd U = (row_sum - col_sum);
+            MatrixXd V = (row_sum + col_sum).asDiagonal();
+            V -= sum.topLeftCorner(num_states-1, num_states-1);
+                
+            FullPivLU<MatrixXd> lu(V);
+
+            if (lu.isInvertible()) {
+                double chi2_marsym = U.transpose() * lu.inverse() * U;
+                int df_marsym = num_states-1;
+                double chi2_pval = chi2prob(df_marsym, chi2_marsym);
+                if (chi2_pval < chi2_cutoff)
+                    marsym.significant_pairs++;
+                marsym.included_pairs++;
+
+                // internal symmetry
+                double chi2_intsym = chi2_sym - chi2_marsym;
+                int df_intsym = df_sym - df_marsym;
+                if (df_intsym > 0 && applicable) {
+                    double pval_intsym = chi2prob(df_intsym, chi2_intsym);
+                    if (pval_intsym < chi2_cutoff)
+                        intsym.significant_pairs++;
+                    intsym.included_pairs++;
+                } else
+                    intsym.excluded_pairs++;
+            } else {
+                marsym.excluded_pairs++;
+                intsym.excluded_pairs++;
+            }
+            
+            
+        }
+    
+    sym.computePvalue();
+    marsym.computePvalue();
+    intsym.computePvalue();
+    vec_sym.push_back(sym);
+    vec_marsym.push_back(marsym);
+    vec_intsym.push_back(intsym);
+    out << name << "," << sym << "," << marsym << "," << intsym << endl;
+    
 }
 
 void Alignment::convfreq(double *stateFrqArr) {

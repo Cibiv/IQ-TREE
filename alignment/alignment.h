@@ -39,6 +39,24 @@ enum SeqType {
     SEQ_DNA, SEQ_PROTEIN, SEQ_BINARY, SEQ_MORPH, SEQ_MULTISTATE, SEQ_CODON, SEQ_POMO, SEQ_UNKNOWN
 };
 
+/** class storing results of symmetry tests */
+class SymTestResult {
+public:
+    SymTestResult() {
+        significant_pairs = included_pairs = excluded_pairs = 0;
+        pvalue = -1.0;
+    }
+    
+    /** compute pvalue using bionomial test */
+    void computePvalue();
+    
+    int significant_pairs; // number of significant sequence pairs
+    int included_pairs; // total number of included sequence pairs
+    int excluded_pairs; // number of excluded sequence pairs
+    double pvalue; // pvalue of symmetry test
+};
+
+std::ostream& operator<< (std::ostream& stream, const SymTestResult& res);
 
 #ifdef USE_HASH_MAP
 struct hashPattern {
@@ -619,16 +637,18 @@ public:
 	void computeCodonFreq(StateFreqType freq, double *state_freq, double *ntfreq);
 
 	/**
-            compute empirical rates between state pairs
-            @param rates (OUT) vector of size num_states*(num_states-1)/2 for the rates
+            compute empirical substitution counts between state pairs
+            @param normalize true to normalize row sum to 1, false otherwise
+            @param[out] pair_freq matrix of size num_states*num_states
+            @param[out] state_freq vector of size num_states
      */
-    virtual void computeDivergenceMatrix(double *rates);
+    virtual void computeDivergenceMatrix(double *pair_freq, double *state_freq, bool normalize = true);
 
     /**
-            compute non-reversible empirical rates between state pairs
-            @param rates (OUT) vector of size num_states*(num_states-1) for the rates
+        perform symmetry tests of Lars Jermiin
      */
-    virtual void computeDivergenceMatrixNonRev(double *rates);
+    virtual void doSymTest(vector<SymTestResult> &sym, vector<SymTestResult> &marsym,
+                           vector<SymTestResult> &intsym, ostream &out);
 
     /**
             count the fraction of constant sites in the alignment, update the variable frac_const_sites

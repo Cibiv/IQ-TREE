@@ -775,6 +775,10 @@ void parseArg(int argc, char *argv[], Params &params) {
 
     params.aln_file = NULL;
     params.phylip_sequential_format = false;
+    params.symtest = false;
+    params.symtest_keep_zero = false;
+    params.symtest_type = 0;
+    params.symtest_pcutoff = 0.05;
     params.treeset_file = NULL;
     params.topotest_replicates = 0;
     params.do_weighted_test = false;
@@ -1053,9 +1057,12 @@ void parseArg(int argc, char *argv[], Params &params) {
 				usage_iqtree(argv, false);
 				continue;
 			}
-			if (strcmp(argv[cnt], "-hh") == 0
-					|| strcmp(argv[cnt], "-hhh") == 0) {
+			if (strcmp(argv[cnt], "-hh") == 0 || strcmp(argv[cnt], "-hhh") == 0) {
+#ifdef IQ_TREE
+                usage_iqtree(argv, true);
+#else
 				usage(argv);
+#endif
 				continue;
 			}
 			if (strcmp(argv[cnt], "-v0") == 0) {
@@ -1650,10 +1657,55 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.phylip_sequential_format = true;
                 continue;
             }
-			if (strcmp(argv[cnt], "-z") == 0) {
+            if (strcmp(argv[cnt], "--symtest") == 0) {
+                params.symtest = 1;
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--symtest-remove-bad") == 0) {
+                params.symtest = 2;
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--symtest-remove-good") == 0) {
+                params.symtest = 3;
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--symtest-keep-zero") == 0) {
+                params.symtest_keep_zero = true;
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--symtest-type") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --symtest-type SYM|MAR|INT";
+                if (strcmp(argv[cnt], "SYM") == 0)
+                    params.symtest_type = 0;
+                else if (strcmp(argv[cnt], "MAR") == 0)
+                    params.symtest_type = 1;
+                else if (strcmp(argv[cnt], "INT") == 0)
+                    params.symtest_type = 2;
+                else
+                    throw "Use --symtest-type SYM|MAR|INT";
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--symtest-pval") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --symtest-pval PVALUE_CUTOFF";
+                params.symtest_pcutoff = convert_double(argv[cnt]);
+                if (params.symtest_pcutoff <= 0 || params.symtest_pcutoff >= 1)
+                    throw "--symtest-pval must be between 0 and 1";
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-z") == 0) {
 				cnt++;
 				if (cnt >= argc)
-					throw "Use -aln, -z <user_trees_file>";
+					throw "Use -z <user_trees_file>";
 				params.treeset_file = argv[cnt];
 				continue;
 			}
@@ -3566,7 +3618,10 @@ void parseArg(int argc, char *argv[], Params &params) {
 
     if (params.num_runs > 1 && params.treeset_file)
         outError("Can't combine --runs and -z options");
-    
+
+    if (params.num_runs > 1 && params.lmap_num_quartets >= 0)
+        outError("Can't combine --runs and -lmap options");
+
 	// Diep:
 	if(params.ufboot2corr == true){
 		if(params.gbo_replicates <= 0) params.ufboot2corr = false;
@@ -3955,6 +4010,15 @@ void usage_iqtree(char* argv[], bool full_command) {
 
     if (full_command) {
         //TODO Print other options here (to be added)
+        cout << "TEST OF SYMMETRY" << endl
+        << "  --symtest               Perform three tests of symmetry" << endl
+        << "  --symtest-remove-bad    Do --symtest and remove bad partitions" << endl
+        << "  --symtest-remove-good   Do --symtest and remove good partitions" << endl
+        << "  --symtest-type MAR|INT  MARginal/INTernal test when removing partitions" << endl
+        << "  --symtest-pval NUM      P-value cutoff (default: 0.05)" << endl
+        << "  --symtest-keep-zero     Keep NAs in the tests" << endl;
+        
+        cout << endl;
     }
 
     exit(0);
@@ -4330,6 +4394,34 @@ double random_double(int *rstream) {
 #endif /* FIXEDINTRAND */
 
 }
+
+void random_resampling(int n, IntVector &sample, int *rstream) {
+    sample.resize(n, 0);
+    if (Params::getInstance().jackknife_prop == 0.0) {
+        // boostrap resampling
+        for (int i = 0; i < n; i++) {
+            int j = random_int(n, rstream);
+            sample[j]++;
+        }
+    } else {
+        // jackknife resampling
+        int total = floor((1.0 - Params::getInstance().jackknife_prop)*n);
+        if (total <= 0)
+            outError("Jackknife sample size is zero");
+        // make sure jackknife samples have exacly the same size
+        for (int num = 0; num < total; ) {
+            for (int i = 0; i < n; i++) if (!sample[i]) {
+                if (random_double(rstream) < Params::getInstance().jackknife_prop)
+                    continue;
+                sample[i] = 1;
+                num++;
+                if (num >= total)
+                    break;
+            }
+        }
+    }
+}
+
 
 /* Following part is taken from ModelTest software */
 #define	BIGX            20.0                                 /* max value to represent exp (x) */

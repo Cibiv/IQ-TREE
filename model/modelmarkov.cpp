@@ -444,7 +444,7 @@ void ModelMarkov::computeTransMatrixNonrev(double time, double *trans_matrix, in
         Map<Matrix<double,Dynamic,Dynamic,RowMajor> >map_trans(trans_matrix,num_states,num_states);
         map_trans = res.real();
         // sanity check rows sum to 1
-        VectorXd row_sum = res.real().rowwise().sum();
+        VectorXd row_sum = map_trans.rowwise().sum();
         double mincoeff = row_sum.minCoeff();
         double maxcoeff = row_sum.maxCoeff();
         if (maxcoeff > 1.0001 || mincoeff < 0.9999) {
@@ -608,6 +608,23 @@ void ModelMarkov::setRateMatrix(double* rate_mat)
 {
 	int nrate = getNumRateEntries();
 	memcpy(rates, rate_mat, nrate * sizeof(double));
+}
+
+void ModelMarkov::setFullRateMatrix(double* rate_mat, double *freq)
+{
+    int i, j, k;
+    if (isReversible()) {
+        for (i = 0, k = 0; i < num_states; i++)
+            for (j = i+1; j < num_states; j++)
+                rates[k++] = rate_mat[i*num_states+j] / freq[j];
+        memcpy(state_freq, freq, sizeof(double)*num_states);
+    } else {
+        // non-reversible
+        for (i = 0, k = 0; i < num_states; i++)
+            for (j = 0; j < num_states; j++)
+                if (i != j)
+                    rates[k++] = rate_mat[i*num_states+j];
+    }
 }
 
 void ModelMarkov::getStateFrequency(double *freq, int mixture) {

@@ -807,6 +807,28 @@ public:
     bool phylip_sequential_format;
 
     /**
+     0 to not perform test of symmetry of Jermiin et al. (default)
+     1 to perform symmetry test
+     2 to do symtest and then remove bad loci
+     3 to do symtest and then remove good loci
+    */
+    int symtest;
+    
+    /** true to keep zero which may result in many taxon pairs not testable (default: false) */
+    bool symtest_keep_zero;
+    
+    /**
+        which test used when removing loci
+        0 test of symmetry (default)
+        1 test of marginal symmetry
+        2 test of internal symmetry
+     */
+    int symtest_type;
+    
+    /** pvalue cutoff (default: 0.05) */
+    double symtest_pcutoff;
+    
+    /**
             file containing multiple trees to evaluate at the end
      */
     char *treeset_file;
@@ -2463,6 +2485,18 @@ void my_random_shuffle (T first, T last, int *rstream = NULL)
 		swap (first[i],first[random_int(i+1, rstream)]);
 	}
 }
+
+/**
+ random resampling according to bootstrap or jackknife
+ @param n sample size
+ @param[in/out] sample array of size n with frequency of resampling
+ @param rstream random number generator stream
+*/
+void random_resampling(int n, IntVector &sample, int *rstream = NULL);
+
+#define RESAMPLE_NAME ((Params::getInstance().jackknife_prop == 0.0) ? "bootstrap" : "jackknife")
+#define RESAMPLE_NAME_I ((Params::getInstance().jackknife_prop == 0.0) ? "Bootstrap" : "Jackknife")
+#define RESAMPLE_NAME_UPPER ((Params::getInstance().jackknife_prop == 0.0) ? "BOOTSTRAP" : "JACKKNIFE")
 
 /**
  * generic function for sorting by index

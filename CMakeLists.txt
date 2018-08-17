@@ -48,10 +48,28 @@ set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
 project(iqtree)
 add_definitions(-DIQ_TREE)
+
+# Find Eigen3 library
+if (NOT EIGEN3_INCLUDE_DIR)
+    find_package(Eigen3)
+    if(NOT EIGEN3_FOUND)
+        message(FATAL_ERROR "Eigen3 library not found. Either install it or rerun cmake with -DEIGEN3_INCLUDE_DIR=<installed_eigen3_dir>")
+    endif()
+endif()
+add_definitions(-I${EIGEN3_INCLUDE_DIR})
+
+# Find Boost library
+find_package(Boost)
+if(Boost_FOUND)
+    add_definitions(-I${Boost_INCLUDE_DIRS})
+    add_definitions(-DUSE_BOOST)
+endif()
+
+
 # The version number.
 set (iqtree_VERSION_MAJOR 1)
 set (iqtree_VERSION_MINOR 6)
-set (iqtree_VERSION_PATCH "5")
+set (iqtree_VERSION_PATCH "6")
 
 set(BUILD_SHARED_LIBS OFF)
 
@@ -483,13 +501,6 @@ add_subdirectory(sprng)
 #add_subdirectory(zlib-1.2.7)
 add_subdirectory(vectorclass)
 LIST(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
-if (NOT EIGEN3_INCLUDE_DIR)
-    find_package(Eigen3)
-    if(NOT EIGEN3_FOUND)
-        message(FATAL_ERROR "Eigen3 library not found. Either install it or rerun cmake with -DEIGEN3_INCLUDE_DIR=<installed_eigen3_dir>")
-    endif()
-endif()
-add_definitions("-I${EIGEN3_INCLUDE_DIR}")
 add_subdirectory(model)
 add_subdirectory(gsl)
 add_subdirectory(alignment)
@@ -511,6 +522,14 @@ endif()
 
 if (IQTREE_FLAGS MATCHES "mpi")
 	add_library(mympi utils/TreeCollection.cpp utils/ObjectStream.cpp)
+endif()
+
+if (NOT IQTREE_FLAGS MATCHES "single")
+    if (BINARY32)
+        link_directories(${PROJECT_SOURCE_DIR}/lib32)
+    else()
+        link_directories(${PROJECT_SOURCE_DIR}/lib)
+    endif()
 endif()
 
 add_executable(iqtree
@@ -612,7 +631,7 @@ endif()
 set_target_properties(iqtree PROPERTIES OUTPUT_NAME "iqtree${EXE_SUFFIX}")
 
 # strip the release build
-if (CMAKE_BUILD_TYPE STREQUAL "Release" AND (GCC OR CLANG) AND NOT APPLE) # strip is not necessary for MSVC
+if (NOT IQTREE_FLAGS MATCHES "nostrip" AND CMAKE_BUILD_TYPE STREQUAL "Release" AND (GCC OR CLANG) AND NOT APPLE) # strip is not necessary for MSVC
 	if (WIN32)
 		ADD_CUSTOM_COMMAND(TARGET iqtree POST_BUILD COMMAND strip $<TARGET_FILE:iqtree>)
 	elseif (NOT APPLE)

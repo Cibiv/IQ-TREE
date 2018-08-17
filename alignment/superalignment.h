@@ -95,6 +95,19 @@ public:
     */
     virtual void printSiteInfo(const char* filename);
 
+    /**
+     compute empirical substitution counts between state pairs
+     @param normalize true to normalize row sum to 1, false otherwise
+     @param[out] pair_freq matrix of size num_states*num_states
+     @param[out] state_freq vector of size num_states
+     */
+    virtual void computeDivergenceMatrix(double *pair_freq, double *state_freq, bool normalize = true);
+
+    /**
+     perform symmetry tests of Lars Jermiin
+     */
+    virtual void doSymTest(vector<SymTestResult> &sym, vector<SymTestResult> &marsym,
+                           vector<SymTestResult> &intsym, ostream &out);
 
     /**
             extract sub-alignment of a sub-set of sequences
@@ -105,6 +118,19 @@ public:
             @param[out] kept_partitions (for SuperAlignment) indices of kept partitions
      */
     virtual void extractSubAlignment(Alignment *aln, IntVector &seq_id, int min_true_char, int min_taxa = 0, IntVector *kept_partitions = NULL);
+
+    /**
+        extract a subset of partitions to form a new SuperAlignment object
+        @param part_id vector of partition IDs
+        @return new alignment containing only part_id partitions
+     */
+    SuperAlignment *extractPartitions(IntVector &part_id);
+
+    /**
+     remove a subset of partitions
+     @param part_id vector of partition IDs
+     */
+    void removePartitions(set<int> &part_id);
 
     /**
      * remove identical sequences from alignment
