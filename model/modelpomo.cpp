@@ -537,11 +537,13 @@ void ModelPoMo::normalizeMutationRates() {
     }
 
 
-    for (int j = 0; j < n_alleles; j++) {
-      m[i*n_alleles+j] *= m_norm;
-      // DEBUG.
-      // cout << setprecision(15);
-      // cout << m[i*n_alleles+j] << endl;
+    for (int i = 0; i < n_alleles; i++) {
+      for (int j = 0; j < n_alleles; j++) {
+        m[i*n_alleles+j] *= m_norm;
+        // DEBUG.
+        // cout << setprecision(15);
+        // cout << m[i*n_alleles+j] << endl;
+      }
     }
 
     // Wed May 23 13:27:50 CEST 2018. IQ-TREE now stores the un-normalized
