@@ -342,7 +342,7 @@ void ModelPoMo::updatePoMoStatesAndRateMatrix () {
     // harder to interpret although from a biological point of view they make
     // more sense (see also discussion below).
 
-    // TODO DOM: This step can be moved into the calculation above! See mail
+    // TODO DS: This step can be moved into the calculation above! See mail
     // from Rui, where he observes that the number of events is N*H_P, where H_P
     // is the heterozygosity of PoMo. Thu May 24 09:47:14 CEST 2018.
 
@@ -822,7 +822,7 @@ void ModelPoMo::report_model_params(ostream &out, bool reset_scale) {
   else
     out << "The reported rates are scaled by a factor of " << scale << "." << endl;;
 
-  // TODO: If verbose, output rate matrix.
+  // If verbose, output rate matrix.
   if (verbose_mode >= VB_MED) {
     out << "Rate matrix: " << endl;
     for (int i = 0; i < num_states; i++) {
