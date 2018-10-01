@@ -22,6 +22,7 @@ ModelSubst::ModelSubst(int nstates) : Optimization(), CheckpointFactory()
 		state_freq[i] = 1.0 / num_states;
 	freq_type = FREQ_EQUAL;
     linked_model = NULL;
+    linked_exchangeabilities_target_model = NULL;
 }
 
 void ModelSubst::startCheckpoint() {
@@ -63,6 +64,40 @@ bool ModelSubst::linkModel(ModelSubst *target) {
     state_freq = target->state_freq;
     linked_model = target;
     return true;
+}
+
+bool ModelSubst::linkExchangeabilities(ModelSubst *target) {
+  if (num_states != target->num_states) {
+    cout << "Cannot link exchangeabilities. ";
+    cout << "Number of states does not match." << endl;
+    return false;
+  }
+  // TODO DS: Name check deactivated for now because model names are not
+  // expected to match. Only the first part is expected to match. E.g.,
+  // GTR20+FFClass001 != GTR20+FFClass000.
+  // if (name != target->name) {
+  //   cout << "Cannot link exchangeabilities. ";
+  //   cout << "Model name " << name << " does not match target model name " << target->name << "." << endl;
+  //   return false;
+  // }
+  if (freq_type != target->freq_type) {
+    cout << "Cannot link exchangeabilities. ";
+    cout << "Frequency types do not match." << endl;
+    return false;
+  }
+  if (linked_model != NULL) {
+    cout << "Cannot link exchangeabilities. ";
+    cout << "Model already fully linked." << endl;
+    return false;
+  }
+  if (target == this) {
+    cout << "Cannot link exchangeabilities.";
+    cout << "Models are the same." << endl;
+    return false;
+  }
+  // Since there are no exchangeabilities here (why ?) there is nothing to do.
+  linked_exchangeabilities_target_model = target;
+  return true;
 }
 
 // here the simplest Juke-Cantor model is implemented, valid for all kind of data (DNA, AA,...)

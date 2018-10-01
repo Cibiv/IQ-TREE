@@ -116,6 +116,13 @@ public:
      */
     virtual bool linkModel(ModelSubst *target);
 
+
+  // Link exchangeabilities to another model. E.g., for distribution (profile)
+  // mixture models that share a common set of exchangeabilities.
+  // @param target target model
+  // @return true if successfully linked, false for failure
+  virtual bool linkExchangeabilities(ModelSubst *target);
+
 	/**
 	 * @return model name
 	 */

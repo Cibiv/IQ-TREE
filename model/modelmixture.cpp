@@ -1241,6 +1241,12 @@ void ModelMixture::initMixture(string orig_model_name, string model_name, string
 				}
 //				name += model->name;
 				full_name += model->name;
+        // Link exchangeabilities.
+        if (tree->params->link_exchangeabilities == true) {
+          if (f  > 0) {
+            model->linkExchangeabilities(this->at(0));
+          }
+        }
 			}
 		} else {
 			model = (ModelMarkov*)createModel(this_name, models_block, freq, freq_params, tree);

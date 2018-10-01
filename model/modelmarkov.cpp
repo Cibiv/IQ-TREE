@@ -203,6 +203,20 @@ bool ModelMarkov::linkModel(ModelSubst *target) {
     return true;
 }
 
+bool ModelMarkov::linkExchangeabilities(ModelSubst *target) {
+  cout << "Linking exchangeabilities." << endl;
+  if (!ModelSubst::linkExchangeabilities(target))
+    return false;
+  // Free the rates.
+	if (rates) delete [] rates;
+  ModelMarkov *model = (ModelMarkov*)target;
+  // Set them to the ones from the target.
+  rates = model->rates;
+  // Set the number of free rate parameters to zero.
+  num_params = 0;
+  return true;
+}
+
 void ModelMarkov::setTree(PhyloTree *tree) {
 	phylo_tree = tree;
 }
@@ -379,6 +393,12 @@ void ModelMarkov::writeInfo(ostream &out) {
 		report_rates(out, "Substitution rates", rates);
         report_state_freqs(out, state_freq);
     }
+  // Still output rates in verbose mode, even when the output is not nice.
+  else {
+    if (verbose_mode >= VB_MED)
+      report_rates(out, "", rates);
+  }
+
 }
 
 void ModelMarkov::report_rates(ostream& out, string title, double *r) {
@@ -409,6 +429,12 @@ void ModelMarkov::report_rates(ostream& out, string title, double *r) {
     out << "  T-A: " << r[9];
     out << "  T-C: " << r[10];
     out << "  T-G: " << r[11];
+    out << endl;
+  }
+  else if (verbose_mode >= VB_MED) {
+    cout << "Rates: ";
+    for (int i = 0; i<getNumRateEntries(); i++)
+      out << r[i] << " ";
     out << endl;
   }
 }

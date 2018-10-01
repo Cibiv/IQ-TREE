@@ -1073,6 +1073,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.suppress_output_flags = 0;
     params.ufboot2corr = false;
     params.u2c_nni5 = false;
+    params.link_exchangeabilities = false;
     
     params.matrix_exp_technique = MET_EIGEN3LIB_DECOMPOSITION;
 
@@ -2992,6 +2993,11 @@ void parseArg(int argc, char *argv[], Params &params) {
 			}
 			if (strcmp(argv[cnt], "-u2c_nni5") == 0) {
 				params.u2c_nni5 = true;
+				continue;
+			}
+
+			if (strcmp(argv[cnt], "-link_exchangeabilities") == 0) {
+				params.link_exchangeabilities = true;
 				continue;
 			}
 
