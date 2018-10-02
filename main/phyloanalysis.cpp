@@ -936,7 +936,7 @@ void reportPhyloAnalysis(Params &params, IQTree &tree, ModelCheckpoint &model_in
         out << "SEQUENCE ALIGNMENT" << endl << "------------------" << endl
                 << endl;
         if (tree.isSuperTree()) {
-      // TODO DS: Changes may be needed here for PoMo.
+      // XXX DS: Changes may be needed here for PoMo.
             out << "Input data: " << tree.aln->getNSeq()+tree.removed_seqs.size() << " taxa with "
                     << tree.aln->getNSite() << " partitions and "
                     << tree.getAlnNSite() << " total sites ("

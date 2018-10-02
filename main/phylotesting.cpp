@@ -1268,10 +1268,8 @@ int getModelList(Params &params, Alignment *aln, StrVector &models, bool separat
         }
 
     string pomo_suffix = (seq_type == SEQ_POMO) ? "+P" : "";
-    // TODO DS: should we allow virtual population size?
-
     if (separate_rate) {
-        for (i = 0; i < model_names.size(); i++) 
+        for (i = 0; i < model_names.size(); i++)
             models.push_back(model_names[i]);
         for (j = 0; j < ratehet.size(); j++)
             if (ratehet[j] != "")
@@ -1284,7 +1282,7 @@ int getModelList(Params &params, Alignment *aln, StrVector &models, bool separat
     }
     if (params.model_extra_set) {
         StrVector extra_model_names;
-        convert_string_vec(params.model_extra_set, extra_model_names);        
+        convert_string_vec(params.model_extra_set, extra_model_names);
         models.insert(models.end(), extra_model_names.begin(), extra_model_names.end());
     }
     return max_cats;
@@ -2127,7 +2125,6 @@ ModelMarkov* getPrototypeModel(SeqType seq_type, PhyloTree* tree, char *model_se
 	break;
     case SEQ_POMO:
         // subst_model = new ModelPoMo("JC", "", FREQ_UNKNOWN, "", tree, "");
-        // TODO DS: Implement model finder.
         cout << "ERROR: Automatic model selection with PoMo not yet supported." << endl;
         outError("Please provide a substitution model with, e.g., \"-m HKY+P\".");
 	break;

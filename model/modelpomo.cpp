@@ -755,10 +755,9 @@ ModelPoMo::estimateEmpiricalWattersonTheta()
         for (int i = 0; i < n_alleles; i++) sum_fix += abs_state_freq[i];
         for (int i = n_alleles; i < num_states; i++) sum_pol += abs_state_freq[i];
         theta_p = (double) sum_pol / (double) (sum_fix + sum_pol);
-        // TODO DS: This is wrong because Watterson's estimator is
-        // expected to decrease when sampling step is performed.  Some
-        // sequences will be taken more often and necessarily,
-        // polymorphism is lost.
+        // XXX DS: This is wrong because Watterson's estimator is expected to
+        // decrease when sampling step is performed. Some sequences will be
+        // taken more often and necessarily, polymorphism is lost.
     } else {
         for (Alignment::iterator it = phylo_tree->aln->begin();
              it != phylo_tree->aln->end(); it++) {
@@ -1096,7 +1095,7 @@ void ModelPoMo::computeTransMatrix(double time, double *trans_matrix, int mixtur
     }
   }
   else if (technique == MET_EIGEN3LIB_DECOMPOSITION) {
-    outError("TODO DS: EIGEN3LIB DECOMPOSITION not yet tested.");
+    outError("EIGEN3LIB DECOMPOSITION not yet tested with PoMo.");
     // and nondiagonalizable == false, else we used scaled squaring
     int i;
     Eigen::VectorXcd ceval_exp;

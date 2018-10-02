@@ -906,7 +906,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.optimize_from_given_params = false;
     params.fixed_branch_length = BRLEN_OPTIMIZE;
     params.min_branch_length = 0.0; // this is now adjusted later based on alignment length
-    // TODO DS: This seems inappropriate for PoMo.  It is handled in
+    // XXX DS: This seems inappropriate for PoMo.  It is handled in
     // phyloanalysis::2908.
     params.max_branch_length = 10.0; // Nov 22 2016: reduce from 100 to 10!
     params.iqp_assess_quartet = IQP_DISTANCE;
@@ -2996,7 +2996,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 				continue;
 			}
 
-			if (strcmp(argv[cnt], "-link_exchangeabilities") == 0) {
+			if (strcmp(argv[cnt], "-link-exchangeabilities") == 0) {
 				params.link_exchangeabilities = true;
 				continue;
 			}
@@ -4054,11 +4054,9 @@ void usage_iqtree(char* argv[], bool full_command) {
             << " -s <counts_file>      Input counts file (see manual)"                               << endl
             << " -m <MODEL>+P          DNA substitution model (see above) used with PoMo"            << endl
             << "   +N<POPSIZE>         Virtual population size (default: 9)"                         << endl
-      // TODO DS: Maybe change default to +WH.
             << "   +[WB|WH|S]          Sampling method (default: +WB), WB: Weighted binomial,"       << endl
             << "                       WH: Weighted hypergeometric S: Sampled sampling"              << endl
             << "   +G[n]               Discrete Gamma rate model with n categories (default n=4)"    << endl
-      // TODO DS: Maybe change default to +WH.
 
             << endl << "ASCERTAINMENT BIAS CORRECTION:" << endl
             << "  -m modelname+ASC     Correction for absence of invariant sites in alignment" << endl

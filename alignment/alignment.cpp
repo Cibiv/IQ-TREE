@@ -2081,7 +2081,7 @@ int Alignment::readCountsFormat(char* filename, char* sequence_type) {
     // Access model_name in global parameters; needed to get N and
     // sampling method.
     Params params = Params::getInstance();
-    // TODO DS: Do not temper with params; use another way to set PoMo
+    // XXX DS: Do not temper with params; use another way to set PoMo
     // flag.
     params.pomo = true;
 
@@ -3658,7 +3658,7 @@ double Alignment::readDist(const char *file_name, double *dist_mat) {
     return longest_dist;
 }
 
-// TODO DS: This only works when the sampling method is SAMPLING_SAMPLED or when
+// XXX DS: This only works when the sampling method is SAMPLING_SAMPLED or when
 // the virtual population size is also the sample size (for every species and
 // every site).
 void Alignment::computeStateFreq (double *state_freq, size_t num_unknown_states) {
