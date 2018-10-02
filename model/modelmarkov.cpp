@@ -204,7 +204,7 @@ bool ModelMarkov::linkModel(ModelSubst *target) {
 }
 
 bool ModelMarkov::linkExchangeabilities(ModelSubst *target) {
-  cout << "Linking exchangeabilities." << endl;
+  cout << "Linking exchangeabilities from "<< this->name << " to " << target->name << "." << endl;
   if (!ModelSubst::linkExchangeabilities(target))
     return false;
   // Free the rates.
@@ -378,35 +378,24 @@ void ModelMarkov::init(StateFreqType type) {
 
 void ModelMarkov::writeInfo(ostream &out) {
 	if (is_reversible && num_states == 4) {
-        report_rates(out, "Rate parameters", rates);
-        report_state_freqs(out);
-		//if (freq_type != FREQ_ESTIMATE) return;
-	} else if (!is_reversible) {
-        // non-reversible
-//        int i;
-//        out << "Model parameters: ";
-//        if (num_params>0) out << model_parameters[0];
-//        for (i=1; i < num_params; i++) out << "," << model_parameters[i];
-//        out << endl;
-
-        if (num_states != 4) return;
-		report_rates(out, "Substitution rates", rates);
-        report_state_freqs(out, state_freq);
-    }
-  // Still output rates in verbose mode, even when the output is not nice.
-  else {
-    if (verbose_mode >= VB_MED)
-      report_rates(out, "", rates);
+    report_rates(out, "Rate parameters (exchangeabilities)", rates);
+    report_state_freqs(out);
+	}
+  else if (!is_reversible && num_states == 4) {
+    report_rates(out, "Substitution rates", rates);
+    report_state_freqs(out, state_freq);
+  }
+  else if (is_reversible && num_states == 20) {
+    report_rates(out, "Exchangeabilities in order A, R, N, D, C, Q, E, G, H, I, L, K, M, F, P, S, T, W, Y, V", rates);
+    report_state_freqs(out, state_freq);
   }
 
 }
 
 void ModelMarkov::report_rates(ostream& out, string title, double *r) {
-  out << setprecision(5);
+  out << setprecision(4);
   if (is_reversible && num_states == 4) {
     out << title << ":";
-    //out.precision(3);
-    //out << fixed;
     out << "  A-C: " << r[0];
     out << "  A-G: " << r[1];
     out << "  A-T: " << r[2];
@@ -415,7 +404,7 @@ void ModelMarkov::report_rates(ostream& out, string title, double *r) {
     out << "  G-T: " << r[5];
     out << endl;
   }
-  else if (!is_reversible) {
+  else if (!is_reversible && num_states == 4) {
     out << title << ":" << endl;
     out << "  A-C: " << r[0];
     out << "  A-G: " << r[1];
@@ -431,8 +420,8 @@ void ModelMarkov::report_rates(ostream& out, string title, double *r) {
     out << "  T-G: " << r[11];
     out << endl;
   }
-  else if (verbose_mode >= VB_MED) {
-    cout << "Rates: ";
+  else if (is_reversible && num_states == 20) {
+    out << title << ":" << endl;
     for (int i = 0; i<getNumRateEntries(); i++)
       out << r[i] << " ";
     out << endl;
@@ -444,11 +433,36 @@ void ModelMarkov::report_state_freqs(ostream& out, double *custom_state_freq) {
   if (custom_state_freq) f = custom_state_freq;
   else f = state_freq;
   out << setprecision(3);
-  out << "Base frequencies:";
-  out << "  A: " << f[0];
-  out << "  C: " << f[1];
-  out << "  G: " << f[2];
-  out << "  T: " << f[3];
+  if (num_states == 4) {
+    out << "Base frequencies:";
+    out << "  A: " << f[0];
+    out << "  C: " << f[1];
+    out << "  G: " << f[2];
+    out << "  T: " << f[3];
+  }
+  if (num_states == 20) {
+    out << "Amino acid frequencies:";
+    out << "  A: " << f[0];
+    out << "  R: " << f[1];
+    out << "  N: " << f[2];
+    out << "  D: " << f[3];
+    out << "  C: " << f[4];
+    out << "  Q: " << f[5];
+    out << "  E: " << f[6];
+    out << "  G: " << f[7];
+    out << "  H: " << f[8];
+    out << "  I: " << f[9];
+    out << "  L: " << f[10];
+    out << "  K: " << f[11];
+    out << "  M: " << f[12];
+    out << "  F: " << f[13];
+    out << "  P: " << f[14];
+    out << "  S: " << f[15];
+    out << "  T: " << f[16];
+    out << "  W: " << f[17];
+    out << "  Y: " << f[18];
+    out << "  V: " << f[19];
+  }
   out << endl;
 }
 
@@ -1467,7 +1481,9 @@ void ModelMarkov::freeMem()
     if (eigenvalues)
         aligned_free(eigenvalues);
 
-	if (rates) delete [] rates;
+    // Only delete rates when they are not linked to another model.
+    if (rates && ! linked_exchangeabilities_target_model)
+      delete [] rates;
 
     if (cinv_evec)
         aligned_free(cinv_evec);

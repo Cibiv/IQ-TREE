@@ -72,7 +72,7 @@ bool ModelSubst::linkExchangeabilities(ModelSubst *target) {
     cout << "Number of states does not match." << endl;
     return false;
   }
-  // TODO DS: Name check deactivated for now because model names are not
+  // XXX DS: Name check deactivated for now because model names are not
   // expected to match. Only the first part is expected to match. E.g.,
   // GTR20+FFClass001 != GTR20+FFClass000.
   // if (name != target->name) {
