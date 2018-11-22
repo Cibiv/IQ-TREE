@@ -803,12 +803,16 @@ public:
     /** summarize all bootstrap trees */
     void summarizeBootstrap(Params &params, MTreeSet &trees);
 
-    void summarizeBootstrap(Params &params);
+    /** summarize bootstrap trees */
+    virtual void summarizeBootstrap(Params &params);
 
     /** summarize bootstrap trees into split set */
     void summarizeBootstrap(SplitGraph &sg);
 
-    void writeUFBootTrees(Params &params);
+    /**
+     write .ufboot trees file
+     */
+    virtual void writeUFBootTrees(Params &params);
 
     /** @return bootstrap correlation coefficient for assessing convergence */
     double computeBootstrapCorrelation();

@@ -95,7 +95,8 @@ void ModelMarkov::setReversible(bool reversible, bool adapt_tree) {
         num_params = nrate - 1;
 
         if (adapt_tree && phylo_tree && phylo_tree->rooted) {
-            cout << "Converting rooted to unrooted tree..." << endl;
+            if (verbose_mode >= VB_MED)
+                cout << "Converting rooted to unrooted tree..." << endl;
             phylo_tree->convertToUnrooted();
         }
     } else {
@@ -142,7 +143,8 @@ void ModelMarkov::setReversible(bool reversible, bool adapt_tree) {
             cinv_evec = aligned_alloc<complex<double> >(num_states*num_states);
         
         if (adapt_tree && phylo_tree && !phylo_tree->rooted) {
-            cout << "Converting unrooted to rooted tree..." << endl;
+            if (verbose_mode >= VB_MED)
+                cout << "Converting unrooted to rooted tree..." << endl;
             phylo_tree->convertToRooted();
         }
         num_params = num_rates - 1;        
@@ -433,7 +435,11 @@ void ModelMarkov::computeTransMatrixNonrev(double time, double *trans_matrix, in
         Map<Matrix<double,Dynamic,Dynamic,RowMajor>,Aligned >rate_mat(rate_matrix, num_states, num_states);
         Map<Matrix<double,Dynamic,Dynamic,RowMajor> >trans_mat(trans_matrix, num_states, num_states);
         MatrixXd mat = rate_mat;
-        trans_mat = (mat*time).exp();
+        mat = (mat*time).exp();
+        if (mat.minCoeff() < 0) {
+            outWarning("negative trans_mat");
+        }
+        trans_mat = mat;
     } else if (phylo_tree->params->matrix_exp_technique == MET_EIGEN3LIB_DECOMPOSITION) {
         VectorXcd ceval_exp(num_states);
         ArrayXcd eval = Map<ArrayXcd,Aligned>(ceval, num_states);
@@ -843,18 +849,27 @@ bool ModelMarkov::getVariables(double *variables) {
 double ModelMarkov::targetFunk(double x[]) {
 	bool changed = getVariables(x);
 
-    if (state_freq[num_states-1] < 0) return 1.0e+12;
+    if (state_freq[num_states-1] < 0) return 1.0e+30;
 
 	if (changed) {
 		decomposeRateMatrix();
 		ASSERT(phylo_tree);
 		phylo_tree->clearAllPartialLH();
+        if (nondiagonalizable) // matrix is ill-formed
+            return 1.0e+30;
 	}
 
     // avoid numerical issue if state_freq is too small
     for (int i = 0; i < num_states; i++)
         if (state_freq[i] < 0)
-            return 1.0e+12;
+            return 1.0e+30;
+
+    if (!is_reversible) {
+        for (int i = 0; i < num_states; i++)
+            if (state_freq[i] < MIN_FREQUENCY)
+                return 1.0e+30;
+    }
+    
 
 	return -phylo_tree->computeLikelihood();
 
@@ -1026,13 +1041,25 @@ void ModelMarkov::decomposeRateMatrixNonrev() {
     eval = eigensolver.eigenvalues();
     Map<MatrixXcd,Aligned> evec(cevec, num_states, num_states);
     evec = eigensolver.eigenvectors();
+    // NOTE 2018-10-29: determinant is not good for detecting non-diagonalizable
+    // use isInvertible instead (below)
+    /*
     if (abs(evec.determinant())<1e-8) {
         // limit of 1e-10 is something of a guess. 1e-12 was too restrictive.
         nondiagonalizable = true; // will use scaled squaring instead of eigendecomposition for matrix exponentiation
         return;
+        outWarning("zero evec determinant");
     }
-    Map<MatrixXcd,Aligned> inv_evec(cinv_evec, num_states, num_states);
-    inv_evec = evec.inverse();
+    */
+
+    FullPivLU<MatrixXcd> lu(evec);
+    if (lu.isInvertible()) {
+        Map<MatrixXcd,Aligned> inv_evec(cinv_evec, num_states, num_states);
+        inv_evec = lu.inverse();
+    } else {
+        nondiagonalizable = true;
+        outWarning("evec not invertible");
+    }
     
     // sanity check
 //    MatrixXcd eval_diag = eval.asDiagonal();
@@ -1254,7 +1281,8 @@ void ModelMarkov::readRates(istream &in) throw(const char*, string) {
 	if (str == "equalrate") {
 		for (int i = 0; i < nrates; i++)
 			rates[i] = 1.0;
-	} else {
+	} else if (is_reversible ){
+        // reversible model
 		try {
 			rates[0] = convert_double(str.c_str());
 		} catch (string &str) {
@@ -1268,7 +1296,37 @@ void ModelMarkov::readRates(istream &in) throw(const char*, string) {
 			if (rates[i] < 0.0)
 				throw "Negative rates not allowed";
 		}
-	}
+    } else {
+        // non-reversible model, read the whole rate matrix
+        int i = 0, row, col;
+        for (row = 0; row < num_states; row++) {
+            double row_sum = 0.0;
+            for (col = 0; col < num_states; col++)
+                if (row == 0 && col == 0) {
+                    // top-left element was already red
+                    try {
+                        row_sum = convert_double(str.c_str());
+                    } catch (string &str) {
+                        outError(str);
+                    }
+                } else if (row != col) {
+                    // non-diagonal element
+                    if (!(in >> rates[i]))
+                        throw name+string(": Rate entries could not be read");
+                    if (rates[i] < 0.0)
+                        throw "Negative rates found";
+                    row_sum += rates[i];
+                    i++;
+                } else {
+                    // diagonal element
+                    double d;
+                    in >> d;
+                    row_sum += d;
+                }
+            if (fabs(row_sum) > 1e-3)
+                throw "Row " + convertIntToString(row) + " does not sum to 0";
+        }
+    }
 }
 
 void ModelMarkov::readRates(string str) throw(const char*) {

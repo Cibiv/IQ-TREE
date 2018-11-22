@@ -46,13 +46,13 @@ void PhyloSuperTreeUnlinked::mapTrees() {
     // do nothing here as partition trees are unlinked
 }
 
-int PhyloSuperTreeUnlinked::computeParsimonyTree(const char *out_prefix, Alignment *alignment) {
+int PhyloSuperTreeUnlinked::computeParsimonyTree(const char *out_prefix, Alignment *alignment, int *rand_stream) {
     SuperAlignment *saln = (SuperAlignment*)alignment;
     int score = 0;
     int i;
     ASSERT(saln->partitions.size() == size());
     for (i = 0; i < size(); i++) {
-        score += at(i)->computeParsimonyTree(NULL, saln->partitions[i]);
+        score += at(i)->computeParsimonyTree(NULL, saln->partitions[i], rand_stream);
     }
     if (out_prefix) {
         string file_name = out_prefix;
@@ -211,6 +211,8 @@ double PhyloSuperTreeUnlinked::doTreeSearch() {
     params->suppress_output_flags |= OUT_TREEFILE + OUT_LOG;
     VerboseMode saved_mode = verbose_mode;
     verbose_mode = VB_QUIET;
+    bool saved_print_ufboot_trees = params->print_ufboot_trees;
+    params->print_ufboot_trees = false;
 
 #pragma omp parallel for schedule(dynamic) num_threads(num_threads) if (num_threads > 1) reduction(+: tree_lh)
     for (int i = 0; i < size(); i++) {
@@ -236,6 +238,7 @@ double PhyloSuperTreeUnlinked::doTreeSearch() {
 
     verbose_mode = saved_mode;
     params->suppress_output_flags= saved_flag;
+    params->print_ufboot_trees = saved_print_ufboot_trees;
 
     if (tree_lh < curScore)
         cout << "BETTER TREE FOUND: " << tree_lh << endl;
@@ -247,4 +250,65 @@ double PhyloSuperTreeUnlinked::doTreeSearch() {
     intermediateTrees.update(bestTree, getCurScore());
     candidateTrees.saveCheckpoint();
     return curScore;
+}
+
+void PhyloSuperTreeUnlinked::summarizeBootstrap(Params &params) {
+    for (auto tree = begin(); tree != end(); tree++)
+        ((IQTree*)*tree)->summarizeBootstrap(params);
+}
+
+void PhyloSuperTreeUnlinked::writeUFBootTrees(Params &params) {
+    //    IntVector tree_weights;
+    int i, j;
+    string filename = params.out_prefix;
+    filename += ".ufboot";
+    ofstream out(filename.c_str());
+    
+    for (auto tree = begin(); tree != end(); tree++) {
+        MTreeSet trees;
+
+        trees.init(((IQTree*)*tree)->boot_trees, (*tree)->rooted);
+        for (i = 0; i < trees.size(); i++) {
+            NodeVector taxa;
+            // change the taxa name from ID to real name
+            trees[i]->getOrderedTaxa(taxa);
+            for (j = 0; j < taxa.size(); j++)
+                taxa[j]->name = aln->getSeqName(taxa[j]->id);
+            if (removed_seqs.size() > 0) {
+                // reinsert removed seqs into each tree
+                trees[i]->insertTaxa(removed_seqs, twin_seqs);
+            }
+            // now print to file
+            for (j = 0; j < trees.tree_weights[i]; j++)
+                if (params.print_ufboot_trees == 1)
+                    trees[i]->printTree(out, WT_NEWLINE);
+                else
+                    trees[i]->printTree(out, WT_NEWLINE + WT_BR_LEN);
+        }
+    }
+    cout << "UFBoot trees printed to " << filename << endl;
+    out.close();
+}
+
+/**
+ Test all branches of the tree with aLRT SH-like interpretation
+ */
+int PhyloSuperTreeUnlinked::testAllBranches(int threshold, double best_score, double *pattern_lh,
+                            int reps, int lbp_reps, bool aLRT_test, bool aBayes_test,
+                            PhyloNode *node, PhyloNode *dad)
+{
+    int id;
+    int num_low_support = 0;
+    double *ptn_lh[size()];
+    ptn_lh[0] = pattern_lh;
+    for (id = 1; id < size(); id++)
+        ptn_lh[id] = ptn_lh[id-1] + at(id-1)->getAlnNPattern();
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+: num_low_support)
+#endif
+    for (int id = 0; id < size(); id++) {
+        num_low_support += at(id)->testAllBranches(threshold, at(id)->getCurScore(), ptn_lh[id],
+                            reps, lbp_reps, aLRT_test, aBayes_test);
+    }
+    return num_low_support;
 }

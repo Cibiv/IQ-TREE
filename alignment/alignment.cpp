@@ -980,6 +980,15 @@ void Alignment::orderPatternByNumChars(int pat_type) {
             pars_lower_bound[i] += num;
         }
     }
+    
+    // fill up to vectoclass with dummy pattern
+    int maxnptn = get_safe_upper_limit_float(ordered_pattern.size());
+    while (ordered_pattern.size() < maxnptn) {
+        Pattern pat;
+        pat.resize(getNSeq(), STATE_UNKNOWN);
+        pat.frequency = 0;
+        ordered_pattern.push_back(pat);
+    }
     sum += pars_lower_bound[i];
     // now transform lower_bound
 //    assert(i == maxi-1);
@@ -1536,6 +1545,8 @@ int Alignment::buildPattern(StrVector &sequences, char *sequence_type, int nseq,
         seq_type = user_seq_type;
     }
 
+    //initStateSpace(seq_type);
+    
     // now convert to patterns
     int site, seq, num_gaps_only = 0;
 
@@ -2932,6 +2943,109 @@ void Alignment::convertToCodonOrAA(Alignment *aln, char *gene_code_id, bool nt2a
 
 }
 
+Alignment *Alignment::convertCodonToAA() {
+    Alignment *res = new Alignment;
+    if (seq_type != SEQ_CODON)
+        outError("Cannot convert non-codon alignment into AA");
+    int i, site;
+    char AA_to_state[NUM_CHAR];
+    for (i = 0; i < getNSeq(); i++) {
+        res->seq_names.push_back(getSeqName(i));
+    }
+    res->name = name;
+    res->model_name = model_name;
+    res->sequence_type = sequence_type;
+    res->position_spec = position_spec;
+    res->aln_file = aln_file;
+    res->seq_type = SEQ_PROTEIN;
+    res->num_states = 20;
+    
+    res->computeUnknownState();
+    
+    res->buildStateMap(AA_to_state, SEQ_PROTEIN);
+
+    res->site_pattern.resize(getNSite(), -1);
+    res->clear();
+    res->pattern_index.clear();
+    
+    VerboseMode save_mode = verbose_mode;
+    verbose_mode = min(verbose_mode, VB_MIN); // to avoid printing gappy sites in addPattern
+    int nsite = getNSite();
+    int nseq = getNSeq();
+    Pattern pat;
+    pat.resize(nseq);
+    
+    for (site = 0; site < nsite; site++) {
+        for (int seq = 0; seq < nseq; seq++) {
+            StateType state = at(getPatternID(site))[seq];
+            if (state == STATE_UNKNOWN)
+                state = res->STATE_UNKNOWN;
+            else
+                state = AA_to_state[(int)genetic_code[(int)codon_table[state]]];
+            pat[seq] = state;
+        }
+        res->addPattern(pat, site);
+    }
+    verbose_mode = save_mode;
+    res->countConstSite();
+    res->buildSeqStates();
+    return res;
+}
+
+Alignment *Alignment::convertCodonToDNA() {
+    Alignment *res = new Alignment;
+    if (seq_type != SEQ_CODON)
+        outError("Cannot convert non-codon alignment into DNA");
+    int i, site;
+    for (i = 0; i < getNSeq(); i++) {
+        res->seq_names.push_back(getSeqName(i));
+    }
+    res->name = name;
+    res->model_name = model_name;
+    res->sequence_type = sequence_type;
+    res->position_spec = position_spec;
+    res->aln_file = aln_file;
+    res->seq_type = SEQ_DNA;
+    res->num_states = 4;
+    
+    res->computeUnknownState();
+    
+    res->site_pattern.resize(getNSite()*3, -1);
+    res->clear();
+    res->pattern_index.clear();
+    
+    VerboseMode save_mode = verbose_mode;
+    verbose_mode = min(verbose_mode, VB_MIN); // to avoid printing gappy sites in addPattern
+    int nsite = getNSite();
+    int nseq = getNSeq();
+    Pattern pat[3];
+    pat[0].resize(nseq);
+    pat[1].resize(nseq);
+    pat[2].resize(nseq);
+
+    for (site = 0; site < nsite; site++) {
+        int i;
+        for (int seq = 0; seq < nseq; seq++) {
+            StateType state = at(getPatternID(site))[seq];
+            if (state == STATE_UNKNOWN) {
+                for (i = 0; i < 3; i++)
+                    pat[i][seq] = res->STATE_UNKNOWN;
+            } else {
+                state = codon_table[state];
+                pat[0][seq] = state/16;
+                pat[1][seq] = (state%16)/4;
+                pat[2][seq] = state%4;
+            }
+        }
+        for (i = 0; i < 3; i++)
+            res->addPattern(pat[i], site*3+i);
+    }
+    verbose_mode = save_mode;
+    res->countConstSite();
+    res->buildSeqStates();
+    return res;
+}
+
 void convert_range(const char *str, int &lower, int &upper, int &step_size, char* &endptr) throw (string) {
     //char *endptr;
     char *beginptr = (char*) str;
@@ -3187,7 +3301,17 @@ void Alignment::createBootstrapAlignment(int *pattern_freq, const char *spec, in
     if (Params::getInstance().jackknife_prop > 0.0 && spec)
         outError((string)"Unsupported jackknife with " + spec);
 
-    if (!spec) {
+    if (spec && strncmp(spec, "SCALE=", 6) == 0) {
+        // multi-scale bootstrapping called by AU test
+        int orig_nsite = nsite;
+        double scale = convert_double(spec+6);
+        nsite = (int)round(scale * nsite);
+        for (site = 0; site < nsite; site++) {
+            int site_id = random_int(orig_nsite, rstream);
+            int ptn_id = getPatternID(site_id);
+            pattern_freq[ptn_id]++;
+        }
+    } else if (!spec) {
 
         int nptn = getNPattern();
 
@@ -3794,7 +3918,8 @@ void Alignment::computeAbsoluteStateFreq(unsigned int *abs_state_freq) {
     } else {
         for (iterator it = begin(); it != end(); it++)
             for (Pattern::iterator it2 = it->begin(); it2 != it->end(); it2++)
-                abs_state_freq[(int)*it2] += it->frequency;
+                if ((*it2) < num_states)
+                    abs_state_freq[(int)*it2] += it->frequency;
     }
 }
 
@@ -4271,31 +4396,61 @@ void SymTestResult::computePvalue() {
 
 std::ostream& operator<<(std::ostream& stream, const SymTestResult& res) {
     stream << res.significant_pairs << ","
-        << res.included_pairs - res.significant_pairs << ","
-    << res.pvalue;
+        << res.included_pairs - res.significant_pairs << "," << res.pvalue;
+    if (Params::getInstance().symtest_shuffle > 1)
+        stream << "," << res.max_stat << ',' << res.perm_pvalue;
     return stream;
 }
 
-void Alignment::doSymTest(vector<SymTestResult> &vec_sym, vector<SymTestResult> &vec_marsym,
-                       vector<SymTestResult> &vec_intsym, ostream &out)
+void Alignment::doSymTest(size_t vecid, vector<SymTestResult> &vec_sym, vector<SymTestResult> &vec_marsym,
+                       vector<SymTestResult> &vec_intsym, int *rstream, vector<SymTestStat> *stats)
 {
     int nseq = getNSeq();
 
     const double chi2_cutoff = Params::getInstance().symtest_pcutoff;
     
     SymTestResult sym, marsym, intsym;
+    sym.max_stat = -1.0;
+    marsym.max_stat = -1.0;
+    intsym.max_stat = -1.0;
+    
+    vector<Pattern> ptn_shuffled;
+    
+    if (rstream) {
+        // random shuffle alignment columns
+        int nsite = getNSite();
+        for (int site = 0; site < nsite; site++) {
+            Pattern ptn = getPattern(site);
+            my_random_shuffle(ptn.begin(), ptn.end(), rstream);
+            ptn_shuffled.push_back(ptn);
+        }
+    }
+    
+    if (stats)
+        stats->reserve(nseq*(nseq-1)/2);
 
     for (int seq1 = 0; seq1 < nseq; seq1++)
         for (int seq2 = seq1+1; seq2 < nseq; seq2++) {
             MatrixXd pair_freq = MatrixXd::Zero(num_states, num_states);
-            for (auto it = begin(); it != end(); it++) {
-                if (it->at(seq1) < num_states && it->at(seq2) < num_states)
-                    pair_freq(it->at(seq1), it->at(seq2)) += it->frequency;
+            if (rstream) {
+                for (auto it = ptn_shuffled.begin(); it != ptn_shuffled.end(); it++)
+                    if (it->at(seq1) < num_states && it->at(seq2) < num_states)
+                        pair_freq(it->at(seq1), it->at(seq2))++;
+
+            } else {
+                for (auto it = begin(); it != end(); it++) {
+                    if (it->at(seq1) < num_states && it->at(seq2) < num_states)
+                        pair_freq(it->at(seq1), it->at(seq2)) += it->frequency;
+                }
             }
             
             // performing test of symmetry
             int i, j;
-            double chi2_sym = 0.0;
+            
+            SymTestStat stat;
+            stat.seq1 = seq1;
+            stat.seq2 = seq2;
+            
             int df_sym = num_states*(num_states-1)/2;
             bool applicable = true;
             MatrixXd sum = (pair_freq + pair_freq.transpose());
@@ -4304,7 +4459,7 @@ void Alignment::doSymTest(vector<SymTestResult> &vec_sym, vector<SymTestResult> 
             for (i = 0; i < num_states; i++)
                 for (j = i+1; j < num_states; j++) {
                     if (!std::isnan(res(i,j))) {
-                        chi2_sym += res(i,j);
+                        stat.chi2_sym += res(i,j);
                     } else {
                         if (Params::getInstance().symtest_keep_zero)
                             applicable = false;
@@ -4315,10 +4470,12 @@ void Alignment::doSymTest(vector<SymTestResult> &vec_sym, vector<SymTestResult> 
                 applicable = false;
             
             if (applicable) {
-                double pval_sym = chi2prob(df_sym, chi2_sym);
-                if (pval_sym < chi2_cutoff)
+                stat.pval_sym = chi2prob(df_sym, stat.chi2_sym);
+                if (stat.pval_sym < chi2_cutoff)
                     sym.significant_pairs++;
                 sym.included_pairs++;
+                if (sym.max_stat < stat.chi2_sym)
+                    sym.max_stat = stat.chi2_sym;
             } else {
                 sym.excluded_pairs++;
             }
@@ -4333,39 +4490,41 @@ void Alignment::doSymTest(vector<SymTestResult> &vec_sym, vector<SymTestResult> 
             FullPivLU<MatrixXd> lu(V);
 
             if (lu.isInvertible()) {
-                double chi2_marsym = U.transpose() * lu.inverse() * U;
+                stat.chi2_marsym = U.transpose() * lu.inverse() * U;
                 int df_marsym = num_states-1;
-                double chi2_pval = chi2prob(df_marsym, chi2_marsym);
-                if (chi2_pval < chi2_cutoff)
+                stat.pval_marsym = chi2prob(df_marsym, stat.chi2_marsym);
+                if (stat.pval_marsym < chi2_cutoff)
                     marsym.significant_pairs++;
                 marsym.included_pairs++;
+                if (marsym.max_stat < stat.chi2_marsym)
+                    marsym.max_stat = stat.chi2_marsym;
 
                 // internal symmetry
-                double chi2_intsym = chi2_sym - chi2_marsym;
+                stat.chi2_intsym = stat.chi2_sym - stat.chi2_marsym;
                 int df_intsym = df_sym - df_marsym;
                 if (df_intsym > 0 && applicable) {
-                    double pval_intsym = chi2prob(df_intsym, chi2_intsym);
-                    if (pval_intsym < chi2_cutoff)
+                    stat.pval_intsym = chi2prob(df_intsym, stat.chi2_intsym);
+                    if (stat.pval_intsym < chi2_cutoff)
                         intsym.significant_pairs++;
                     intsym.included_pairs++;
+                    if (intsym.max_stat < stat.chi2_intsym)
+                        intsym.max_stat = stat.chi2_intsym;
                 } else
                     intsym.excluded_pairs++;
             } else {
                 marsym.excluded_pairs++;
                 intsym.excluded_pairs++;
             }
-            
-            
+            if (stats)
+                stats->push_back(stat);
         }
     
     sym.computePvalue();
     marsym.computePvalue();
     intsym.computePvalue();
-    vec_sym.push_back(sym);
-    vec_marsym.push_back(marsym);
-    vec_intsym.push_back(intsym);
-    out << name << "," << sym << "," << marsym << "," << intsym << endl;
-    
+    vec_sym[vecid] = sym;
+    vec_marsym[vecid] = marsym;
+    vec_intsym[vecid] = intsym;
 }
 
 void Alignment::convfreq(double *stateFrqArr) {
@@ -4448,6 +4607,12 @@ void Alignment::getPatternFreq(IntVector &freq) {
 	int cnt = 0;
 	for (iterator it = begin(); it < end(); it++, cnt++)
 		freq[cnt] = (*it).frequency;
+}
+
+void Alignment::getPatternFreq(int *freq) {
+    int cnt = 0;
+    for (iterator it = begin(); it < end(); it++, cnt++)
+        freq[cnt] = (*it).frequency;
 }
 
 //added by MA

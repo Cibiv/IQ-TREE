@@ -142,8 +142,12 @@ void MTree::copyTree(MTree *tree) {
 }
 
 void MTree::copyTree(MTree *tree, string &taxa_set) {
-    if (tree->leafNum != taxa_set.length())
-    	outError("#leaves and taxa_set do not match!");
+    if (rooted) {
+        ASSERT(tree->rooted);
+        taxa_set.push_back(1);
+    }
+//    if (tree->leafNum != taxa_set.length())
+//        outError("#leaves and taxa_set do not match!");
     leafNum = nodeNum = branchNum = 0;
     for (string::iterator it = taxa_set.begin(); it != taxa_set.end(); it++)
         nodeNum += (*it);
@@ -151,6 +155,8 @@ void MTree::copyTree(MTree *tree, string &taxa_set) {
     if (root) freeNode();
     root = NULL;
     root = copyTree(tree, taxa_set, new_len);
+    if (rooted)
+        ASSERT(root->name == ROOT_NAME);
 }
 
 Node* MTree::copyTree(MTree *tree, string &taxa_set, double &len, Node *node, Node *dad) {
@@ -439,7 +445,7 @@ void MTree::printBranchLength(ostream &out, int brtype, bool print_slash, Neighb
             out << ":" << fixed << length;
         else
             out << ":" << length;
-    } else if (brtype & WT_BR_CLADE) {
+    } else if (brtype & WT_BR_CLADE && length_nei->node->name != ROOT_NAME) {
     	if (print_slash)
     		out << "/";
         out << length;
@@ -516,10 +522,10 @@ int MTree::printTree(ostream &out, int brtype, Node *node, Node *dad)
                 delete (*iss);
         }
         out << ")";
-        if (!node->name.empty())
-            out << node->name;
-        else if (brtype & WT_INT_NODE)
+        if (brtype & WT_INT_NODE)
             out << node->id;
+        else if (!node->name.empty())
+            out << node->name;
         if (dad != NULL || length_nei) {
         	printBranchLength(out, brtype, !node->name.empty(), length_nei);
         }
@@ -842,7 +848,7 @@ void MTree::parseFile(istream &infile, char &ch, Node* &root, DoubleVector &bran
         renameString(seqname);
 //    seqname[seqlen] = 0;
     if (seqlen == 0 && root->isLeaf())
-        throw "A taxon has no name.";
+        throw "Redundant double-bracket ‘((…))’ with closing bracket ending at";
     if (seqlen > 0)
         root->name.append(seqname);
     if (root->isLeaf()) {
@@ -1011,6 +1017,18 @@ void MTree::getInternalNodes(NodeVector &nodes, Node *node, Node *dad) {
     }
 }
 
+void MTree::getMultifurcatingNodes(NodeVector &nodes, Node *node, Node *dad) {
+    if (!node) node = root;
+    //for (NeighborVec::iterator it = node->neighbors.begin(); it != node->neighbors.end(); it++)
+    //if ((*it)->node != dad)    {
+    FOR_NEIGHBOR_IT(node, dad, it)
+    if (!(*it)->node->isLeaf()) {
+        if ((*it)->node->degree() > 3)
+            nodes.push_back((*it)->node);
+        getMultifurcatingNodes(nodes, (*it)->node, node);
+    }
+}
+
 void MTree::generateNNIBraches(NodeVector &nodes1, NodeVector &nodes2, SplitGraph* excludeSplits, Node *node, Node *dad) {
     if (!node) node = root;
     //for (NeighborVec::iterator it = node->neighbors.begin(); it != node->neighbors.end(); it++)
@@ -1082,19 +1100,28 @@ bool MTree::isABranch(Node* node1, Node* node2) {
     return (node1->findNeighbor(node2) != NULL && node2->findNeighbor(node1) != NULL);
 }
 
-void MTree::getBranches(NodeVector &nodes, NodeVector &nodes2, Node *node, Node *dad) {
+void MTree::getBranches(NodeVector &nodes, NodeVector &nodes2, Node *node, Node *dad, bool post_traversal) {
     if (!node) node = root;
     //for (NeighborVec::iterator it = node->neighbors.begin(); it != node->neighbors.end(); it++)
     //if ((*it)->node != dad)   {
     FOR_NEIGHBOR_IT(node, dad, it) {
-        if (node->id < (*it)->node->id) {
-            nodes.push_back(node);
-            nodes2.push_back((*it)->node);
-        } else {
-            nodes.push_back((*it)->node);
-            nodes2.push_back(node);
-        }
-        getBranches(nodes, nodes2, (*it)->node, node);
+        if (!post_traversal)
+            if (node->id < (*it)->node->id) {
+                nodes.push_back(node);
+                nodes2.push_back((*it)->node);
+            } else {
+                nodes.push_back((*it)->node);
+                nodes2.push_back(node);
+            }
+        getBranches(nodes, nodes2, (*it)->node, node, post_traversal);
+        if (post_traversal)
+            if (node->id < (*it)->node->id) {
+                nodes.push_back(node);
+                nodes2.push_back((*it)->node);
+            } else {
+                nodes.push_back((*it)->node);
+                nodes2.push_back(node);
+            }
     }
 }
 
@@ -1125,6 +1152,25 @@ void MTree::getInnerBranches(Branches& branches, Node *node, Node *dad) {
             branches.insert(pair<int, Branch>(pairInteger(branch.first->id, branch.second->id), branch));
     	}
     	getInnerBranches(branches, (*it)->node, node);
+    }
+}
+
+void MTree::getInnerBranches(BranchVector& branches, Node *node, Node *dad, bool post_traversal) {
+    if (!node) node = root;
+    FOR_NEIGHBOR_IT(node, dad, it) {
+        if (!node->isLeaf() && !(*it)->node->isLeaf() && !post_traversal) {
+            Branch branch;
+            branch.first = node;
+            branch.second = (*it)->node;
+            branches.push_back(branch);
+        }
+        getInnerBranches(branches, (*it)->node, node);
+        if (!node->isLeaf() && !(*it)->node->isLeaf() && post_traversal) {
+            Branch branch;
+            branch.first = node;
+            branch.second = (*it)->node;
+            branches.push_back(branch);
+        }
     }
 }
 
@@ -1367,6 +1413,13 @@ void MTree::convertToTree(SplitGraph &sg) {
     root = newnode;
     nodeNum++;
     cladetaxa.clear();
+    string root_name = ROOT_NAME;
+    newnode = findLeafName(root_name);
+    if (newnode) {
+        rooted = true;
+        root = newnode;
+    }
+    
 }
 
 Node *MTree::findNodeName(string &name, Node *node, Node *dad) {
@@ -1564,6 +1617,42 @@ string MTree::reportInputInfo() {
     return str;
 }
 
+void MTree::convertToUnrooted() {
+    ASSERT(rooted && root);
+    ASSERT(root->isLeaf() && root->id == leafNum-1);
+    Node *node = root->neighbors[0]->node;
+    Node *taxon = findFirstTaxon();
+    
+    rooted = false;
+    leafNum--;
+    
+    // delete root node
+    if (node->degree() == 3) {
+        // delete and join adjacent branches
+        Node *node1 = NULL, *node2 = NULL;
+        double len = 0.0;
+        FOR_NEIGHBOR_IT(node, root, it) {
+            if (!node1) node1 = (*it)->node; else node2 = (*it)->node;
+            len += (*it)->length;
+        }
+        node1->updateNeighbor(node, node2, len);
+        node2->updateNeighbor(node, node1, len);
+        delete node;
+    } else {
+        // only delete root node
+        auto it = node->findNeighborIt(root);
+        delete *it;
+        node->neighbors.erase(it);
+        
+    }
+    
+    delete root;
+    // set a temporary taxon so that tree traversal works
+    root = taxon;
+    
+    initializeTree();
+    //    computeBranchDirection();
+}
 
 typedef map<int, Neighbor*> IntNeighborMap;
 
@@ -1957,10 +2046,10 @@ void MTree::getTaxa(Split &taxa, Node *node, Node *dad) {
 }
 
 
-void MTree::extractQuadSubtrees(vector<Split*> &subtrees, Node *node, Node *dad) {
+void MTree::extractQuadSubtrees(vector<Split*> &subtrees, BranchVector &branches, Node *node, Node *dad) {
 	if (!node) node = root;
 	FOR_NEIGHBOR_IT(node, dad, it) {
-		extractQuadSubtrees(subtrees, (*it)->node, node);
+		extractQuadSubtrees(subtrees, branches, (*it)->node, node);
 		if ((*it)->node->isLeaf()) continue;
 		// internal branch
 		ASSERT(node->degree() == 3 && (*it)->node->degree() == 3);
@@ -1979,10 +2068,11 @@ void MTree::extractQuadSubtrees(vector<Split*> &subtrees, Node *node, Node *dad)
 			cnt += sp->countTaxa();
 		}
 		ASSERT(cnt == leafNum);
+        branches.push_back({node, child});
 	}
 }
 
-
+/*
 void MTree::assignBranchSupport(const char *trees_file, map<int,BranchSupportInfo> &branch_supports) {
 	cout << "Reading input trees file " << trees_file << endl;
 	try {
@@ -2132,6 +2222,7 @@ void MTree::assignBranchSupport(istream &in, map<int,BranchSupportInfo> &branch_
 	for (vector<Split*>::reverse_iterator it = subtrees.rbegin(); it != subtrees.rend(); it++)
 		delete (*it);
 }
+*/
 
 void MTree::computeRFDist(const char *trees_file, IntVector &dist, int assign_sup) {
 	cout << "Reading input trees file " << trees_file << endl;

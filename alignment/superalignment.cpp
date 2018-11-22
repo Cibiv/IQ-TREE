@@ -904,7 +904,7 @@ void SuperAlignment::getSitePatternIndex(IntVector &pattern_index) {
 
 void SuperAlignment::getPatternFreq(IntVector &pattern_freq) {
 	ASSERT(isSuperAlignment());
-	int offset = 0;
+	size_t offset = 0;
 	if (!pattern_freq.empty()) pattern_freq.resize(0);
 	for (vector<Alignment*>::iterator it = partitions.begin(); it != partitions.end(); it++) {
 		IntVector freq;
@@ -912,6 +912,15 @@ void SuperAlignment::getPatternFreq(IntVector &pattern_freq) {
 		pattern_freq.insert(pattern_freq.end(), freq.begin(), freq.end());
 		offset += freq.size();
 	}
+}
+
+void SuperAlignment::getPatternFreq(int *pattern_freq) {
+    ASSERT(isSuperAlignment());
+    size_t offset = 0;
+    for (vector<Alignment*>::iterator it = partitions.begin(); it != partitions.end(); it++) {
+        (*it)->getPatternFreq(pattern_freq + offset);
+        offset += (*it)->getNPattern();
+    }
 }
 
 void SuperAlignment::printSiteInfo(const char* filename) {
@@ -965,10 +974,28 @@ void SuperAlignment::computeDivergenceMatrix(double *pair_freq, double *state_fr
     delete [] part_pair_freq;
 }
 
-void SuperAlignment::doSymTest(vector<SymTestResult> &vec_sym, vector<SymTestResult> &vec_marsym,
-                               vector<SymTestResult> &vec_intsym, ostream &out) {
-    for (auto it = partitions.begin(); it != partitions.end(); it++) {
-        (*it)->doSymTest(vec_sym, vec_marsym, vec_intsym, out);
+void SuperAlignment::doSymTest(size_t vecid, vector<SymTestResult> &vec_sym, vector<SymTestResult> &vec_marsym,
+                               vector<SymTestResult> &vec_intsym, int *rstream, vector<SymTestStat> *stats) {
+
+    vector<vector<SymTestStat> >all_stats;
+    if (stats)
+        all_stats.resize(partitions.size());
+
+    int i, nparts = partitions.size();
+    #ifdef _OPENMP
+    #pragma omp parallel for private(i)
+    #endif
+    for (i = 0; i < nparts; i++) {
+        if (stats) {
+            partitions[i]->doSymTest(vecid + i, vec_sym, vec_marsym, vec_intsym, rstream, &all_stats[i]);
+            for (auto it = all_stats[i].begin(); it != all_stats[i].end(); it++)
+                it->part = i;
+        } else
+            partitions[i]->doSymTest(vecid + i, vec_sym, vec_marsym, vec_intsym, rstream);
+    }
+    if (stats) {
+        for (i = 0; i < nparts; i++)
+            stats->insert(stats->end(), all_stats[i].begin(), all_stats[i].end());
     }
 }
 

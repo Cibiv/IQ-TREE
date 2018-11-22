@@ -830,7 +830,13 @@ public:
     
     /** pvalue cutoff (default: 0.05) */
     double symtest_pcutoff;
-    
+
+    /** TRUE to print all pairwise statistics */
+    double symtest_stat;
+
+    /** Times to shuffle characters within columns of the alignment */
+    int symtest_shuffle;
+
     /**
             file containing multiple trees to evaluate at the end
      */
@@ -1197,6 +1203,14 @@ public:
         number of quartets for site concordance factor
      */
     int site_concordance;
+
+    /**
+     TRUE to print concordant sites per partition
+     */
+    bool site_concordance_partition;
+
+    /** 1 to compute internode certainty */
+    int internode_certainty;
     
     /**
             2nd alignment used in computing multinomialProb (Added by MA)
@@ -1370,6 +1384,9 @@ public:
     /** model defition file */
     char *model_def_file;
 
+    /** TRUE to perform ModelOMatic method of Whelan et al. 2015 */
+    bool modelomatic;
+    
     /** true to redo model testing even if .model file exists */
     bool model_test_again;
 
@@ -1980,6 +1997,9 @@ public:
     /** TRUE to link substitution models over partitions */
     bool link_model;
 
+    /** name of the joint model across partitions */
+    char* model_joint;
+    
 	/** true to count all distinct trees visited during tree search */
 	bool count_trees;
 
@@ -2005,6 +2025,10 @@ public:
 
 	/* TRUE to print .splits file in star-dot format */
 	bool print_splits_file;
+    
+    /* TRUE to print .splits.nex file in NEXUS format */
+    bool print_splits_nex_file;
+
     
     /** TRUE (default) to ignore identical sequences and add them back at the end */
     bool ignore_identical_seqs;
@@ -2102,6 +2126,32 @@ struct PDRelatedMeasures {
 
 
 /*--------------------------------------------------------------*/
+    
+inline size_t get_safe_upper_limit(size_t cur_limit) {
+    if (Params::getInstance().SSE >= LK_AVX512)
+        // AVX-512
+        return ((cur_limit+7)/8)*8;
+    else
+        if (Params::getInstance().SSE >= LK_AVX)
+            // AVX
+            return ((cur_limit+3)/4)*4;
+        else
+            // SSE
+            return ((cur_limit+1)/2)*2;
+}
+
+inline size_t get_safe_upper_limit_float(size_t cur_limit) {
+    if (Params::getInstance().SSE >= LK_AVX512)
+        // AVX-512
+        return ((cur_limit+15)/16)*16;
+    else
+        if (Params::getInstance().SSE >= LK_AVX)
+            // AVX
+            return ((cur_limit+7)/8)*8;
+        else
+            // SSE
+            return ((cur_limit+3)/4)*4;
+}
 /*--------------------------------------------------------------*/
 
 /**

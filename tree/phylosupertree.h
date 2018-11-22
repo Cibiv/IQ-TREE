@@ -223,7 +223,12 @@ public:
 	 */
 	void linkBranch(int part, SuperNeighbor *nei, SuperNeighbor *dad_nei);
 
-
+    /**
+        make the rooting consistent between trees
+     */
+    void syncRooting();
+    
+    
     /**
             initialize partial_lh vector of all PhyloNeighbors, allocating central_partial_lh
      */
@@ -298,7 +303,7 @@ public:
      *   Apply 5 new branch lengths stored in the NNI move
      *   @param nnimove the NNI move currently in consideration
      */
-    virtual void changeNNIBrans(NNIMove nnimove);
+    virtual void changeNNIBrans(NNIMove &nnimove);
 
     /**
         OBSOLETE!
@@ -402,8 +407,7 @@ public:
         end computing ancestral sequence probability for an internal node by marginal reconstruction
     */
     virtual void endMarginalAncestralState(bool orig_kernel_nonrev, double* &ptn_ancestral_prob, int* &ptn_ancestral_seq);
-
-
+    
 	/**
 		write site-rates to a file in the following format:
 		1  rate_1

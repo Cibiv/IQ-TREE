@@ -16,28 +16,12 @@
 #include <bitset>
 #include "pattern.h"
 #include "ncl/ncl.h"
-#include "utils/tools.h"
 
-// IMPORTANT: refactor STATE_UNKNOWN
-//const char STATE_UNKNOWN = 126;
-
-// TODO DS: This seems like a significant restriction.
-/* PoMo: STATE_INVALID is not handled in PoMo.  Set STATE_INVALID to
-   127 to remove warning about comparison to char in alignment.cpp.
-   This is important if the maximum N will be increased above 21
-   because then the state space is larger than 127 and we have to
-   think about something else. */
-/* const unsigned char STATE_INVALID = 255; */
-const unsigned char STATE_INVALID = 127;
-const int NUM_CHAR = 256;
 const double MIN_FREQUENCY          = 0.0001;
 const double MIN_FREQUENCY_DIFF     = 0.00001;
 
+const int NUM_CHAR = 256;
 typedef bitset<NUM_CHAR> StateBitset;
-
-enum SeqType {
-    SEQ_DNA, SEQ_PROTEIN, SEQ_BINARY, SEQ_MORPH, SEQ_MULTISTATE, SEQ_CODON, SEQ_POMO, SEQ_UNKNOWN
-};
 
 /** class storing results of symmetry tests */
 class SymTestResult {
@@ -53,37 +37,57 @@ public:
     int significant_pairs; // number of significant sequence pairs
     int included_pairs; // total number of included sequence pairs
     int excluded_pairs; // number of excluded sequence pairs
-    double pvalue; // pvalue of symmetry test
+    double pvalue; // pvalue of binomial test of symmetry
+    double max_stat; // maximum of the pair statistics
+    double perm_pvalue; // p-value of permutation test of symmetry
+};
+
+/** class storing all pairwise statistics */
+class SymTestStat {
+public:
+    SymTestStat() {
+        part = 0;
+        seq1 = seq2 = 0;
+        chi2_sym = 0.0;
+        chi2_marsym = std::numeric_limits<double>::quiet_NaN();
+        chi2_intsym = std::numeric_limits<double>::quiet_NaN();
+        pval_sym = std::numeric_limits<double>::quiet_NaN();
+        pval_marsym = std::numeric_limits<double>::quiet_NaN();
+        pval_intsym = std::numeric_limits<double>::quiet_NaN();
+    }
+    int part; // partition ID
+    int seq1, seq2; // ID of sequence 1 and 2
+    double chi2_sym; // chi2 statistic test of symmetry
+    double chi2_marsym; // chi2 statistic test of marginal symmetry
+    double chi2_intsym; // chi2 statistic test of internal symmetry
+    double pval_sym; // chi2 p-value test of symmetry
+    double pval_marsym; // chi2 p-value test of marginal symmetry
+    double pval_intsym; // chi2 p-value test of internal symmetry
 };
 
 std::ostream& operator<< (std::ostream& stream, const SymTestResult& res);
 
 #ifdef USE_HASH_MAP
 struct hashPattern {
-	size_t operator()(const vector<StateType> &sp) const {
-		size_t sum = 0;
-		for (Pattern::const_iterator it = sp.begin(); it != sp.end(); it++)
-			sum = (*it) + (sum << 6) + (sum << 16) - sum;
-		return sum;
-	}
+    size_t operator()(const vector<StateType> &sp) const {
+        size_t sum = 0;
+        for (Pattern::const_iterator it = sp.begin(); it != sp.end(); it++)
+            sum = (*it) + (sum << 6) + (sum << 16) - sum;
+        return sum;
+    }
 };
-typedef unordered_map<string, int> StringIntMap;
-typedef unordered_map<string, double> StringDoubleHashMap;
 typedef unordered_map<vector<StateType>, int, hashPattern> PatternIntMap;
-typedef unordered_map<uint32_t, uint32_t> IntIntMap;
 #else
-typedef map<string, int> StringIntMap;
-typedef map<string, double> StringDoubleHashMap;
 typedef map<vector<StateType>, int> PatternIntMap;
-typedef map<uint32_t, uint32_t> IntIntMap;
 #endif
+
 
 /**
 Multiple Sequence Alignment. Stored by a vector of site-patterns
 
         @author BUI Quang Minh, Steffen Klaere, Arndt von Haeseler <minh.bui@univie.ac.at>
  */
-class Alignment : public vector<Pattern>, public CharSet {
+class Alignment : public vector<Pattern>, public CharSet, public StateSpace {
     friend class SuperAlignment;
     friend class SuperAlignmentUnlinked;
 
@@ -352,6 +356,11 @@ public:
     virtual void getPatternFreq(IntVector &freq);
 
     /**
+     * @param[out] freq vector of site-pattern frequencies
+     */
+    virtual void getPatternFreq(int *freq);
+
+    /**
             @param i sequence index
             @return sequence name
      */
@@ -528,6 +537,22 @@ public:
     */
     void convertToCodonOrAA(Alignment *aln, char *gene_code_id, bool nt2aa = false);
 
+    /**
+     convert this codon alignment to AA
+     */
+    Alignment *convertCodonToAA();
+
+    /**
+     convert this codon alignment to DNA
+     */
+    Alignment *convertCodonToDNA();
+
+    /**
+     @param quartet ID of four taxa
+     @param[out] support number of sites supporting 12|34, 13|24 and 14|23
+     */
+    virtual void computeQuartetSupports(IntVector &quartet, vector<size_t> &support);
+    
     /****************************************************************************
             Distance functions
      ****************************************************************************/
@@ -646,10 +671,16 @@ public:
     virtual void computeDivergenceMatrix(double *pair_freq, double *state_freq, bool normalize = true);
 
     /**
-        perform symmetry tests of Lars Jermiin
+        perform matched-pair tests of symmetry of Lars Jermiin et al.
+        @param[out] sym results of test of symmetry
+        @param[out] marsym results of test of marginal symmetry
+        @param[out] intsym results of test of internal symmetry
+        @param out output stream to print results
+        @param rstream random stream to shuffle alignment columns
+        @param out_stat output stream to print pairwise statistics
      */
-    virtual void doSymTest(vector<SymTestResult> &sym, vector<SymTestResult> &marsym,
-                           vector<SymTestResult> &intsym, ostream &out);
+    virtual void doSymTest(size_t vecid, vector<SymTestResult> &sym, vector<SymTestResult> &marsym,
+                           vector<SymTestResult> &intsym, int *rstream = NULL, vector<SymTestStat> *stats = NULL);
 
     /**
             count the fraction of constant sites in the alignment, update the variable frac_const_sites
@@ -681,11 +712,6 @@ public:
     SeqType seq_type;
 
     StateType STATE_UNKNOWN;
-
-    /**
-            number of states
-     */
-    int num_states;
 
     /**
             fraction of constant sites

@@ -98,6 +98,8 @@ void IQTree::setCheckpoint(Checkpoint *checkpoint) {
     PhyloTree::setCheckpoint(checkpoint);
     stop_rule.setCheckpoint(checkpoint);
     candidateTrees.setCheckpoint(checkpoint);
+    for (auto it = boot_splits.begin(); it != boot_splits.end(); it++)
+        (*it)->setCheckpoint(checkpoint);
 }
 
 void IQTree::saveUFBoot(Checkpoint *checkpoint) {
@@ -323,7 +325,7 @@ void IQTree::initSettings(Params &params) {
 
     size_t i;
 
-    if (params.online_bootstrap && params.gbo_replicates > 0) {
+    if (params.online_bootstrap && params.gbo_replicates > 0 && !isSuperTreeUnlinked()) {
         if (aln->getNSeq() < 4)
             outError("It makes no sense to perform bootstrap with less than 4 sequences.");
 
@@ -340,8 +342,8 @@ void IQTree::initSettings(Params &params) {
         int *saved_randstream = randstream;
         init_random(params.ran_seed);
         
-        cout << "Generating " << params.gbo_replicates << " samples for ultrafast "
-             << RESAMPLE_NAME << " (seed: " << params.ran_seed << ")..." << endl;
+//        cout << "Generating " << params.gbo_replicates << " samples for ultrafast "
+//             << RESAMPLE_NAME << " (seed: " << params.ran_seed << ")..." << endl;
         // allocate memory for boot_samples
         boot_samples.resize(params.gbo_replicates);
         sample_start = 0;
@@ -553,10 +555,13 @@ void IQTree::computeInitialTree(LikelihoodKernel kernel) {
     if (params->stop_condition == SC_FIXED_ITERATION && params->numNNITrees > params->min_iterations)
     	params->numNNITrees = max(params->min_iterations, 1);
     int fixed_number = 0;
-    setParsimonyKernel(kernel);
 
+    if (params->sankoff_cost_file && !cost_matrix)
+        loadCostMatrixFile(params->sankoff_cost_file);
     if (aln->ordered_pattern.empty())
         aln->orderPatternByNumChars(PAT_VARIANT);
+
+    setParsimonyKernel(kernel);
 
     if (params->user_file) {
         // start the search with user-defined tree
@@ -564,21 +569,10 @@ void IQTree::computeInitialTree(LikelihoodKernel kernel) {
         bool myrooted = params->is_rooted;
         readTree(params->user_file, myrooted);
         if (myrooted && !isSuperTreeUnlinked()) {
-            // TODO: convert to unrooted tree for supertree as non-reversible models
-            // do not work with partition models yet
-            if (isSuperTree()) {
-                if (!findNodeName(aln->getSeqName(0)))
-                    outError("Taxon " + aln->getSeqName(0) + " does not exist in tree file");
-                convertToUnrooted();
-                cout << " rooted tree converted to unrooted tree";
-            } else {
-                cout << " rooted tree";
-            }
+            cout << " rooted tree";
         }
         cout << endl;
         setAlignment(aln);
-        if (params->sankoff_cost_file && !cost_matrix)
-            loadCostMatrixFile(params->sankoff_cost_file);
         if (isSuperTree())
         	wrapperFixNegativeBranch(params->fixed_branch_length == BRLEN_OPTIMIZE &&
                                      params->partition_type != TOPO_UNLINKED);
@@ -601,17 +595,16 @@ void IQTree::computeInitialTree(LikelihoodKernel kernel) {
             start_tree = STT_PARSIMONY;
         switch (start_tree) {
         case STT_PARSIMONY:
-            if (params->sankoff_cost_file && !cost_matrix)
-                loadCostMatrixFile(params->sankoff_cost_file);
             //initCostMatrix(CM_UNIFORM);
             // Create parsimony tree using IQ-Tree kernel
             cout << "Creating fast initial parsimony tree by random order stepwise addition..." << endl;
 //            aln->orderPatternByNumChars();
             start = getRealTime();
-            score = computeParsimonyTree(params->out_prefix, aln);
+            score = computeParsimonyTree(params->out_prefix, aln, randstream);
             cout << getRealTime() - start << " seconds, parsimony score: " << score
                 << " (based on " << aln->num_parsimony_sites << " sites)"<< endl;
-            wrapperFixNegativeBranch(false);
+            // already fixed branch length
+            //wrapperFixNegativeBranch(false);
 
             break;
         case STT_RANDOM_TREE:
@@ -700,37 +693,38 @@ void IQTree::initCandidateTreeSet(int nParTrees, int nNNITrees) {
     }
     double startTime = getRealTime();
 //    int numDupPars = 0;
-    bool orig_rooted = rooted;
-    rooted = false;
+//    bool orig_rooted = rooted;
+//    rooted = false;
+    int processID = MPIHelper::getInstance().getProcessID();
 
-/* TODO: this does not work properly with partition model
 #ifdef _OPENMP
     StrVector pars_trees;
     if (params->start_tree == STT_PARSIMONY && nParTrees >= 1) {
         pars_trees.resize(nParTrees);
         #pragma omp parallel
         {
+            int *rstream;
+            int ran_seed = params->ran_seed + processID * 1000 + omp_get_thread_num();
+            init_random(ran_seed, false, &rstream);
             PhyloTree tree;
             if (!constraintTree.empty()) {
                 tree.constraintTree.readConstraint(constraintTree);
             }
             tree.setParams(params);
             tree.setParsimonyKernel(params->SSE);
+            tree.rooted = rooted;
             #pragma omp for schedule(dynamic)
             for (int i = 0; i < nParTrees; i++) {
-                tree.computeParsimonyTree(NULL, aln);
-                if (orig_rooted)
-                    convertToRooted();
+                tree.computeParsimonyTree(NULL, aln, rstream);
                 pars_trees[i] = tree.getTreeString();
             }
+            finish_random(rstream);
         }
     }
 #endif
-*/
 
     int init_size = candidateTrees.size();
 
-    int processID = MPIHelper::getInstance().getProcessID();
 //    unsigned long curNumTrees = candidateTrees.size();
     for (int treeNr = 1; treeNr <= nParTrees; treeNr++) {
         int parRandSeed = Params::getInstance().ran_seed + processID * nParTrees + treeNr;
@@ -745,39 +739,26 @@ void IQTree::initCandidateTreeSet(int nParTrees, int nNNITrees) {
 					pllInst->start->back, PLL_FALSE, PLL_TRUE, PLL_FALSE,
 					PLL_FALSE, PLL_FALSE, PLL_SUMMARIZE_LH, PLL_FALSE, PLL_FALSE);
 			curParsTree = string(pllInst->tree_string);
-            rooted = false;
 			PhyloTree::readTreeStringSeqName(curParsTree);
 			wrapperFixNegativeBranch(true);
-            if (orig_rooted)
-                convertToRooted();
 			curParsTree = getTreeString();
         } else if (params->start_tree == STT_RANDOM_TREE) {
             generateRandomTree(YULE_HARDING);
             wrapperFixNegativeBranch(true);
-            rooted = false;
-            if (orig_rooted)
+            if (rooted) {
+                rooted = false;
                 convertToRooted();
+            }
 			curParsTree = getTreeString();
         } else if (params->start_tree == STT_PARSIMONY) {
             /********* Create parsimony tree using IQ-TREE *********/
-            rooted = false;
-            computeParsimonyTree(NULL, aln);
-            if (orig_rooted)
-                convertToRooted();
-            curParsTree = getTreeString();
-
-/* TODO: this does not work properly with partition model
 #ifdef _OPENMP
-            curParsTree = pars_trees[treeNr-1];
+            PhyloTree::readTreeString(pars_trees[treeNr-1]);
+            curParsTree = getTreeString();
 #else
-            rooted = false;
-            curParsTree = generateParsimonyTree(parRandSeed);
-            if (orig_rooted) {
-                convertToRooted();
-                curParsTree = getTreeString();
-            }
+            computeParsimonyTree(NULL, aln, randstream);
+            curParsTree = getTreeString();
 #endif
-*/
         }
         
         int pos = addTreeToCandidateSet(curParsTree, -DBL_MAX, false, MPIHelper::getInstance().getProcessID());
@@ -787,7 +768,6 @@ void IQTree::initCandidateTreeSet(int nParTrees, int nNNITrees) {
             doRandomNNIs();
 //            generateRandomTree(YULE_HARDING);
             wrapperFixNegativeBranch(true);
-            ASSERT(rooted == orig_rooted);
             string randTree = getTreeString();
 //            if (isMixlen()) {
 //                randTree = optimizeBranches(1);
@@ -955,7 +935,7 @@ string IQTree::generateParsimonyTree(int randomSeed) {
         wrapperFixNegativeBranch(true);
         parsimonyTreeString = getTreeString();
     } else {
-        computeParsimonyTree(NULL, aln);
+        computeParsimonyTree(NULL, aln, randstream);
         parsimonyTreeString = getTreeString();
     }
     return parsimonyTreeString;
@@ -1025,6 +1005,10 @@ void IQTree::initializeModel(Params &params, string &model_name, ModelsBlock *mo
                     setModelFactory(new PartitionModel(params, (PhyloSuperTree*) this, models_block));
                 } else
                     setModelFactory(new PartitionModelPlen(params, (PhyloSuperTreePlen*) this, models_block));
+
+                // mapTrees again in case of different rooting
+                ((PhyloSuperTree*)this)->mapTrees();
+
             } else {
                 setModelFactory(new ModelFactory(params, model_name, this, models_block));
             }
@@ -3828,7 +3812,7 @@ void IQTree::summarizeBootstrap(Params &params, MTreeSet &trees) {
     sg.scaleWeight(100.0, true);
     //	printSplitSet(sg, hash_ss);
     //sg.report(cout);
-    cout << "Creating " << RESAMPLE_NAME << " support values..." << endl;
+    //cout << "Creating " << RESAMPLE_NAME << " support values..." << endl;
 //    stringstream tree_stream;
 //    printTree(tree_stream, WT_TAXON_ID | WT_BR_LEN);
 //    MExtTree mytree;
@@ -3864,11 +3848,13 @@ void IQTree::summarizeBootstrap(Params &params, MTreeSet &trees) {
         printTree(out_file.c_str());
         cout << "Tree with assigned support written to " << out_file << endl;
     }
-
-    out_file = params.out_prefix;
-    out_file += ".splits.nex";
-    sg.saveFile(out_file.c_str(), IN_NEXUS, false);
-    cout << "Split supports printed to NEXUS file " << out_file << endl;
+    
+    if (params.print_splits_nex_file) {
+        out_file = params.out_prefix;
+        out_file += ".splits.nex";
+        sg.saveFile(out_file.c_str(), IN_NEXUS, false);
+        cout << "Split supports printed to NEXUS file " << out_file << endl;
+    }
 
     /*
      out_file = params.out_prefix;
