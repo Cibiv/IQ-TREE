@@ -74,32 +74,6 @@ const int SPR_DEPTH = 2;
 
 //using namespace Eigen;
 
-inline size_t get_safe_upper_limit(size_t cur_limit) {
-	if (Params::getInstance().SSE >= LK_AVX512)
-		// AVX-512
-		return ((cur_limit+7)/8)*8;
-	else
-	if (Params::getInstance().SSE >= LK_AVX)
-		// AVX
-		return ((cur_limit+3)/4)*4;
-	else
-		// SSE
-		return ((cur_limit+1)/2)*2;
-}
-
-inline size_t get_safe_upper_limit_float(size_t cur_limit) {
-	if (Params::getInstance().SSE >= LK_AVX512)
-		// AVX-512
-		return ((cur_limit+15)/16)*16;
-	else
-	if (Params::getInstance().SSE >= LK_AVX)
-		// AVX
-		return ((cur_limit+7)/8)*8;
-	else
-		// SSE
-		return ((cur_limit+3)/4)*4;
-}
-
 template< class T>
 inline T *aligned_alloc(size_t size) {
 	size_t MEM_ALIGNMENT = (Params::getInstance().SSE >= LK_AVX512) ? 64 : ((Params::getInstance().SSE >= LK_AVX) ? 32 : 16);
@@ -333,6 +307,7 @@ public:
 // END traversal information
 // ********************************************
 
+
 /**
 Phylogenetic Tree class
 
@@ -422,6 +397,12 @@ public:
      */
     virtual void copyTree(MTree *tree, string &taxa_set);
 
+    /**
+     copy the constraint tree structure into this tree and reindex node IDs accordingly
+     @param tree the tree to copy
+     @param[out] order of taxa with first part being in constraint tree
+     */
+    void copyConstraintTree(MTree *tree, IntVector &taxon_order, int *rand_stream);
 
     /**
             copy the phylogenetic tree structure into this tree, designed specifically for PhyloTree.
@@ -631,6 +612,9 @@ public:
     template<class VectorClass>
     void computePartialParsimonyFastSIMD(PhyloNeighbor *dad_branch, PhyloNode *dad);
 
+    template<class VectorClass>
+    void computePartialParsimonySankoffSIMD(PhyloNeighbor *dad_branch, PhyloNode *dad);
+
     void computeReversePartialParsimony(PhyloNode *node, PhyloNode *dad);
 
     typedef int (PhyloTree::*ComputeParsimonyBranchType)(PhyloNeighbor *, PhyloNode *, int *);
@@ -649,6 +633,8 @@ public:
     template<class VectorClass>
     int computeParsimonyBranchFastSIMD(PhyloNeighbor *dad_branch, PhyloNode *dad, int *branch_subst = NULL);
 
+    template<class VectorClass>
+    int computeParsimonyBranchSankoffSIMD(PhyloNeighbor *dad_branch, PhyloNode *dad, int *branch_subst = NULL);
 
 //    void printParsimonyStates(PhyloNeighbor *dad_branch = NULL, PhyloNode *dad = NULL);
 
@@ -763,7 +749,8 @@ public:
      * e.g. (1,0,0,0) for A,  (0,0,0,1) for T
      */
     double *tip_partial_lh;
-    bool tip_partial_lh_computed;
+    int tip_partial_lh_computed;
+    UINT *tip_partial_pars;
 
     bool ptn_freq_computed;
 
@@ -823,6 +810,7 @@ public:
   // hypergeometric sampling.
   void computeTipPartialLikelihoodPoMo(int state, double *lh, bool hyper=false);
     void computeTipPartialLikelihood();
+    void computeTipPartialParsimony();
     void computePtnInvar();
     void computePtnFreq();
 
@@ -1127,7 +1115,7 @@ public:
 
     void computeAllSubtreeDistForOneNode(PhyloNode* source, PhyloNode* nei1, PhyloNode* nei2, PhyloNode* node, PhyloNode* dad);
 
-    double correctBranchLengthF81(double observedBran, double alpha = -1.0);
+    double correctBranchLengthF81(double observedBran, double alpha);
 
     double computeCorrectedBayesianBranchLength(PhyloNeighbor *dad_branch, PhyloNode *dad);
 
@@ -1278,6 +1266,14 @@ public:
     ConstraintTree constraintTree;
 
     /**
+     insert a node to a target branch
+     @param added_node node to add
+     @param target_node left node of the target branch
+     @param target_dad right node of the target branch
+     */
+    void insertNode2Branch(Node* added_node, Node* target_node, Node* target_dad);
+        
+    /**
             FAST VERSION: used internally by computeParsimonyTree() to find the best target branch to add into the tree
             @param added_node node to add
             @param target_node (OUT) one end of the best branch found
@@ -1289,16 +1285,30 @@ public:
      */
     int addTaxonMPFast(Node *added_taxon, Node *added_node, Node *node, Node *dad);
 
+    /**
+        create a 3-taxon tree and return random taxon order
+        @param[out] taxon_order random taxon order
+     */
+    void create3TaxonTree(IntVector &taxon_order, int *rand_stream);
+
+    /**
+     Extract a bifurcating subtree and return randomly removed Neighbor
+     If the tree is bifurcating, nothing change
+     @param[out] removed_nei vector of removed Neighbor
+     @param[out] attached_node vector of node attached to removed Neighbor
+     */
+    void extractBifurcatingSubTree(NeighborVec &removed_nei, NodeVector &attached_node, int *rand_stream);
+    
 
     /**
      * FAST VERSION: compute parsimony tree by step-wise addition
      * @param out_prefix prefix for .parstree file
      * @param alignment input alignment
+     * @param rand_stream random stream
      * @return parsimony score
      */
-    virtual int computeParsimonyTree(const char *out_prefix, Alignment *alignment);
-
-
+    virtual int computeParsimonyTree(const char *out_prefix, Alignment *alignment, int *rand_stream);
+        
     /****************************************************************************
             Branch length optimization by maximum likelihood
      ****************************************************************************/
@@ -1438,6 +1448,11 @@ public:
      * frequencies of alignment patterns, used as buffer for likelihood computation
      */
     double *ptn_freq;
+    
+    /**
+     * frequencies of aln->ordered_pattern, used as buffer for parsimony computation
+     */
+    UINT *ptn_freq_pars;
 
     /**
      * used as buffer for faster likelihood computation
@@ -1519,7 +1534,7 @@ public:
      *   Apply 5 new branch lengths stored in the NNI move
      *   @param nnimove the NNI move currently in consideration
      */
-    virtual void changeNNIBrans(NNIMove nnimove);
+    virtual void changeNNIBrans(NNIMove &nnimove);
 
     /****************************************************************************
             Stepwise addition (greedy) by maximum likelihood
@@ -1633,6 +1648,19 @@ public:
     virtual int fixNegativeBranch(bool force = false, Node *node = NULL, Node *dad = NULL);
 
     /**
+     Jukes-Cantor correction with alpha shape of Gamma distribution
+     @param dist observed distance
+     @param alpha shape of Gamma distribution
+     @return corrected JC distance
+     */
+    double JukesCantorCorrection(double dist, double alpha);
+                                            
+    /**
+     set all branch lengths using parsimony
+     */
+    int setParsimonyBranchLengths();
+
+    /**
         set negative branch to a new len
     */
     int setNegativeBranch(bool force, double newlen, Node *node = NULL, Node *dad = NULL);
@@ -1737,7 +1765,7 @@ public:
     /**
             Test all branches of the tree with aLRT SH-like interpretation
      */
-    int testAllBranches(int threshold, double best_score, double *pattern_lh, 
+    virtual int testAllBranches(int threshold, double best_score, double *pattern_lh,
             int reps, int lbp_reps, bool aLRT_test, bool aBayes_test,
             PhyloNode *node = NULL, PhyloNode *dad = NULL);
 
@@ -1778,14 +1806,37 @@ public:
     /**
      compute site concordance factor and assign node names
      */
-    void computeSiteConcordanceFactor(map<int,BranchSupportInfo> &branch_supports);
+    void computeSiteConcordance(map<string,string> &meanings);
 
     /**
-     compute site concordance factor and assign node names
-     @return sCF value for this branch
-     @num_sites average number of quartet informative sites for the branch
+     compute site concordance factor
+     @param branch target branch
+     @param nquartets number of quartets
+     @param[out] info concordance information
+     @param rstream random stream
      */
-    virtual double computeSiteConcordanceFactor(Branch &branch, double &num_sites);
+    virtual void computeSiteConcordance(Branch &branch, int nquartets, int *rsteam);
+
+    /**
+     Compute gene concordance factor
+     for each branch, assign how many times this branch appears in the input set of trees.
+     Work fine also when the trees do not have the same taxon set.
+     */
+    void computeGeneConcordance(MTreeSet &trees, map<string,string> &meanings);
+
+    /**
+     Compute quartet concordance factor and internode certainty, similar to Zhou et al. biorxiv
+     Work fine also when the trees do not have the same taxon set.
+     */
+    void computeQuartetConcordance(MTreeSet &trees);
+
+    /**
+     compute quartet concordance factor and assign node names
+     @param branch target branch
+     @param trees input tree set
+     @return quartet concordance factor
+     */
+    double computeQuartetConcordance(Branch &branch, MTreeSet &trees);
 
     /****************************************************************************
             Collapse stable (highly supported) clades by one representative

@@ -71,7 +71,7 @@ endif()
 # The version number.
 set (iqtree_VERSION_MAJOR 1)
 set (iqtree_VERSION_MINOR 7)
-set (iqtree_VERSION_PATCH "-beta2")
+set (iqtree_VERSION_PATCH "-beta6")
 
 set(BUILD_SHARED_LIBS OFF)
 
@@ -97,6 +97,7 @@ if (CMAKE_GENERATOR MATCHES "Xcode")
 endif()
 
 include_directories("${PROJECT_SOURCE_DIR}")
+include_directories("${PROJECT_SOURCE_DIR}/yaml-cpp/include")
 
 ##################################################################
 # Include the Terraphast library
@@ -245,7 +246,7 @@ endif()
 if (IQTREE_FLAGS MATCHES "mpi")
     add_definitions(-D_IQTREE_MPI)
     if (NOT CMAKE_CXX_COMPILER MATCHES "mpi")
-        # if not using the MPI compiler wrapper, set own options manually 
+        # if not using the MPI compiler wrapper, set own options manually
         find_package(MPI REQUIRED)
         set(CMAKE_CXX_COMPILE_FLAGS "${CMAKE_CXX_COMPILE_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
         set(CMAKE_C_COMPILE_FLAGS "${CMAKE_C_COMPILE_FLAGS} ${MPI_C_COMPILE_FLAGS}")
@@ -276,7 +277,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4 OR IQTREE_FLAGS MATCHES "m32")
         error("Both 32-bit and 64-bit mode cannot be specified")
     endif()
     #SET(EXE_SUFFIX "${EXE_SUFFIX}32")
-    if (GCC OR CLANG) 
+    if (GCC OR CLANG)
         set(COMBINED_FLAGS "${COMBINED_FLAGS} -m32")
     endif()
     add_definitions(-DBINARY32)
@@ -335,7 +336,7 @@ endif()
 ##################################################################
 
 SET(AVX_FLAGS "-D__SSE3 -D__AVX")
-if (VCC) 
+if (VCC)
     set(AVX_FLAGS "${AVX_FLAGS} /arch:AVX")
 elseif (CLANG)
     set(AVX_FLAGS "${AVX_FLAGS} -mavx")
@@ -363,13 +364,13 @@ elseif (ICC)
 endif()
 
 SET(FMA_FLAGS "-D__SSE3 -D__AVX")
-if (VCC) 
+if (VCC)
     set(FMA_FLAGS "${FMA_FLAGS} /arch:AVX2")
 elseif (CLANG)
     set(FMA_FLAGS "${FMA_FLAGS} -mavx -mfma")
 elseif (GCC)
     set(FMA_FLAGS "${FMA_FLAGS} -mavx -fabi-version=0 -mfma")
-elseif (ICC) 
+elseif (ICC)
     if (WIN32)
          set(FMA_FLAGS "${FMA_FLAGS} /arch:core-avx2")
     else()
@@ -385,7 +386,7 @@ elseif (CLANG)
     set(AVX512_FLAGS "${AVX512_FLAGS} -mavx512f -mfma")
 elseif (GCC)
     set(AVX512_FLAGS "${AVX512_FLAGS} -mavx512f -mfma")
-elseif (ICC) 
+elseif (ICC)
     if (WIN32)
          set(AVX512_FLAGS "${AVX512_FLAGS} /QxMIC-AVX512")
     else()
@@ -532,6 +533,13 @@ add_subdirectory(gsl)
 add_subdirectory(alignment)
 add_subdirectory(tree)
 
+# YAML library
+option(YAML_CPP_BUILD_TESTS "Enable testing" OFF)
+option(YAML_CPP_BUILD_TOOLS "Enable parse tools" OFF)
+option(YAML_CPP_BUILD_CONTRIB "Enable contrib stuff in library" OFF)
+add_subdirectory(yaml-cpp)
+add_subdirectory(phylo-yaml)
+
 if (USE_TERRAPHAST)
    add_subdirectory(terraphast)
    add_subdirectory(terrace)
@@ -584,7 +592,13 @@ endif()
 
 if (NOT IQTREE_FLAGS MATCHES "avx" AND NOT IQTREE_FLAGS MATCHES "fma")
     if (NOT IQTREE_FLAGS MATCHES "nosse")
-        set_target_properties(iqtree ncl nclextra utils pda lbfgsb whtest sprng vectorclass model alignment tree PROPERTIES COMPILE_FLAGS "${SSE_FLAGS}")
+        set_target_properties(iqtree ncl nclextra utils pda lbfgsb whtest sprng vectorclass model gsl alignment tree yaml-cpp phyloYAML PROPERTIES COMPILE_FLAGS "${SSE_FLAGS}")
+        if (USE_TERRAPHAST)
+            set_target_properties(terrace terraphast PROPERTIES COMPILE_FLAGS "${SSE_FLAGS}")
+        endif()
+        if (USE_BOOSTER)
+            set_target_properties(booster PROPERTIES COMPILE_FLAGS "${SSE_FLAGS}")
+        endif()
     endif()
     set_target_properties(kernelsse pll PROPERTIES COMPILE_FLAGS "${SSE_FLAGS}")
     if (NOT BINARY32 AND NOT IQTREE_FLAGS MATCHES "novx")
@@ -640,7 +654,7 @@ if (NOT IQTREE_FLAGS MATCHES "single")
 endif()
 
 # basic linking librararies
-target_link_libraries(iqtree pll ncl nclextra utils pda lbfgsb whtest sprng vectorclass model gsl alignment tree ${PLATFORM_LIB} ${STD_LIB} ${THREAD_LIB} ${ATOMIC_LIB})
+target_link_libraries(iqtree pll ncl nclextra utils pda lbfgsb whtest sprng vectorclass model gsl alignment tree yaml-cpp phyloYAML ${PLATFORM_LIB} ${STD_LIB} ${THREAD_LIB} ${ATOMIC_LIB})
 
 if (USE_TERRAPHAST)
    target_link_libraries(iqtree terrace)
@@ -757,7 +771,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     endif()
 endif()
 
-if (BINARY32) 
+if (BINARY32)
     set (SYSTEM_NAME "${SYSTEM_NAME}32")
 endif()
 
@@ -765,7 +779,7 @@ if (IQTREE_FLAGS MATCHES "KNL")
     set (SYSTEM_NAME "${SYSTEM_NAME}KNL")
 endif()
 
-set(CPACK_PACKAGE_FILE_NAME 
+set(CPACK_PACKAGE_FILE_NAME
     "${CMAKE_PROJECT_NAME}${EXE_SUFFIX}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}${CPACK_PACKAGE_VERSION_PATCH}-${SYSTEM_NAME}")
 
 if (NOT APPLE)

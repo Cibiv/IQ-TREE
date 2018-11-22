@@ -123,7 +123,10 @@ void MTreeSet::init(StrVector &treels, bool &is_rooted) {
 		NodeVector taxa;
 		tree->getTaxa(taxa);
 		for (NodeVector::iterator taxit = taxa.begin(); taxit != taxa.end(); taxit++)
-			(*taxit)->id = atoi((*taxit)->name.c_str());
+            if ((*taxit)->name == ROOT_NAME)
+                (*taxit)->id = taxa.size()-1;
+            else
+                (*taxit)->id = atoi((*taxit)->name.c_str());
 		//at(it->second) = tree;
 		push_back(tree);
 		tree_weights.push_back(1);
@@ -269,14 +272,14 @@ void MTreeSet::checkConsistency() {
 			// now check this tree with the first tree	
             if (tree->leafNum != taxa1.size()) {
                 equal_taxon_set = false;
-				cout << "Tree has different number of taxa!" << endl;
+				cout << "Trees have different number of taxa" << endl;
                 break;
             }
 	
 			for (it2 = taxa.begin(), i = 0; it2 != taxa.end(); it2++, i++) {
                 if ((*it2)->name != taxa1[i]->name) {
                     equal_taxon_set = false;
-					cout << "Tree has different taxa names!" << endl;
+					cout << "Trees have different taxa sets" << endl;
                     break;
                 }
 			}

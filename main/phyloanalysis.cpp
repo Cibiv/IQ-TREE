@@ -203,7 +203,7 @@ void reportModelSelection(ofstream &out, Params &params, ModelCheckpoint *model_
     }
     if (tree->isSuperTree())
         out << "  ID  ";
-    out << "Model             LogL          AIC      w-AIC      AICc     w-AICc       BIC      w-BIC" << endl;
+    out << "Model                  LogL         AIC      w-AIC        AICc     w-AICc         BIC      w-BIC" << endl;
     /*
     if (is_partitioned)
         out << "----------";
@@ -211,6 +211,7 @@ void reportModelSelection(ofstream &out, Params &params, ModelCheckpoint *model_
     out << "----------------------------------------------------------------------------------------" << endl;
     */
     int setid = 1;
+    out.precision(3);
 
     vector<ModelInfo> models;
     model_info->getOrderedModels(tree, models);
@@ -225,13 +226,26 @@ void reportModelSelection(ofstream &out, Params &params, ModelCheckpoint *model_
         out.width(11);
         out << right << it->logl << " ";
         out.width(11);
-        out    << it->AIC_score << ((it->AIC_conf) ? " + " : " - ") << it->AIC_weight << " ";
+        out    << it->AIC_score << ((it->AIC_conf) ? " + " : " - ");
+        out.unsetf(ios::fixed);
+        out.width(8);
+        out << it->AIC_weight << " ";
+        out.setf(ios::fixed);
         out.width(11);
-        out << it->AICc_score << ((it->AICc_conf) ? " + " : " - ") << it->AICc_weight << " ";
+        out << it->AICc_score << ((it->AICc_conf) ? " + " : " - ");
+        out.unsetf(ios::fixed);
+        out.width(8);
+        out << it->AICc_weight << " ";
+        out.setf(ios::fixed);
         out.width(11);
-        out << it->BIC_score  << ((it->BIC_conf) ? " + " : " - ") << it->BIC_weight;
+        out << it->BIC_score  << ((it->BIC_conf) ? " + " : " - ");
+        out.unsetf(ios::fixed);
+        out.width(8);
+        out << it->BIC_weight;
+        out.setf(ios::fixed);
         out << endl;
     }
+    out.precision(4);
 
     /* TODO
     for (it = model_info.begin(); it != model_info.end(); it++) {
@@ -837,8 +851,9 @@ void printOutfilesInfo(Params &params, IQTree &tree) {
     }
 
     if (params.gbo_replicates) {
-        cout << endl << "Ultrafast " << RESAMPLE_NAME << " approximation results written to:" << endl
-             << "  Split support values:          " << params.out_prefix << ".splits.nex" << endl
+        cout << endl << "Ultrafast " << RESAMPLE_NAME << " approximation results written to:" << endl;
+        if (!tree.isSuperTreeUnlinked())
+            cout << "  Split support values:          " << params.out_prefix << ".splits.nex" << endl
              << "  Consensus tree:                " << params.out_prefix << ".contree" << endl;
         if (params.print_ufboot_trees)
         cout << "  UFBoot trees:                  " << params.out_prefix << ".ufboot" << endl;
@@ -1126,7 +1141,7 @@ void reportPhyloAnalysis(Params &params, IQTree &tree, ModelCheckpoint &model_in
             tree.setRootNode(params.root);
 
             if (params.gbo_replicates) {
-                if (tree.boot_consense_logl > tree.getBestScore() + 0.1) {
+                if (tree.boot_consense_logl > tree.getBestScore() + 0.1 && !tree.isSuperTreeUnlinked()) {
                     out << endl << "**NOTE**: Consensus tree has higher likelihood than ML tree found! Please use consensus tree below." << endl;
                 }
             }
@@ -1163,11 +1178,11 @@ void reportPhyloAnalysis(Params &params, IQTree &tree, ModelCheckpoint &model_in
          << "Burn-in: " << params.tree_burnin << endl << endl;
          }*/
 
-        if (params.consensus_type == CT_CONSENSUS_TREE) {
+        if (params.consensus_type == CT_CONSENSUS_TREE && !tree.isSuperTreeUnlinked()) {
             out << "CONSENSUS TREE" << endl << "--------------" << endl << endl;
             out << "Consensus tree is constructed from "
                     << (params.num_bootstrap_samples ? params.num_bootstrap_samples : params.gbo_replicates)
-                    << RESAMPLE_NAME << " trees";
+                    << " " << RESAMPLE_NAME << " trees";
             if (params.gbo_replicates || params.num_bootstrap_samples) {
                 out << endl << "Log-likelihood of consensus tree: " << fixed << tree.boot_consense_logl;
             }
@@ -1282,15 +1297,17 @@ void reportPhyloAnalysis(Params &params, IQTree &tree, ModelCheckpoint &model_in
             out.precision(4);
             out.setf(ios_base::fixed);
 
-            out << endl << "USER TREES" << endl << "----------" << endl << endl;
-            out << "See " << params.out_prefix << ".trees for trees with branch lengths." << endl << endl;
-            if (params.topotest_replicates && info.size() > 1) {
+			out << endl << "USER TREES" << endl << "----------" << endl << endl;
+			out << "See " << params.out_prefix << ".trees for trees with branch lengths." << endl << endl;
+			if (params.topotest_replicates && info.size() > 1) {
+                if (params.do_au_test && params.topotest_replicates < 10000)
+                    out << "WARNING: Too few replicates for AU test. At least -zb 10000 for reliable results!" << endl << endl;
                 out << "Tree      logL    deltaL  bp-RELL    p-KH     p-SH    ";
-                if (params.do_weighted_test)
-                    out << "p-WKH    p-WSH    ";
-                out << "c-ELW";
+				if (params.do_weighted_test)
+					out << "p-WKH    p-WSH    ";
+                out << "   c-ELW";
                 if (params.do_au_test)
-                    out << "     p-AU";
+                    out << "       p-AU";
 
                 out << endl << "------------------------------------------------------------------";
                 if (params.do_weighted_test)
@@ -1298,82 +1315,85 @@ void reportPhyloAnalysis(Params &params, IQTree &tree, ModelCheckpoint &model_in
                 if (params.do_au_test)
                     out << "-------";
                 out << endl;
-            } else {
-                out << "Tree      logL    deltaL" << endl;
-                out << "-------------------------" << endl;
+			} else {
+				out << "Tree      logL    deltaL" << endl;
+				out << "-------------------------" << endl;
 
-            }
-            double maxL = -DBL_MAX;
-            int tid, orig_id;
-            for (tid = 0; tid < info.size(); tid++)
-                if (info[tid].logl > maxL) maxL = info[tid].logl;
-            for (orig_id = 0, tid = 0; orig_id < distinct_trees.size(); orig_id++) {
-                out.width(3);
-                out << right << orig_id+1 << " ";
-                if (distinct_trees[orig_id] >= 0) {
-                    out << " = tree " << distinct_trees[orig_id]+1 << endl;
-                    continue;
-                }
-                out.precision(3);
-                out.width(12);
-                out << info[tid].logl << " ";
-                out.width(7);
-                out << maxL - info[tid].logl;
-                if (!params.topotest_replicates || info.size() <= 1) {
-                    out << endl;
-                    tid++;
-                    continue;
-                }
-                out.precision(4);
-                out << "  ";
-                out.width(6);
-                out << info[tid].rell_bp;
-                if (info[tid].rell_confident)
-                    out << " + ";
-                else
-                    out << " - ";
-                out.width(6);
-                out << right << info[tid].kh_pvalue;
-                if (info[tid].kh_pvalue < 0.05)
-                    out << " - ";
-                else
-                    out << " + ";
-                out.width(6);
-                out << right << info[tid].sh_pvalue;
-                if (info[tid].sh_pvalue < 0.05)
-                    out << " - ";
-                else
-                    out << " + ";
+			}
+			double maxL = -DBL_MAX;
+			int tid, orig_id;
+			for (tid = 0; tid < info.size(); tid++)
+				if (info[tid].logl > maxL) maxL = info[tid].logl;
+			for (orig_id = 0, tid = 0; orig_id < distinct_trees.size(); orig_id++) {
+				out.width(3);
+				out << right << orig_id+1 << " ";
+				if (distinct_trees[orig_id] >= 0) {
+					out << " = tree " << distinct_trees[orig_id]+1 << endl;
+					continue;
+				}
+                out.unsetf(ios::fixed);
+				out.precision(10);
+				out.width(12);
+				out << info[tid].logl << " ";
+				out.width(7);
+                out.precision(5);
+				out << maxL - info[tid].logl;
+				if (!params.topotest_replicates || info.size() <= 1) {
+					out << endl;
+					tid++;
+					continue;
+				}
+				out.precision(3);
+				out << "  ";
+				out.width(6);
+				out << info[tid].rell_bp;
+				if (info[tid].rell_confident)
+					out << " + ";
+				else
+					out << " - ";
+				out.width(6);
+				out << right << info[tid].kh_pvalue;
+				if (info[tid].kh_pvalue < 0.05)
+					out << " - ";
+				else
+					out << " + ";
+				out.width(6);
+				out << right << info[tid].sh_pvalue;
+				if (info[tid].sh_pvalue < 0.05)
+					out << " - ";
+				else
+					out << " + ";
 
-                if (params.do_weighted_test) {
-                    out.width(6);
-                    out << right << info[tid].wkh_pvalue;
-                    if (info[tid].wkh_pvalue < 0.05)
-                        out << " - ";
-                    else
-                        out << " + ";
-                    out.width(6);
-                    out << right << info[tid].wsh_pvalue;
-                    if (info[tid].wsh_pvalue < 0.05)
-                        out << " - ";
-                    else
-                        out << " + ";
-                }
-                out.width(6);
-                out << info[tid].elw_value;
-                if (info[tid].elw_confident)
-                    out << " + ";
-                else
-                    out << " - ";
+				if (params.do_weighted_test) {
+					out.width(6);
+					out << right << info[tid].wkh_pvalue;
+					if (info[tid].wkh_pvalue < 0.05)
+						out << " - ";
+					else
+						out << " + ";
+					out.width(6);
+					out << right << info[tid].wsh_pvalue;
+					if (info[tid].wsh_pvalue < 0.05)
+						out << " - ";
+					else
+						out << " + ";
+				}
+				out.width(9);
+				out << right << info[tid].elw_value;
+				if (info[tid].elw_confident)
+					out << " + ";
+				else
+					out << " - ";
 
                 if (params.do_au_test) {
-                    out.width(6);
+                    out.width(8);
                     out << right << info[tid].au_pvalue;
                     if (info[tid].au_pvalue < 0.05)
                         out << " - ";
                     else
                         out << " + ";
                 }
+                out.setf(ios::fixed);
 
                 out << endl;
                 tid++;
@@ -2048,12 +2068,12 @@ void startTreeReconstruction(Params &params, IQTree* &iqtree, ModelCheckpoint &m
         if (iqtree->isSuperTreeUnlinked()) {
             params.start_tree = STT_PARSIMONY;
         } else if (iqtree->isSuperTree()) {
-			PhyloSuperTree *stree = (PhyloSuperTree*)iqtree;
-			for (PhyloSuperTree::iterator it = stree->begin(); it != stree->end(); it++)
-				if ((*it)->aln->seq_type != SEQ_DNA && (*it)->aln->seq_type != SEQ_PROTEIN)
-					params.start_tree = STT_BIONJ;
-		} else if (iqtree->aln->seq_type != SEQ_DNA && iqtree->aln->seq_type != SEQ_PROTEIN)
-			params.start_tree = STT_PARSIMONY;
+            PhyloSuperTree *stree = (PhyloSuperTree*)iqtree;
+            for (PhyloSuperTree::iterator it = stree->begin(); it != stree->end(); it++)
+                if ((*it)->aln->seq_type != SEQ_DNA && (*it)->aln->seq_type != SEQ_PROTEIN)
+                    params.start_tree = STT_PARSIMONY;
+        } else if (iqtree->aln->seq_type != SEQ_DNA && iqtree->aln->seq_type != SEQ_PROTEIN)
+            params.start_tree = STT_PARSIMONY;
     }
 
     /***************** Initialization for PLL and sNNI ******************/
@@ -2168,6 +2188,12 @@ void runTreeReconstruction(Params &params, IQTree* &iqtree) {
     iqtree->setRootNode(params.root);
 
     iqtree->restoreCheckpoint();
+
+    if (params.online_bootstrap && params.gbo_replicates > 0) {
+        cout << "Generating " << params.gbo_replicates << " samples for ultrafast "
+        << RESAMPLE_NAME << " (seed: " << params.ran_seed << ")..." << endl;
+    }
+
     iqtree->initSettings(params);
 
     /*********************** INITIAL MODEL OPTIMIZATION *****************/
@@ -2373,16 +2399,12 @@ void runTreeReconstruction(Params &params, IQTree* &iqtree) {
                 // NEW 2015-08-10: always compute BIONJ tree into the candidate set
                 iqtree->resetCurScore();
                 double start_bionj = getRealTime();
-                bool orig_rooted = iqtree->rooted;
-                iqtree->rooted = false;
                 iqtree->computeBioNJ(params, iqtree->aln, iqtree->dist_file);
                 cout << getRealTime() - start_bionj << " seconds" << endl;
                 if (iqtree->isSuperTree())
                     iqtree->wrapperFixNegativeBranch(true);
                 else
                     iqtree->wrapperFixNegativeBranch(false);
-                if (orig_rooted)
-                    iqtree->convertToRooted();
                 iqtree->initializeAllPartialLh();
                 if (params.start_tree == STT_BIONJ) {
                     initTree = iqtree->optimizeModelParameters(params.min_iterations==0, initEpsilon);
@@ -2420,11 +2442,11 @@ void runTreeReconstruction(Params &params, IQTree* &iqtree) {
     // prune stable taxa
     pruneTaxa(params, *iqtree, pattern_lh, pruned_taxa, linked_name);
 
-	/***************************************** DO STOCHASTIC TREE SEARCH *******************************************/
-	if (params.min_iterations > 0 && !params.tree_spr) {
-		iqtree->doTreeSearch();
-		iqtree->setAlignment(iqtree->aln);
-	} else {
+    /***************************************** DO STOCHASTIC TREE SEARCH *******************************************/
+    if (params.min_iterations > 0 && !params.tree_spr) {
+        iqtree->doTreeSearch();
+        iqtree->setAlignment(iqtree->aln);
+    } else {
         iqtree->candidateTrees.saveCheckpoint();
         /* do SPR with likelihood function */
         if (params.tree_spr) {
@@ -2542,6 +2564,7 @@ void runTreeReconstruction(Params &params, IQTree* &iqtree) {
     }
 
     if (params.gbo_replicates > 0) {
+        cout << "Creating " << RESAMPLE_NAME << " support values..." << endl;
         if (!params.online_bootstrap)
             outError("Obsolete feature");
 //            runGuidedBootstrap(params, iqtree->aln, iqtree);
@@ -2557,9 +2580,10 @@ void runTreeReconstruction(Params &params, IQTree* &iqtree) {
 
     printFinalSearchInfo(params, *iqtree, search_cpu_time, search_real_time);
 
-    if (params.gbo_replicates && params.online_bootstrap) {
-        if (params.print_ufboot_trees)
-            iqtree->writeUFBootTrees(params);
+    if (params.gbo_replicates && params.online_bootstrap && params.print_ufboot_trees)
+        iqtree->writeUFBootTrees(params);
+
+    if (params.gbo_replicates && params.online_bootstrap && !iqtree->isSuperTreeUnlinked()) {
         
         cout << endl << "Computing " << RESAMPLE_NAME << " consensus tree..." << endl;
         string splitsfile = params.out_prefix;
@@ -2760,7 +2784,7 @@ void runMultipleTreeReconstruction(Params &params, Alignment *alignment, IQTree 
     tree->restoreCheckpoint();
     tree->getModelFactory()->restoreCheckpoint();
     tree->setCurScore(runLnL[best_run]);
-    if (params.gbo_replicates) {
+    if (params.gbo_replicates && !tree->isSuperTreeUnlinked()) {
         
         string out_file = (string)params.out_prefix + ".splits";
         if (params.print_splits_file) {
@@ -2768,9 +2792,11 @@ void runMultipleTreeReconstruction(Params &params, Alignment *alignment, IQTree 
             cout << "Split supports printed to star-dot file " << out_file << endl;
         }
 
-        out_file = (string)params.out_prefix + ".splits.nex";
-        tree->boot_splits.back()->saveFile(out_file.c_str(), IN_NEXUS, false);
-        cout << "Split supports printed to NEXUS file " << out_file << endl;
+        if (params.print_splits_nex_file) {
+            out_file = (string)params.out_prefix + ".splits.nex";
+            tree->boot_splits.back()->saveFile(out_file.c_str(), IN_NEXUS, false);
+            cout << "Split supports printed to NEXUS file " << out_file << endl;
+        }
 
         // overwrite .ufboot trees
         if (params.print_ufboot_trees)
@@ -3405,21 +3431,199 @@ void getSymTestID(vector<SymTestResult> &res, set<int> &id, bool bad_res) {
     }
 }
 
+double computePValueSMax(vector<SymTestResult> &sym, int start, int step) {
+    double orig_max = sym[start].max_stat;
+    int count = 0, num = 0;
+    for (size_t i = start; i < sym.size(); i += step, num++)
+        if (sym[i].max_stat >= orig_max)
+            count++;
+    return double(count)/num;
+    
+}
+
+void doSymTest(Alignment *alignment, Params &params) {
+    double start_time = getRealTime();
+    cout << "Performing matched-pair tests of symmetry...";
+    vector<SymTestResult> sym, marsym, intsym;
+
+    size_t num_parts = 1;
+    if (alignment->isSuperAlignment())
+        num_parts = ((SuperAlignment*)alignment)->partitions.size();
+    
+    string filename_stat = string(params.out_prefix) + ".symstat.csv";
+    ofstream *out_stat = NULL;
+    if (params.symtest_stat) {
+        out_stat = new ofstream;
+        out_stat->open(filename_stat);
+        *out_stat
+        << "# Statistic values for matched-pair tests of symmetry" << endl
+        << "# This file can be read in MS Excel or in R with command:" << endl
+        << "#    dat=read.csv('" <<  filename_stat << "',comment.char='#')" << endl
+        << "# Columns are comma-separated with following meanings:" << endl
+        << "#    ID:     Partition ID" << endl
+        << "#    Seq1:   ID of sequence 1 within partition" << endl
+        << "#    Seq1:   ID of sequence 2 within partition" << endl
+        << "#    Sym:    Statistic for test of symmetry" << endl
+        << "#    SymChi: Chi-square p-value for test of symmetry" << endl
+        << "#    Mar:    Statistic for test of marginal symmetry" << endl
+        << "#    MarChi: Chi-square p-value for marginal test of symmetry" << endl
+        << "#    Int:    Statistic for test of internal symmetry" << endl
+        << "#    MarChi: Chi-square p-value for internal test of symmetry" << endl
+        << "ID,Seq1,Seq2,Sym,SymChi,Mar,MarChi,Int,IntChi" << endl;
+        
+    }
+
+    sym.resize(num_parts*params.symtest_shuffle);
+    marsym.resize(num_parts*params.symtest_shuffle);
+    intsym.resize(num_parts*params.symtest_shuffle);
+
+    for (int i = 0; i < params.symtest_shuffle; i++) {
+        vector<SymTestStat> *stats = NULL;
+        if (params.symtest_stat)
+            stats = new vector<SymTestStat>;
+        if (i == 0) // original alignment
+            alignment->doSymTest(i*num_parts, sym, marsym, intsym, NULL, stats);
+        else {
+            int *rstream;
+            init_random(params.ran_seed+i+1, false, &rstream);
+            alignment->doSymTest(i*num_parts, sym, marsym, intsym, rstream, stats);
+            finish_random(rstream);
+        }
+        if ((i+1)*10 % params.symtest_shuffle == 0) {
+            cout << " " << (i+1)*100 / params.symtest_shuffle << "%";
+            cout.flush();
+        }
+        if (!stats)
+            continue;
+        for (auto it = stats->begin(); it != stats->end(); it++) {
+            *out_stat << it->part << ',' << it->seq1 << ',' << it->seq2 << ','
+            << it->chi2_sym << ',' << it->pval_sym << ','
+            << it->chi2_marsym << ',' << it->pval_marsym << ','
+            << it->chi2_intsym << ',' << it->pval_intsym << endl;
+        }
+        delete stats;
+    }
+
+    if (out_stat) {
+        out_stat->close();
+        delete out_stat;
+    }
+    
+    if (params.symtest_shuffle > 1) {
+        // compute p-value for s-max approach
+        for (int part = 0; part < num_parts; part++) {
+            sym[part].perm_pvalue = computePValueSMax(sym, part, num_parts);
+            marsym[part].perm_pvalue = computePValueSMax(marsym, part, num_parts);
+            intsym[part].perm_pvalue = computePValueSMax(intsym, part, num_parts);
+        }
+    }
+
+    string filename = string(params.out_prefix) + ".symtest.csv";
+    ofstream out;
+    out.open(filename);
+    out << "# Matched-pair tests of symmetry" << endl
+    << "# This file can be read in MS Excel or in R with command:" << endl
+    << "#    dat=read.csv('" <<  filename << "',comment.char='#')" << endl
+    << "# Columns are comma-separated with following meanings:" << endl
+    << "#    Name:    Partition name" << endl
+    << "#    SymSig:  Number of significant sequence pairs by test of symmetry" << endl
+    << "#    SymNon:  Number of non-significant sequence pairs by test of symmetry" << endl
+    << "#    SymBi:   P-value for binomial test of symmetry" << endl;
+    if (params.symtest_shuffle > 1)
+        out << "#    SymMax:  Maximum of pair statistics by test of symmetry" << endl
+            << "#    SymPerm: P-value for permutation test of symmetry" << endl;
+    
+    out << "#    MarSig:  Number of significant sequence pairs by test of marginal symmetry" << endl
+    << "#    MarNon:  Number of non-significant sequence pairs by test of marginal symmetry" << endl
+    << "#    MarBi:   P-value for binomial test of marginal symmetry" << endl;
+    if (params.symtest_shuffle > 1)
+        out << "#    MarMax:  Maximum of pair statistics by test of marginal symmetry" << endl
+            << "#    MarPerm: P-value for permutation test of marginal symmetry" << endl;
+    out << "#    IntSig:  Number of significant sequence pairs by test of internal symmetry" << endl
+    << "#    IntNon:  Number of non-significant sequence pairs by test of internal symmetry" << endl
+    << "#    IntBi:   P-value for binomial test of internal symmetry" << endl;
+    if (params.symtest_shuffle > 1)
+        out << "#    IntMax:  Maximum of pair statistics by test of internal symmetry" << endl
+        << "#    IntPerm: P-value for permutation test of internal symmetry" << endl;
+    
+    out << "Name,SymSig,SymNon,SymBi" << ((params.symtest_shuffle > 1) ? ",SymMax,SymPerm" : "")
+    << ",MarSig,MarNon,MarBi" << ((params.symtest_shuffle > 1) ? ",MarMax,MarPerm" : "")
+    << ",IntSig,IntNon,IntBi" << ((params.symtest_shuffle > 1) ? ",IntMax,IntPerm" : "") << endl;
+    
+    if (alignment->isSuperAlignment()) {
+        SuperAlignment *saln = (SuperAlignment*)alignment;
+        for (int part = 0; part < saln->partitions.size(); part++)
+            out << saln->partitions[part]->name << ','
+                << sym[part] << ',' << marsym[part] << ','  << intsym[part] << endl;
+    } else {
+        out << alignment->name << ',' << sym[0] << ',' << marsym[0] << ','  << intsym[0] << endl;
+    }
+
+    if (params.symtest_shuffle > 1) {
+        for (int part = num_parts; part < sym.size(); part++) {
+            sym[part].perm_pvalue = marsym[part].perm_pvalue = intsym[part].perm_pvalue = -1.0;
+            out << part % num_parts << ','
+            << sym[part] << ',' << marsym[part] << ','  << intsym[part] << endl;
+        }
+        // erase the rest
+        sym.erase(sym.begin()+num_parts, sym.end());
+        marsym.erase(marsym.begin()+num_parts, marsym.end());
+        intsym.erase(intsym.begin()+num_parts, intsym.end());
+    }
+    
+    out.close();
+    cout << " " << getRealTime() - start_time << " seconds" << endl;
+    if (params.symtest_stat)
+        cout << "SymTest statistics written to " << filename_stat << endl;
+    cout << "SymTest results written to " << filename << endl;
+
+    // now filter out partitions
+    if (alignment->isSuperAlignment()) {
+        set<int> part_id;
+        if (params.symtest == 2) {
+            // remove bad loci
+            if (params.symtest_type == 0)
+                getSymTestID(sym, part_id, true);
+            else if (params.symtest_type == 1)
+                getSymTestID(marsym, part_id, true);
+            else
+                getSymTestID(intsym, part_id, true);
+        } else if (params.symtest == 3) {
+            // remove good loci
+            if (params.symtest_type == 0)
+                getSymTestID(sym, part_id, false);
+            else if (params.symtest_type == 1)
+                getSymTestID(marsym, part_id, false);
+            else
+                getSymTestID(intsym, part_id, false);
+        }
+        if (!part_id.empty()) {
+            cout << "Removing " << part_id.size()
+            << ((params.symtest == 2)? " bad" : " good") << " partitions (pvalue cutoff = "
+            << params.symtest_pcutoff << ")..." << endl;
+            if (part_id.size() < alignment->getNSite())
+                ((SuperAlignment*)alignment)->removePartitions(part_id);
+            else
+                outError("Can't remove all partitions");
+        }
+    }
+}
+
 void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
     Alignment *alignment;
 
     checkpoint->putBool("finished", false);
     checkpoint->setDumpInterval(params.checkpoint_dump_interval);
 
-	/****************** read in alignment **********************/
-	if (params.partition_file) {
-		// Partition model analysis
+    /****************** read in alignment **********************/
+    if (params.partition_file) {
+        // Partition model analysis
         if (params.partition_type == TOPO_UNLINKED)
             alignment = new SuperAlignmentUnlinked(params);
         else
             alignment = new SuperAlignment(params);
-	} else {
-		alignment = new Alignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
+    } else {
+        alignment = new Alignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
 
         if (params.freq_const_patterns) {
             int orig_nsite = alignment->getNSite();
@@ -3445,46 +3649,7 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
     }
 
     if (params.symtest) {
-        double start_time = getRealTime();
-        cout << "Performing symmetry test... ";
-        ofstream out;
-        string filename = string(params.out_prefix) + ".symtest.csv";
-        out.open(filename.c_str());
-        out << "Name,SymSig,SymNon,SymPval,MarSig,MarNon,MarPval,IntSig,IntNon,IntPval" << endl;
-        vector<SymTestResult> sym, marsym, intsym;
-        alignment->doSymTest(sym, marsym, intsym, out);
-        out.close();
-        cout << getRealTime() - start_time << " seconds" << endl;
-        cout << "SymTest results written to " << filename << endl;
-        if (alignment->isSuperAlignment()) {
-            set<int> part_id;
-            if (params.symtest == 2) {
-                // remove bad loci
-                if (params.symtest_type == 0)
-                    getSymTestID(sym, part_id, true);
-                else if (params.symtest_type == 1)
-                    getSymTestID(marsym, part_id, true);
-                else
-                   getSymTestID(intsym, part_id, true);
-            } else if (params.symtest == 3) {
-                // remove good loci
-                if (params.symtest_type == 0)
-                    getSymTestID(sym, part_id, false);
-                else if (params.symtest_type == 1)
-                    getSymTestID(marsym, part_id, false);
-                else
-                    getSymTestID(intsym, part_id, false);
-            }
-            if (!part_id.empty()) {
-                cout << "Removing " << part_id.size()
-                << ((params.symtest == 2)? " bad" : " good") << " partitions (pvalue cutoff = "
-                     << params.symtest_pcutoff << ")..." << endl;
-                if (part_id.size() < alignment->getNSite())
-                    ((SuperAlignment*)alignment)->removePartitions(part_id);
-                else
-                    outError("Can't remove all partitions");
-            }
-        }
+        doSymTest(alignment, params);
     }
 
     if (params.print_aln_info) {
@@ -3723,54 +3888,136 @@ void runUnlinkedPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
 
 void assignBranchSupportNew(Params &params) {
     if (!params.user_file)
-        outError("No trees file provided");
-    if (!params.second_tree)
         outError("No target tree file provided");
-    cout << "Reading tree " << params.second_tree << " ..." << endl;
-    PhyloTree tree;
-    tree.readTree(params.second_tree, params.is_rooted);
-    cout << tree.leafNum << " taxa and " << tree.branchNum << " branches" << endl;
-    map<int, BranchSupportInfo> branch_supports;
-    tree.assignBranchSupport(params.user_file, branch_supports);
+    PhyloTree *tree;
+    Alignment *aln = NULL;
     if (params.site_concordance) {
-        if (!params.aln_file)
-            outError("Please provide an alignment");
-        Alignment *aln = new Alignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
-        tree.setAlignment(aln);
+        params.compute_seq_composition = false;
+        if (!params.aln_file && !params.partition_file)
+            outError("Please provide an alignment (-s) or partition file");
+        if (params.partition_file) {
+            aln = new SuperAlignment(params);
+            tree = new PhyloSuperTree((SuperAlignment*)aln);
+        } else {
+            aln = new Alignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
+            tree = new PhyloTree;
+        }
+    } else {
+        tree = new PhyloTree;
+    }
+    
+    cout << "Reading tree " << params.user_file << " ..." << endl;
+    tree->readTree(params.user_file, params.is_rooted);
+    cout << tree->leafNum << " taxa and " << tree->branchNum << " branches" << endl;
+
+    BranchVector branches;
+    tree->getInnerBranches(branches);
+    BranchVector::iterator brit;
+    for (brit = branches.begin(); brit != branches.end(); brit++) {
+        Neighbor *branch = brit->second->findNeighbor(brit->first);
+        string label = brit->second->name;
+        if (!label.empty())
+            PUT_ATTR(branch, label);
+    }
+    
+    map<string,string> meanings;
+    
+    if (params.treeset_file) {
+        MTreeSet trees(params.treeset_file, params.is_rooted, params.tree_burnin, params.tree_max_count);
+        double start_time = getRealTime();
+        cout << "Computing gene concordance factor..." << endl;
+        tree->computeGeneConcordance(trees, meanings);
+        if (params.internode_certainty)
+            tree->computeQuartetConcordance(trees);
+        cout << getRealTime() - start_time << " sec" << endl;
+    }
+    if (params.site_concordance) {
+        tree->setAlignment(aln);
+        tree->setParams(&params);
+        if (tree->isSuperTree())
+            ((PhyloSuperTree*)tree)->mapTrees();
         cout << "Computing site concordance factor..." << endl;
-        tree.computeSiteConcordanceFactor(branch_supports);
+        double start_time = getRealTime();
+        tree->computeSiteConcordance(meanings);
+        cout << getRealTime() - start_time << " sec" << endl;
         delete aln;
     }
-    string str = (string)params.second_tree + ".suptree";
-    tree.printTree(str.c_str());
-    cout << "Tree with assigned branch supports written to " << str << endl;
+    string prefix = (params.out_prefix) ? params.out_prefix : params.user_file;
+    string str = prefix + ".cf.tree";
+    tree->printTree(str.c_str());
+    cout << "Tree with concordance factors written to " << str << endl;
     if (verbose_mode >= VB_DEBUG)
-        tree.drawTree(cout);
+        tree->drawTree(cout);
+    str = prefix + ".cf.branch";
+    tree->printTree(str.c_str(), WT_BR_LEN + WT_INT_NODE + WT_NEWLINE);
+    cout << "Tree with branch IDs written to " << str << endl;
     ofstream out;
-    string filename = (string)params.second_tree + ".support";
+    string filename = prefix + ".cf.stat";
     out.open(filename.c_str());
-    out << "# ID: Node ID" << endl
-        << "# Length: Branch length" << endl
-        << "# Value: Current node value (e.g. bootstrap)" << endl
-        << "# geneCF: Gene concordance factor" << endl
-        << "# geneN: Number of trees decisive for the branch" << endl;
-    if (params.site_concordance)
-        out << "# siteCF: Site concordance factor averaged over " << params.site_concordance << " quartets" << endl
-            << "# siteN: number of informative sites averaged over " << params.site_concordance << " quartets" << endl;
-    out << "ID\tLength\tValue\tgeneCF\tgeneN";
-    if (params.site_concordance)
-        out << "\tsiteCF\tsiteN";
-    out << endl;
-    for (auto brit = branch_supports.begin(); brit != branch_supports.end(); brit++) {
-        out << brit->second.id << '\t' << brit->second.length << '\t' << brit->second.name << '\t'
-            << brit->second.geneCF << '\t' << brit->second.geneN;
-        if (params.site_concordance)
-            out << '\t' << brit->second.siteCF << '\t'
-                << brit->second.siteN;
-        out << endl;
+    out << "# Concordance factor statistics" << endl
+        << "# This file can be read in MS Excel or in R with command:" << endl
+        << "#   tab=read.table('" <<  filename << "',header=TRUE)" << endl
+        << "# Columns are tab-separated with following meaning:" << endl
+        << "#   ID: Branch ID" << endl;
+    map<string,string>::iterator mit;
+    for (mit = meanings.begin(); mit != meanings.end(); mit++)
+        out << "#   " << mit->first << ": " << mit->second << endl;
+    out << "#   Label: Existing branch label" << endl;
+    out << "#   Length: Branch length" << endl;
+    out << "ID";
+    for (mit = meanings.begin(); mit != meanings.end(); mit++)
+        out << "\t" << mit->first;
+    out << "\tLabel\tLength" << endl;
+    for (brit = branches.begin(); brit != branches.end(); brit++) {
+        Neighbor *branch = brit->second->findNeighbor(brit->first);
+        int ID = brit->second->id;
+        double length = branch->length;
+        string label = "NA";
+        GET_ATTR(branch, label);
+        out << ID;
+        for (mit = meanings.begin(); mit != meanings.end(); mit++) {
+            double val;
+            branch->getAttr(mit->first, val);
+            out << '\t' << val;
+        }
+        out << '\t' << label << '\t' << length << endl;
     }
     out.close();
-    cout << "Concordance factors printed to " << filename << endl;
+    cout << "Concordance factors per branch printed to " << filename << endl;
+    if (!params.site_concordance_partition || !tree->isSuperTree())
+        return;
+    // print partition-wise concordant/discordant sites
+    filename = prefix + ".cf.stat2";
+    out.open(filename);
+    out << "# Concordance factor statistics for loci" << endl
+    << "# This file can be read in MS Excel or in R with command:" << endl
+    << "#   tab2=read.table('" <<  filename << "',header=TRUE)" << endl
+    << "# Columns are tab-separated with following meaning:" << endl
+    << "#   ID: Branch ID" << endl
+    << "#   PartID: Locus ID" << endl
+    << "#   sC: Number of concordant sites averaged over " << params.site_concordance << " quartets" << endl
+    << "#   sD1: Number of discordant sites for alternative quartet 1" << endl
+    << "#   sD2: Number of discordant sites for alternative quartet 2" << endl
+    << "ID\tPartID\tsC\tsD1\tsD2" << endl;
+    for (brit = branches.begin(); brit != branches.end(); brit++) {
+        Neighbor *branch = brit->second->findNeighbor(brit->first);
+        int ID = brit->second->id;
+        for (int part = 1; ; part++) {
+            double sC, sD1, sD2;
+            string key = "sC" + convertIntToString(part);
+            if (!branch->getAttr(key, sC))
+                break;
+            key = "sD1" + convertIntToString(part);
+            if (!branch->getAttr(key, sD1))
+                break;
+            key = "sD2" + convertIntToString(part);
+            if (!branch->getAttr(key, sD2))
+                break;
+            out << ID << '\t' << part << '\t' << sC << '\t' << sD1 << '\t' << sD2 << endl;
+        }
+    }
+    out.close();
+    cout << "Concordance factors per branch and locus printed to " << filename << endl;
 }
 
 
@@ -3983,14 +4230,16 @@ void computeConsensusTree(const char *input_trees, int burnin, int max_count,
     //cout << "convert compatible split system into tree..." << endl;
     mytree.convertToTree(maxsg);
     //cout << "done" << endl;
-    string taxname;
-    if (params->root)
-        taxname = params->root;
-    else
-        taxname = sg.getTaxa()->GetTaxonLabel(0);
-    Node *node = mytree.findLeafName(taxname);
-    if (node)
-        mytree.root = node;
+    if (!mytree.rooted) {
+        string taxname;
+        if (params->root)
+            taxname = params->root;
+        else
+            taxname = sg.getTaxa()->GetTaxonLabel(0);
+        Node *node = mytree.findLeafName(taxname);
+        if (node)
+            mytree.root = node;
+    }
     // mytree.scaleLength(100.0 / boot_trees.sumTreeWeights(), true);
 
     // mytree.getTaxaID(maxsg.getSplitsBlock()->getCycle());

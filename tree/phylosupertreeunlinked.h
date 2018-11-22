@@ -54,9 +54,10 @@ public:
      * FAST VERSION: compute parsimony tree by step-wise addition
      * @param out_prefix prefix for .parstree file
      * @param alignment input alignment
+     * @param rand_stream random stream
      * @return parsimony score
      */
-    virtual int computeParsimonyTree(const char *out_prefix, Alignment *alignment);
+    virtual int computeParsimonyTree(const char *out_prefix, Alignment *alignment, int *rand_stream);
 
     /**
      * Assign branch lengths for branch that has no or negative length
@@ -149,6 +150,21 @@ public:
      */
     virtual double doTreeSearch();
 
+    /** summarize bootstrap trees */
+    virtual void summarizeBootstrap(Params &params);
+
+    /**
+     write .ufboot trees file
+     */
+    virtual void writeUFBootTrees(Params &params);
+
+    /**
+     Test all branches of the tree with aLRT SH-like interpretation
+     */
+    virtual int testAllBranches(int threshold, double best_score, double *pattern_lh,
+                                int reps, int lbp_reps, bool aLRT_test, bool aBayes_test,
+                                PhyloNode *node = NULL, PhyloNode *dad = NULL);
+    
 };
 
 #endif /* phylosupertreeunlinked_h */

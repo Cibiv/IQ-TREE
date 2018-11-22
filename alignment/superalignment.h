@@ -102,6 +102,11 @@ public:
 	virtual void getPatternFreq(IntVector &pattern_freq);
 
     /**
+     * @param[out] freq vector of site-pattern frequencies
+     */
+    virtual void getPatternFreq(int *freq);
+
+    /**
         Print all site information to a file
         @param filename output file name
     */
@@ -116,10 +121,16 @@ public:
     virtual void computeDivergenceMatrix(double *pair_freq, double *state_freq, bool normalize = true);
 
     /**
-     perform symmetry tests of Lars Jermiin
+     perform matched-pair tests of symmetry of Lars Jermiin et al.
+     @param[out] sym results of test of symmetry
+     @param[out] marsym results of test of marginal symmetry
+     @param[out] intsym results of test of internal symmetry
+     @param out output stream to print results
+     @param rstream random stream to shuffle alignment columns
+     @param out_stat output stream to print pairwise statistics
      */
-    virtual void doSymTest(vector<SymTestResult> &sym, vector<SymTestResult> &marsym,
-                           vector<SymTestResult> &intsym, ostream &out);
+    virtual void doSymTest(size_t vecid, vector<SymTestResult> &sym, vector<SymTestResult> &marsym,
+                           vector<SymTestResult> &intsym, int *rstream = NULL, vector<SymTestStat> *stats = NULL);
 
     /**
             extract sub-alignment of a sub-set of sequences
@@ -236,6 +247,12 @@ public:
 	 */
 	void printSubAlignments(Params &params);
 
+    /**
+     @param quartet ID of four taxa
+     @param[out] support number of sites supporting 12|34, 13|24 and 14|23
+     */
+    virtual void computeQuartetSupports(IntVector &quartet, vector<size_t> &support);
+    
 	/**
 		@return unconstrained log-likelihood (without a tree)
 	*/

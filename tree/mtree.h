@@ -36,24 +36,6 @@ const char BRANCH_LENGTH_SEPARATOR = '/';
 class SplitGraph;
 class MTreeSet;
 
-class BranchSupportInfo {
-public:
-    BranchSupportInfo() {
-        id = 0;
-        length = 0.0;
-        geneCF = 0.0;
-        geneN = 0;
-        siteCF = siteN = 0.0;
-    }
-    int id; // branch id
-    double length;
-    string name;
-    double geneCF; // gene concordance factor
-    int geneN; // number of gene trees that is decisive
-    double siteCF; // site concordance factor
-    double siteN; // number of sites that is decisive
-};
-
 /**
 General-purposed tree
 @author BUI Quang Minh, Steffen Klaere, Arndt von Haeseler
@@ -125,7 +107,7 @@ public:
 
 
     /**
-            In case of mulfurcating tree, randomly resolve multifurcating node to obtain strictly bifurcating tree
+            In case of multifurcating tree, randomly resolve multifurcating node to obtain strictly bifurcating tree
             If the tree is bifurcating, nothing change
      */
     void resolveMultifurcation();
@@ -154,6 +136,11 @@ public:
         return (rooted && node == root);
     }
 
+    /**
+     convert from rooted to unrooted tree
+     */
+    void convertToUnrooted();
+    
     /**
             allocate a new node. Override this if you have an inherited Node class.
             @param node_id node ID
@@ -464,6 +451,14 @@ public:
     void getInternalNodes(NodeVector &nodes, Node *node = NULL, Node *dad = NULL);
 
     /**
+         get the descending internal nodes below \a node
+         @param node the starting node, NULL to start from the root
+         @param dad dad of the node, used to direct the search
+         @param nodes (OUT) vector of internal nodes
+     */
+    void getMultifurcatingNodes(NodeVector &nodes, Node *node = NULL, Node *dad = NULL);
+
+    /**
             get the descending internal branches below \a node
             @param node the starting node, NULL to start from the root
             @param dad dad of the node, used to direct the search
@@ -479,8 +474,10 @@ public:
             @param dad dad of the node, used to direct the search
             @param nodes (OUT) vector of one end node of branch
             @param nodes2 (OUT) vector of the other end node of branch
+            @param post_traversal true to add branches in post traversal order, default: pre-traversal
      */
-    void getBranches(NodeVector &nodes, NodeVector &nodes2, Node *node = NULL, Node *dad = NULL);
+    void getBranches(NodeVector &nodes, NodeVector &nodes2, Node *node = NULL, Node *dad = NULL,
+                     bool post_traversal = false);
 
     /**
      get all descending branches below the node not further away from max_dist
@@ -499,6 +496,15 @@ public:
             @param dad dad of the node, used to direct the search
      */
     void getInnerBranches(Branches& branches, Node *node = NULL, Node *dad = NULL);
+
+    /**
+     get all inner branches below the node
+     @param branches the branches are stored here
+     @param node the starting node, NULL to start from the root
+     @param dad dad of the node, used to direct the search
+     @param post_traveral true for post-traversal, false for pre-traversal
+     */
+    void getInnerBranches(BranchVector& branches, Node *node = NULL, Node *dad = NULL, bool post_traversal = false);
 
     /**
      *      get all descending internal branches below \a node and \a dad up to depth \a depth
@@ -722,16 +728,22 @@ public:
 	STATISTICS
 ********************************************************/
 
-	void extractQuadSubtrees(vector<Split*> &subtrees, Node *node = NULL, Node *dad = NULL);
+    /**
+     extract four subtrees around each inner branch
+     @param[out] subtrees consecutive 4 subtrees
+     @param[out] branches corresponding inner branch vector
+     */
+	void extractQuadSubtrees(vector<Split*> &subtrees, BranchVector &branches, Node *node = NULL, Node *dad = NULL);
 
 	/**
+     * OBSOLETE: now in PhyloTree::computeGeneConcordance
 	 * for each branch, assign how many times this branch appears in the input set of trees.
 	 * Work fine also when the trees do not have the same taxon set.
 	 * @param trees_file set of trees in NEWICK
 	 */
-	void assignBranchSupport(const char *trees_file, map<int,BranchSupportInfo> &branch_supports);
+	//void assignBranchSupport(const char *trees_file, map<int,BranchSupportInfo> &branch_supports);
 
-	void assignBranchSupport(istream &in, map<int,BranchSupportInfo> &branch_supports);
+	//void assignBranchSupport(istream &in, map<int,BranchSupportInfo> &branch_supports);
 
 	/**
 	 * compute robinson foulds distance between this tree and a set of trees.
