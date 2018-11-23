@@ -1351,9 +1351,25 @@ void ModelMixture::initMem() {
 	if (inv_eigenvectors) aligned_free(inv_eigenvectors);
   // if (eigen_coeff) aligned_free(eigen_coeff);
 
+  // TODO: I have
+  //
+  // >> cout << num_states_total << " " << nmixtures << endl;
+  // 5120 256
+  //
+  // And direct calculation of
+  //
+  // >> size_t n_squared = num_states_total*num_states_total*nmixtures;
+  //
+  // overflows? WHY? It should be 6710886400.
+  // XXX: Workaround.
+  size_t n_squared = num_states_total;
+  n_squared *= num_states_total;
+  n_squared *= nmixtures;
 	eigenvalues = aligned_alloc<double>(num_states_total*nmixtures);
-	eigenvectors = aligned_alloc<double>(num_states_total*num_states_total*nmixtures);
-	inv_eigenvectors = aligned_alloc<double>(num_states_total*num_states_total*nmixtures);
+	// eigenvectors = aligned_alloc<double>(num_states_total*num_states_total*nmixtures);
+	eigenvectors = aligned_alloc<double>(n_squared);
+	// inv_eigenvectors = aligned_alloc<double>(num_states_total*num_states_total*nmixtures);
+	inv_eigenvectors = aligned_alloc<double>(n_squared);
   // int ncoeff = num_states_total*num_states_total*num_states_total;
   // eigen_coeff = aligned_alloc<double>(ncoeff*nmixtures);
 
