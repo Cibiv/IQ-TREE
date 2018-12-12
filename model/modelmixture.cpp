@@ -1243,7 +1243,7 @@ void ModelMixture::initMixture(string orig_model_name, string model_name, string
 				full_name += model->name;
         // Link exchangeabilities.
         if (f > 0 && tree->params->link_exchangeabilities == true) {
-          cout << "Link exchangeabilities of frequency mixture model components." << endl;
+          // cout << "Link exchangeabilities of frequency mixture model components." << endl;
           model->linkExchangeabilities(this->at(0));
         }
 			}

@@ -206,7 +206,7 @@ bool ModelMarkov::linkModel(ModelSubst *target) {
 }
 
 bool ModelMarkov::linkExchangeabilities(ModelSubst *target) {
-  cout << "Linking exchangeabilities from "<< this->name << " to " << target->name << "." << endl;
+  cout << "Link exchangeabilities from "<< this->name << " to " << target->name << "." << endl;
   if (!ModelSubst::linkExchangeabilities(target))
     return false;
   // Free the rates.
@@ -387,11 +387,10 @@ void ModelMarkov::writeInfo(ostream &out) {
     report_rates(out, "Substitution rates", rates);
     report_state_freqs(out, state_freq);
   }
-  else if (is_reversible && num_states == 20) {
-    report_rates(out, "Exchangeabilities in order A, R, N, D, C, Q, E, G, H, I, L, K, M, F, P, S, T, W, Y, V", rates);
-    report_state_freqs(out, state_freq);
-  }
-
+  else if (is_reversible && num_states == 20 && linked_exchangeabilities_target_model == NULL) {
+             report_rates(out, "Exchangeabilities in order A, R, N, D, C, Q, E, G, H, I, L, K, M, F, P, S, T, W, Y, V", rates);
+             report_state_freqs(out, state_freq);
+           }
 }
 
 void ModelMarkov::report_rates(ostream& out, string title, double *r) {
@@ -1145,7 +1144,8 @@ void ModelMarkov::decomposeRateMatrix(){
 		for (i = 0; i < num_states; i++)
 			for (j = 0; j < num_states; j++)
 				inv_eigenvectors[i*num_states+j] = state_freq[j]*eigenvectors[j*num_states+i];
-		writeInfo(cout);
+    // XXX: Too verbose for large frequency mixture models.
+		// writeInfo(cout);
 		// sanity check
 		double *q = new double[num_states*num_states];
 		getQMatrix(q);
@@ -1474,7 +1474,8 @@ void ModelMarkov::readParameters(const char *file_name) {
 		outError(str);
 	} 
 	num_params = 0;
-	writeInfo(cout);
+  // XXX: Too verbose for large frequency mixture models.
+	// writeInfo(cout);
 
     if (!is_reversible) {
         // check consistency of state_freq
@@ -1508,7 +1509,8 @@ void ModelMarkov::readParametersString(string &model_str) {
 		outError(str);
 	} 
 	num_params = 0;
-	writeInfo(cout);
+  // XXX: Too verbose for large frequency mixtures.
+  // writeInfo(cout);
 
     if (!is_reversible) {
         // check consistency of state_freq
