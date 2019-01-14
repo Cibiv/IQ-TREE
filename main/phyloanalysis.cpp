@@ -1951,10 +1951,19 @@ void printMiscInfo(Params &params, IQTree &iqtree, double *pattern_lh) {
         cout << "Branch lengths written to " << filename << endl;
     }
     
+    if (params.print_conaln && iqtree.isSuperTree()) {
+        string str = params.out_prefix;
+        str = params.out_prefix;
+        str += ".conaln";
+        ((SuperAlignment*)(iqtree.aln))->printCombinedAlignment(str.c_str());
+    }
+    
     if (params.print_partition_info && iqtree.isSuperTree()) {
+        ASSERT(params.print_conaln);
+        string aln_file = (string)params.out_prefix + ".conaln";
         string partition_info = params.out_prefix;
         partition_info += ".partinfo.nex";
-        ((SuperAlignment*)(iqtree.aln))->printPartition(partition_info.c_str());
+        ((SuperAlignment*)(iqtree.aln))->printPartition(partition_info.c_str(), aln_file.c_str());
         partition_info = (string)params.out_prefix + ".partitions";
         ((SuperAlignment*)(iqtree.aln))->printPartitionRaxml(partition_info.c_str());
     }
@@ -3598,13 +3607,18 @@ void doSymTest(Alignment *alignment, Params &params) {
                 getSymTestID(intsym, part_id, false);
         }
         if (!part_id.empty()) {
+            SuperAlignment *saln = (SuperAlignment*)alignment;
             cout << "Removing " << part_id.size()
             << ((params.symtest == 2)? " bad" : " good") << " partitions (pvalue cutoff = "
             << params.symtest_pcutoff << ")..." << endl;
             if (part_id.size() < alignment->getNSite())
-                ((SuperAlignment*)alignment)->removePartitions(part_id);
+                saln->removePartitions(part_id);
             else
                 outError("Can't remove all partitions");
+            string aln_file = (string)params.out_prefix + ((params.symtest == 2)? ".good.phy" : ".bad.phy");
+            saln->printCombinedAlignment(aln_file.c_str());
+            string filename = (string)params.out_prefix + ((params.symtest == 2)? ".good.nex" : ".bad.nex");
+            saln->printPartition(filename.c_str(), aln_file.c_str());
         }
     }
 }
@@ -3889,13 +3903,15 @@ void runUnlinkedPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
 void assignBranchSupportNew(Params &params) {
     if (!params.user_file)
         outError("No target tree file provided");
+    if (params.num_threads == 0)
+        outError("-nt AUTO is not supported for concordance factor analysis, please specify no. cores");
     PhyloTree *tree;
     Alignment *aln = NULL;
     if (params.site_concordance) {
-        params.compute_seq_composition = false;
         if (!params.aln_file && !params.partition_file)
             outError("Please provide an alignment (-s) or partition file");
         if (params.partition_file) {
+            params.compute_seq_composition = false;
             aln = new SuperAlignment(params);
             tree = new PhyloSuperTree((SuperAlignment*)aln);
         } else {
@@ -3905,11 +3921,21 @@ void assignBranchSupportNew(Params &params) {
     } else {
         tree = new PhyloTree;
     }
-    
-    cout << "Reading tree " << params.user_file << " ..." << endl;
-    tree->readTree(params.user_file, params.is_rooted);
-    cout << tree->leafNum << " taxa and " << tree->branchNum << " branches" << endl;
+    tree->setParams(&params);
 
+    cout << "Reading tree " << params.user_file << " ..." << endl;
+    bool rooted = params.is_rooted;
+    tree->readTree(params.user_file, rooted);
+    cout << ((tree->rooted) ? "rooted" : "un-rooted") << " tree with "
+        << tree->leafNum - tree->rooted << " taxa and " << tree->branchNum << " branches" << endl;
+
+    // 2018-12-13: move initialisation to fix rooted vs unrooted tree
+    if (params.site_concordance) {
+        tree->setAlignment(aln);
+        if (tree->isSuperTree())
+            ((PhyloSuperTree*)tree)->mapTrees();
+    }
+    
     BranchVector branches;
     tree->getInnerBranches(branches);
     BranchVector::iterator brit;
@@ -3923,7 +3949,8 @@ void assignBranchSupportNew(Params &params) {
     map<string,string> meanings;
     
     if (params.treeset_file) {
-        MTreeSet trees(params.treeset_file, params.is_rooted, params.tree_burnin, params.tree_max_count);
+        bool rooted = params.is_rooted;
+        MTreeSet trees(params.treeset_file, rooted, params.tree_burnin, params.tree_max_count);
         double start_time = getRealTime();
         cout << "Computing gene concordance factor..." << endl;
         tree->computeGeneConcordance(trees, meanings);
@@ -3932,10 +3959,6 @@ void assignBranchSupportNew(Params &params) {
         cout << getRealTime() - start_time << " sec" << endl;
     }
     if (params.site_concordance) {
-        tree->setAlignment(aln);
-        tree->setParams(&params);
-        if (tree->isSuperTree())
-            ((PhyloSuperTree*)tree)->mapTrees();
         cout << "Computing site concordance factor..." << endl;
         double start_time = getRealTime();
         tree->computeSiteConcordance(meanings);
@@ -3971,23 +3994,58 @@ void assignBranchSupportNew(Params &params) {
     for (brit = branches.begin(); brit != branches.end(); brit++) {
         Neighbor *branch = brit->second->findNeighbor(brit->first);
         int ID = brit->second->id;
-        double length = branch->length;
-        string label = "NA";
-        GET_ATTR(branch, label);
         out << ID;
         for (mit = meanings.begin(); mit != meanings.end(); mit++) {
-            double val;
-            branch->getAttr(mit->first, val);
-            out << '\t' << val;
+            out << '\t';
+            double val = 0.0;
+            if (branch->getAttr(mit->first, val))
+                out << val;
+            else
+                out << "NA";
         }
+        double length = branch->length;
+        string label;
+        GET_ATTR(branch, label);
         out << '\t' << label << '\t' << length << endl;
     }
     out.close();
     cout << "Concordance factors per branch printed to " << filename << endl;
+    if (!params.site_concordance_partition)
+        return;
+    
+    // print concordant/discordant gene trees
+    filename = prefix + ".cf.stat_tree";
+    out.open(filename);
+    out << "# Concordance factor statistics for decisive trees" << endl
+    << "# This file can be read in MS Excel or in R with command:" << endl
+    << "#   tab2=read.table('" <<  filename << "',header=TRUE)" << endl
+    << "# Columns are tab-separated with following meaning:" << endl
+    << "#   ID: Branch ID" << endl
+    << "#   TreeID: Tree ID" << endl
+    << "#   gC: 1/0 if tree is concordant/discordant with branch" << endl
+    << "#   gD1: 1/0 if NNI-1 tree is concordant/discordant with branch" << endl
+    << "#   gD2: 1/0 if NNI-2 tree is concordant/discordant with branch" << endl
+    << "# NOTE: NA means that tree is not decisive for branch" << endl
+    << "ID\tTreeID\tgC\tgD1\tgD2" << endl;
+    for (brit = branches.begin(); brit != branches.end(); brit++) {
+        Neighbor *branch = brit->second->findNeighbor(brit->first);
+        int ID = brit->second->id;
+        for (int part = 1; ; part++) {
+            string gC, gD1, gD2;
+            if (!branch->getAttr("gC" + convertIntToString(part), gC))
+                break;
+            branch->getAttr("gD1" + convertIntToString(part), gD1);
+            branch->getAttr("gD2" + convertIntToString(part), gD2);
+            out << ID << '\t' << part << '\t' << gC << '\t' << gD1 << '\t' << gD2 << endl;
+        }
+    }
+    out.close();
+    cout << "Concordance factors per branch and tree printed to " << filename << endl;
+    
     if (!params.site_concordance_partition || !tree->isSuperTree())
         return;
     // print partition-wise concordant/discordant sites
-    filename = prefix + ".cf.stat2";
+    filename = prefix + ".cf.stat_loci";
     out.open(filename);
     out << "# Concordance factor statistics for loci" << endl
     << "# This file can be read in MS Excel or in R with command:" << endl
@@ -3998,20 +4056,18 @@ void assignBranchSupportNew(Params &params) {
     << "#   sC: Number of concordant sites averaged over " << params.site_concordance << " quartets" << endl
     << "#   sD1: Number of discordant sites for alternative quartet 1" << endl
     << "#   sD2: Number of discordant sites for alternative quartet 2" << endl
+    << "# NOTE: NA means that locus is not decisive for branch" << endl
     << "ID\tPartID\tsC\tsD1\tsD2" << endl;
     for (brit = branches.begin(); brit != branches.end(); brit++) {
         Neighbor *branch = brit->second->findNeighbor(brit->first);
         int ID = brit->second->id;
         for (int part = 1; ; part++) {
-            double sC, sD1, sD2;
-            string key = "sC" + convertIntToString(part);
-            if (!branch->getAttr(key, sC))
+            string sC, sD1, sD2;
+            if (!branch->getAttr("sC" + convertIntToString(part), sC))
                 break;
-            key = "sD1" + convertIntToString(part);
-            if (!branch->getAttr(key, sD1))
+            if (!branch->getAttr("sD1" + convertIntToString(part), sD1))
                 break;
-            key = "sD2" + convertIntToString(part);
-            if (!branch->getAttr(key, sD2))
+            if (!branch->getAttr("sD2" + convertIntToString(part), sD2))
                 break;
             out << ID << '\t' << part << '\t' << sC << '\t' << sD1 << '\t' << sD2 << endl;
         }

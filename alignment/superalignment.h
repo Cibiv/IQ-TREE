@@ -76,7 +76,7 @@ public:
     /** read partition as files in a directory */
     void readPartitionDir(Params &params);
 
-    void printPartition(const char *filename);
+    void printPartition(const char *filename, const char *aln_file);
     
     void printPartitionRaxml(const char *filename);
     
@@ -251,7 +251,7 @@ public:
      @param quartet ID of four taxa
      @param[out] support number of sites supporting 12|34, 13|24 and 14|23
      */
-    virtual void computeQuartetSupports(IntVector &quartet, vector<size_t> &support);
+    virtual void computeQuartetSupports(IntVector &quartet, vector<int64_t> &support);
     
 	/**
 		@return unconstrained log-likelihood (without a tree)

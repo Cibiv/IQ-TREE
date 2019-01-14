@@ -434,6 +434,8 @@ struct IntStringCmp
 typedef set<IntString*, IntStringCmp> IntStringSet;
 
 void MTree::printBranchLength(ostream &out, int brtype, bool print_slash, Neighbor *length_nei) {
+    if (length_nei->length == -1.0)
+        return; // NA branch length
     int prec = 10;
 	double length = length_nei->length;
     if (brtype & WT_BR_SCALE) length *= len_scale;
@@ -684,7 +686,7 @@ void MTree::readTree(istream &in, bool &is_rooted)
         Node *node;
         parseFile(in, ch, node, branch_len);
         // 2018-01-05: assuming rooted tree if root node has two children
-        if (is_rooted || !branch_len.empty() || node->degree() == 2) {
+        if (is_rooted || (!branch_len.empty() && branch_len[0] != 0.0) || node->degree() == 2) {
             if (branch_len.empty())
                 branch_len.push_back(-1.0);
             if (branch_len[0] == -1.0) branch_len[0] = 0.0;
@@ -695,6 +697,7 @@ void MTree::readTree(istream &in, bool &is_rooted)
             root->addNeighbor(node, branch_len);
             node->addNeighbor(root, branch_len);
             leafNum++;
+            rooted = true;
         } else { // assign root to one of the neighbor of node, if any
             FOR_NEIGHBOR_IT(node, NULL, it)
             if ((*it)->node->isLeaf()) {
@@ -1105,7 +1108,7 @@ void MTree::getBranches(NodeVector &nodes, NodeVector &nodes2, Node *node, Node 
     //for (NeighborVec::iterator it = node->neighbors.begin(); it != node->neighbors.end(); it++)
     //if ((*it)->node != dad)   {
     FOR_NEIGHBOR_IT(node, dad, it) {
-        if (!post_traversal)
+        if (!post_traversal) {
             if (node->id < (*it)->node->id) {
                 nodes.push_back(node);
                 nodes2.push_back((*it)->node);
@@ -1113,8 +1116,9 @@ void MTree::getBranches(NodeVector &nodes, NodeVector &nodes2, Node *node, Node 
                 nodes.push_back((*it)->node);
                 nodes2.push_back(node);
             }
+        }
         getBranches(nodes, nodes2, (*it)->node, node, post_traversal);
-        if (post_traversal)
+        if (post_traversal) {
             if (node->id < (*it)->node->id) {
                 nodes.push_back(node);
                 nodes2.push_back((*it)->node);
@@ -1122,6 +1126,7 @@ void MTree::getBranches(NodeVector &nodes, NodeVector &nodes2, Node *node, Node 
                 nodes.push_back((*it)->node);
                 nodes2.push_back(node);
             }
+        }
     }
 }
 

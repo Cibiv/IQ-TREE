@@ -1535,7 +1535,7 @@ void parseArg(int argc, char *argv[], Params &params) {
                     throw "Positive --scf please";
                 continue;
             }
-            if (strcmp(argv[cnt], "--scf-part") == 0) {
+            if (strcmp(argv[cnt], "--scf-part") == 0 || strcmp(argv[cnt], "--cf-verbose") == 0) {
                 params.site_concordance_partition = true;
                 continue;
             }
@@ -1911,7 +1911,7 @@ void parseArg(int argc, char *argv[], Params &params) {
             if (strcmp(argv[cnt], "-rclusterf") == 0 || strcmp(argv[cnt], "--rclusterf") == 0) {
 				cnt++;
 				if (cnt >= argc)
-					throw "Use -rcluster <percent>";
+					throw "Use -rclusterf <percent>";
                 params.partfinder_rcluster = convert_double(argv[cnt]);
                 if (params.partfinder_rcluster < 0 || params.partfinder_rcluster > 100)
                     throw "rcluster percentage must be between 0 and 100";
@@ -1926,6 +1926,8 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.partfinder_rcluster_max = convert_int(argv[cnt]);
                 if (params.partfinder_rcluster_max <= 0)
                     throw "rcluster-max must be between > 0";
+                if (params.partfinder_rcluster == 100)
+                    params.partfinder_rcluster = 99.9999;
 				continue;
             }
 
@@ -4170,7 +4172,7 @@ void usage_iqtree(char* argv[], bool full_command) {
     << "  --scf NUMBER         Number of quartets for site concordance factor (sCF)" << endl
     << "  -s FILE              Sequence alignment for --scf" << endl
     << "  -p FILE|DIR          Partition file or directory for --scf" << endl
-    << "  --scf-part           Write sCF per partition to .cf.stat2 file" << endl
+    << "  --cf-verbose         Write CF per tree/locus to cf.stat_tree/_loci" << endl
 
     << endl;
     

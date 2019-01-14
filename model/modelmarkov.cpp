@@ -515,7 +515,19 @@ void ModelMarkov::computeTransMatrix(double time, double *trans_matrix, int mixt
 
 	/* compute P(t) */
 	double evol_time = time / total_num_subst;
-	double exptime[num_states];
+
+    VectorXd eval_exp(num_states);
+    ArrayXd eval = Map<ArrayXd,Aligned>(eigenvalues, num_states);
+    eval_exp = (eval*evol_time).exp().matrix();
+    Map<Matrix<double,Dynamic,Dynamic,RowMajor>,Aligned> evectors(eigenvectors, num_states, num_states);
+    Map<Matrix<double,Dynamic,Dynamic,RowMajor>,Aligned> inv_evectors(inv_eigenvectors, num_states, num_states);
+    MatrixXd res = evectors * eval_exp.asDiagonal() * inv_evectors;
+    Map<Matrix<double,Dynamic,Dynamic,RowMajor> >map_trans(trans_matrix,num_states,num_states);
+    map_trans = res;
+    return;
+    
+    /*
+    double exptime[num_states];
 	int i, j, k;
 
 	for (i = 0; i < num_states; i++)
@@ -524,7 +536,7 @@ void ModelMarkov::computeTransMatrix(double time, double *trans_matrix, int mixt
 	int row_offset;
 	for (i = 0, row_offset = 0; i < num_states; i++, row_offset+=num_states) {
 		double *trans_row = trans_matrix + row_offset;
-		for (j = i+1; j < num_states; j ++) { 
+		for (j = i+1; j < num_states; j ++) {
 			// compute upper triangle entries
 			double *trans_entry = trans_row + j;
 //			double *coeff_entry = eigen_coeff + ((row_offset+j)*num_states);
@@ -545,6 +557,7 @@ void ModelMarkov::computeTransMatrix(double time, double *trans_matrix, int mixt
 			sum += trans_row[j];
 		trans_row[i] = 1.0 - sum; // update diagonal entry
 	}
+    */
 //	delete [] exptime;
 }
 
@@ -594,6 +607,18 @@ void ModelMarkov::computeTransDerv(double time, double *trans_matrix,
     if (!is_reversible) {
         computeTransMatrix(time, trans_matrix);
         // First derivative = Q * e^(Qt)
+        Map<Matrix<double, Dynamic, Dynamic, RowMajor> > trans_mat(trans_matrix, num_states, num_states);
+        Map<Matrix<double, Dynamic, Dynamic, RowMajor> > rate_mat(rate_matrix, num_states, num_states);
+        MatrixXd prod = rate_mat * trans_mat;
+        Map<Matrix<double, Dynamic, Dynamic, RowMajor> > derv1_mat(trans_derv1, num_states, num_states);
+        derv1_mat = prod;
+
+        // Second derivative = Q * Q * e^(Qt)
+        prod = rate_mat * prod;
+        Map<Matrix<double, Dynamic, Dynamic, RowMajor> > derv2_mat(trans_derv2, num_states, num_states);
+        derv2_mat = prod;
+
+        /*
         for (i = 0; i < num_states; i++)
             for (j = 0; j < num_states; j++) {
                 double val = 0.0;
@@ -610,10 +635,32 @@ void ModelMarkov::computeTransDerv(double time, double *trans_matrix,
                     val += rate_matrix[i*num_states+k] * trans_derv1[k*num_states+j];
                 trans_derv2[i*num_states+j] = val;
             }
+         */
         return;
     }
 
 	double evol_time = time / total_num_subst;
+    
+    ArrayXd eval = Map<ArrayXd,Aligned>(eigenvalues, num_states);
+    ArrayXd eval_exp = (eval*evol_time).exp();
+    ArrayXd eval_exp_derv1 = eval_exp*eval;
+    ArrayXd eval_exp_derv2 = eval_exp_derv1*eval;
+
+    Map<Matrix<double,Dynamic,Dynamic,RowMajor>,Aligned> evectors(eigenvectors, num_states, num_states);
+    Map<Matrix<double,Dynamic,Dynamic,RowMajor>,Aligned> inv_evectors(inv_eigenvectors, num_states, num_states);
+    MatrixXd res = evectors * eval_exp.matrix().asDiagonal() * inv_evectors;
+    Map<Matrix<double,Dynamic,Dynamic,RowMajor> >map_trans(trans_matrix,num_states,num_states);
+    map_trans = res;
+
+    res = evectors * eval_exp_derv1.matrix().asDiagonal() * inv_evectors;
+    Map<Matrix<double,Dynamic,Dynamic,RowMajor> >map_derv1(trans_derv1,num_states,num_states);
+    map_derv1 = res;
+
+    res = evectors * eval_exp_derv2.matrix().asDiagonal() * inv_evectors;
+    Map<Matrix<double,Dynamic,Dynamic,RowMajor> >map_derv2(trans_derv2,num_states,num_states);
+    map_derv2 = res;
+
+    /*
 	double exptime[num_states];
 
 	for (i = 0; i < num_states; i++)
@@ -643,6 +690,7 @@ void ModelMarkov::computeTransDerv(double time, double *trans_matrix,
 			}
 		}
 	}
+     */
 //	delete [] exptime;
 }
 
@@ -888,14 +936,15 @@ bool ModelMarkov::getVariables(double *variables) {
 double ModelMarkov::targetFunk(double x[]) {
 	bool changed = getVariables(x);
 
-    if (state_freq[num_states-1] < 0) return 1.0e+30;
+//    if (state_freq[num_states-1] < 0)
+//        return 1.0e+30;
 
 	if (changed) {
 		decomposeRateMatrix();
 		ASSERT(phylo_tree);
 		phylo_tree->clearAllPartialLH();
-        if (nondiagonalizable) // matrix is ill-formed
-            return 1.0e+30;
+//        if (nondiagonalizable) // matrix is ill-formed
+//            return 1.0e+30;
 	}
 
     // avoid numerical issue if state_freq is too small
@@ -903,12 +952,11 @@ double ModelMarkov::targetFunk(double x[]) {
         if (state_freq[i] < 0)
             return 1.0e+30;
 
-    if (!is_reversible) {
-        for (int i = 0; i < num_states; i++)
-            if (state_freq[i] < MIN_FREQUENCY)
-                return 1.0e+30;
-    }
-    
+//    if (!is_reversible) {
+//        for (int i = 0; i < num_states; i++)
+//            if (state_freq[i] < MIN_FREQUENCY)
+//                return 1.0e+30;
+//    }
 
 	return -phylo_tree->computeLikelihood();
 
