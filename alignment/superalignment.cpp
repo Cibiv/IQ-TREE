@@ -34,13 +34,6 @@ SuperAlignment::SuperAlignment(Params &params) : Alignment()
     
     init();
 
-    if (params.print_conaln) {
-        string str = params.out_prefix;
-        str = params.out_prefix;
-        str += ".conaln";
-        printCombinedAlignment(str.c_str());
-    }
-    
     cout << "Degree of missing data: " << computeMissingData() << endl;
     
 #ifdef _OPENMP
@@ -87,7 +80,9 @@ void SuperAlignment::readFromParams(Params &params) {
         << "\t" << (*it)->getNSite() << "\t" << (*it)->num_informative_sites
         << "\t" << (*it)->getNSite()-(*it)->num_variant_sites << "\t"
         << (*it)->model_name << "\t" << (*it)->name << endl;
-        if ((*it)->num_informative_sites == 0) {
+        if ((*it)->num_variant_sites == 0) {
+            outWarning("No variant sites in partition " + (*it)->name);
+        } else if ((*it)->num_informative_sites == 0) {
             outWarning("No parsimony-informative sites in partition " + (*it)->name);
         }
     }
@@ -484,12 +479,12 @@ void SuperAlignment::readPartitionDir(Params &params) {
     }
 }
 
-void SuperAlignment::printPartition(const char *filename) {
+void SuperAlignment::printPartition(const char *filename, const char *aln_file) {
     try {
         ofstream out;
         out.exceptions(ios::failbit | ios::badbit);
         out.open(filename);
-        out << "#nexus" << endl << "[ partition information for alignment written in .conaln file ]" << endl
+        out << "#nexus" << endl << "[ partition information for alignment written in " << aln_file <<" file ]" << endl
         << "begin sets;" << endl;
         int part; int start_site;
         for (part = 0, start_site = 1; part < partitions.size(); part++) {
@@ -499,15 +494,23 @@ void SuperAlignment::printPartition(const char *filename) {
             out << "  charset " << name << " = " << start_site << "-" << end_site-1 << ";" << endl;
             start_site = end_site;
         }
-        out << "  charpartition mymodels =" << endl;
-        for (part = 0; part < partitions.size(); part++) {
-            string name = partitions[part]->name;
-            replace(name.begin(), name.end(), '+', '_');
-            if (part > 0) out << "," << endl;
-//            out << "    " << at(part)->getModelNameParams() << ":" << name;
-            out << "    " << partitions[part]->model_name << ":" << name;
+        bool ok_model = true;
+        for (part = 0; part < partitions.size(); part++)
+            if (partitions[part]->model_name.empty()) {
+                ok_model = false;
+                break;
+            }
+        if (ok_model) {
+            out << "  charpartition mymodels =" << endl;
+            for (part = 0; part < partitions.size(); part++) {
+                string name = partitions[part]->name;
+                replace(name.begin(), name.end(), '+', '_');
+                if (part > 0) out << "," << endl;
+    //            out << "    " << at(part)->getModelNameParams() << ":" << name;
+                out << "    " << partitions[part]->model_name << ":" << name;
+            }
+            out << ";" << endl;
         }
-        out << ";" << endl;
         out << "end;" << endl;
         out.close();
         cout << "Partition information was printed to " << filename << endl;
@@ -536,14 +539,22 @@ void SuperAlignment::printBestPartition(const char *filename) {
             replace(pos.begin(), pos.end(), ',' , ' ');
             out << pos << ";" << endl;
         }
-        out << "  charpartition mymodels =" << endl;
-        for (part = 0; part < partitions.size(); part++) {
-            string name = partitions[part]->name;
-            replace(name.begin(), name.end(), '+', '_');
-            if (part > 0) out << "," << endl;
-            out << "    " << partitions[part]->model_name << ": " << name;
+        bool ok_model = true;
+        for (part = 0; part < partitions.size(); part++)
+            if (partitions[part]->model_name.empty()) {
+                ok_model = false;
+                break;
+            }
+        if (ok_model) {
+            out << "  charpartition mymodels =" << endl;
+            for (part = 0; part < partitions.size(); part++) {
+                string name = partitions[part]->name;
+                replace(name.begin(), name.end(), '+', '_');
+                if (part > 0) out << "," << endl;
+                out << "    " << partitions[part]->model_name << ": " << name;
+            }
+            out << ";" << endl;
         }
-        out << ";" << endl;
         out << "end;" << endl;
         out.close();
         cout << "Partition information was printed to " << filename << endl;
@@ -1199,7 +1210,10 @@ void SuperAlignment::createBootstrapAlignment(int *pattern_freq, const char *spe
 		// resampling sites within genes
 		int offset = 0;
 		for (vector<Alignment*>::iterator it = partitions.begin(); it != partitions.end(); it++) {
-            (*it)->createBootstrapAlignment(pattern_freq + offset, NULL, rstream);
+            if (spec && strncmp(spec, "SCALE=", 6) == 0)
+                (*it)->createBootstrapAlignment(pattern_freq + offset, spec, rstream);
+            else
+                (*it)->createBootstrapAlignment(pattern_freq + offset, NULL, rstream);
 			offset += (*it)->getNPattern();
 		}
 	}
@@ -1450,11 +1464,12 @@ Alignment *SuperAlignment::concatenateAlignments(set<int> &ids) {
 
 Alignment *SuperAlignment::concatenateAlignments() {
     vector<SeqType> seq_types;
+    vector<char*> genetic_codes;
     vector<set<int> > ids;
     for (int i = 0; i < partitions.size(); i++) {
         bool found = false;
         for (int j = 0; j < seq_types.size(); j++)
-            if (partitions[i]->seq_type == seq_types[j]) {
+            if (partitions[i]->seq_type == seq_types[j] && partitions[i]->genetic_code == genetic_codes[j]) {
                 ids[j].insert(i);
                 found = true;
                 break;
@@ -1463,6 +1478,7 @@ Alignment *SuperAlignment::concatenateAlignments() {
             continue;
         // create a new partition
         seq_types.push_back(partitions[i]->seq_type);
+        genetic_codes.push_back(partitions[i]->genetic_code);
         ids.push_back(set<int>());
         ids.back().insert(i);
     }

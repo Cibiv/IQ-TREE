@@ -6,17 +6,34 @@
 //
 
 #include "phylosupertree.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 void PhyloTree::computeSiteConcordance(map<string,string> &meanings) {
     BranchVector branches;
     getInnerBranches(branches);
-    for (auto it = branches.begin(); it != branches.end(); it++) {
-        computeSiteConcordance((*it), params->site_concordance, randstream);
+#ifdef _OPENMP
+#pragma omp parallel
+    {
+        int *rstream;
+        init_random(params->ran_seed + omp_get_thread_num(), false, &rstream);
+#pragma omp for
+#else
+        int *rstream = randstream;
+#endif
+    for (auto ii = 0; ii < branches.size(); ii++) {
+        BranchVector::iterator it = branches.begin()+ii;
+        computeSiteConcordance((*it), params->site_concordance, rstream);
         Neighbor *nei = it->second->findNeighbor(it->first);
-        double sCF;
-        GET_ATTR(nei, sCF);
+        double sCF = 0.0;
+        if (!GET_ATTR(nei, sCF))
+            continue;
 
-        string sup_str = convertDoubleToString(sCF);
+        stringstream tmp;
+        tmp.precision(3);
+        tmp << sCF;
+        string sup_str = tmp.str();
         Node *node = it->second;
         if (Params::getInstance().newick_extended_format) {
             if (node->name.empty() || node->name.back() != ']') {
@@ -29,13 +46,21 @@ void PhyloTree::computeSiteConcordance(map<string,string> &meanings) {
             node->name += sup_str;
         }
     }
+#ifdef _OPENMP
+        finish_random(rstream);
+    }
+#endif
     meanings.insert({"sCF", "Site concordance factor (%) averaged over " + convertIntToString(params->site_concordance) +  " quartets"});
     meanings.insert({"sDF1", "Site discordance factor (%) for alternative quartet 1"});
     meanings.insert({"sDF2", "Site discordance factor (%) for alternative quartet 2"});
     meanings.insert({"sN", "Number of informative sites averaged over " + convertIntToString(params->site_concordance) +  " quartets"});
 }
 
-void Alignment::computeQuartetSupports(IntVector &quartet, vector<size_t> &support) {
+void Alignment::computeQuartetSupports(IntVector &quartet, vector<int64_t> &support) {
+    // sanity check e.g. when having rooted tree
+    for (auto q = quartet.begin(); q != quartet.end(); q++)
+        ASSERT(*q < getNSeq());
+        
     for (auto pat = begin(); pat != end(); pat++) {
         if (!pat->isInformative()) continue;
         bool informative = true;
@@ -54,7 +79,7 @@ void Alignment::computeQuartetSupports(IntVector &quartet, vector<size_t> &suppo
     }
 }
 
-void SuperAlignment::computeQuartetSupports(IntVector &quartet, vector<size_t> &support) {
+void SuperAlignment::computeQuartetSupports(IntVector &quartet, vector<int64_t> &support) {
     for (int part = 0; part < partitions.size(); part++) {
         IntVector part_quartet;
         for (auto i = quartet.begin(); i != quartet.end(); i++) {
@@ -66,10 +91,11 @@ void SuperAlignment::computeQuartetSupports(IntVector &quartet, vector<size_t> &
         if (part_quartet.size() != quartet.size())
             continue;
         if (Params::getInstance().site_concordance_partition) {
-            vector<size_t> part_support;
+            vector<int64_t> part_support;
             part_support.resize(3, 0);
             partitions[part]->computeQuartetSupports(part_quartet, part_support);
-            for (int j = 0; j < 3; j++) {
+            for (int j = 0; j < 3; j++) if (part_support[j] > 0) {
+                ASSERT(support[part*3+3+j] >= 0);
                 support[part*3+3+j] += part_support[j];
                 support[j] += part_support[j];
             }
@@ -85,6 +111,9 @@ void PhyloTree::computeSiteConcordance(Branch &branch, int nquartets, int *rstre
     // extract the taxa from the two left subtrees
     int id = 0;
     FOR_NEIGHBOR_DECLARE(branch.first, branch.second, it) {
+        // 2018-12-11: do not consider internal branch at the root
+        if (rooted && (*it)->node == root)
+            return;
         getTaxaID(taxa[id], (*it)->node, branch.first);
         id++;
         if (id > 2)
@@ -93,10 +122,25 @@ void PhyloTree::computeSiteConcordance(Branch &branch, int nquartets, int *rstre
 
     // extract the taxa from the two right subtrees
     FOR_NEIGHBOR(branch.second, branch.first, it) {
+        // 2018-12-11: do not consider internal branch at the root
+        if (rooted && (*it)->node == root)
+            return;
         getTaxaID(taxa[id], (*it)->node, branch.second);
         id++;
         if (id > 4)
             outError(__func__, " only work with bifurcating tree");
+    }
+    
+    ASSERT(id == 4);
+    
+    // 2018-12-11: remove root taxon from taxa for rooted tree
+    if (rooted) {
+        for (auto it = taxa.begin(); it != taxa.end(); it++)
+            for (auto it2 = it->begin(); it2 != it->end(); it2++)
+                if (*it2 == leafNum-1) {
+                    it->erase(it2);
+                    break;
+                }
     }
     
     double sCF = 0.0; // concordance factor
@@ -105,11 +149,39 @@ void PhyloTree::computeSiteConcordance(Branch &branch, int nquartets, int *rstre
     double sN = 0.0;
     size_t sum_sites = 0;
     int i;
-    vector<size_t> support;
+    vector<int64_t> support;
     support.resize(3, 0);
     // reserve size for partition-wise concordant/discordant sites
-    if (Params::getInstance().site_concordance_partition && isSuperTree())
-        support.resize(((PhyloSuperTree*)this)->size()*3+3, 0);
+    if (Params::getInstance().site_concordance_partition && aln->isSuperAlignment()) {
+        SuperAlignment *saln = (SuperAlignment*)aln;
+        support.resize(saln->partitions.size()*3+3, 0);
+        // check for gene trees not decisive for this branch
+        StrVector taxname;
+        getTaxaName(taxname);
+        int part = 0;
+        for (auto part_aln = saln->partitions.begin(); part_aln != saln->partitions.end(); part_aln++, part++) {
+            // get the taxa names of the partition tree
+            StringIntMap name_map;
+            for (i = 0; i < (*part_aln)->getNSeq(); i++)
+                name_map[(*part_aln)->getSeqName(i)] = i;
+            
+            // check that at least one taxon from each subtree is present in partition tree
+            for (auto it = taxa.begin(); it != taxa.end(); it++) {
+                bool present = false;
+                for (auto it2 = it->begin(); it2 != it->end(); it2++) {
+                    if (name_map.find(taxname[*it2]) != name_map.end()) {
+                        present = true;
+                        break;
+                    }
+                }
+                if (!present) {
+                    // not decisive
+                    support[part*3+3] = support[part*3+4] = support[part*3+5] = -1;
+                    break;
+                }
+            }
+        }
+    }
     for (i = 0; i < nquartets; i++) {
         int j;
         // get a random quartet
@@ -138,15 +210,12 @@ void PhyloTree::computeSiteConcordance(Branch &branch, int nquartets, int *rstre
     PUT_ATTR(nei, sDF1);
     PUT_ATTR(nei, sDF2);
     // insert key-value for partition-wise con/discordant sites
+    string keys[] = {"sC", "sD1", "sD2"};
     for (i = 3; i < support.size(); i++) {
-        string key;
-        switch (i%3) {
-            case 0: key = "sC"; break;
-            case 1: key = "sD1"; break;
-            case 2: key = "sD2"; break;
-        }
-        key = key + convertIntToString(i/3);
-        nei->putAttr(key, (double)support[i]/nquartets);
+        if (support[i] >= 0)
+            nei->putAttr(keys[i%3] + convertIntToString(i/3), (double)support[i]/nquartets);
+        else
+            nei->putAttr(keys[i%3] + convertIntToString(i/3), "NA");
     }
 }
 
@@ -168,9 +237,7 @@ void PhyloTree::computeGeneConcordance(MTreeSet &trees, map<string,string> &mean
     supports[0].resize(branches.size(), 0);
     supports[1].resize(branches.size(), 0);
     supports[2].resize(branches.size(), 0);
-    StrVector occurence_trees; // list of tree IDs where each split occurs
-    if (verbose_mode >= VB_MED)
-        occurence_trees.resize(branches.size());
+    string prefix[3] = {"gC", "gD1", "gD2"};
     int treeid, taxid;
     for (treeid = 0; treeid < trees.size(); treeid++) {
         MTree *tree = trees[treeid];
@@ -204,6 +271,8 @@ void PhyloTree::computeGeneConcordance(MTreeSet &trees, map<string,string> &mean
         int id, qid;
         for (id = 0, qid = 0; qid < subtrees.size(); id++, qid += 4)
         {
+            Neighbor *nei = branches[id].second->findNeighbor(branches[id].first);
+
             bool decisive = true;
             int i;
             for (i = 0; i < 4; i++) {
@@ -212,6 +281,11 @@ void PhyloTree::computeGeneConcordance(MTreeSet &trees, map<string,string> &mean
                     break;
                 }
             }
+            if (!decisive && params->site_concordance_partition) {
+                for (i = 0; i < 3; i++)
+                    nei->putAttr(prefix[i] + convertIntToString(treeid+1), "NA");
+            }
+
             if (!decisive) continue;
             
             decisive_counts[id]++;
@@ -221,10 +295,13 @@ void PhyloTree::computeGeneConcordance(MTreeSet &trees, map<string,string> &mean
                 Split *subsp = this_split.extractSubSplit(taxa_mask);
                 if (subsp->shouldInvert())
                     subsp->invert();
+                int concordant = 0;
                 if (hash_ss.findSplit(subsp)) {
                     supports[i][id]++;
-                    if (verbose_mode >= VB_MED && i == 0)
-                        occurence_trees[id] += convertIntToString(treeid+1) + " ";
+                    concordant = 1;
+                }
+                if (params->site_concordance_partition) {
+                    nei->putAttr(prefix[i] + convertIntToString(treeid+1), concordant);
                 }
                 delete subsp;
             }
@@ -233,6 +310,8 @@ void PhyloTree::computeGeneConcordance(MTreeSet &trees, map<string,string> &mean
     }
     
     for (int i = 0; i < branches.size(); i++) {
+        if (decisive_counts[i] == 0)
+            continue;
         Neighbor *nei = branches[i].second->findNeighbor(branches[i].first);
         double gCF = round((double)supports[0][i]/decisive_counts[i] * 10000)/100;
         double gDF1 = round((double)supports[1][i]/decisive_counts[i] * 10000)/100;
@@ -260,16 +339,13 @@ void PhyloTree::computeGeneConcordance(MTreeSet &trees, map<string,string> &mean
                 node->name.append("/");
             node->name.append(tmp.str());
         }
-        if (verbose_mode >= VB_MED) {
-            cout << node->name << " " << occurence_trees[i] << endl;
-        }
     }
     for (vector<Split*>::reverse_iterator it = subtrees.rbegin(); it != subtrees.rend(); it++)
         delete (*it);
 
     meanings.insert({"gCF", "Gene concordance factor (%)"});
-    meanings.insert({"gDF1", "Gene discordance factor (%) for alternative split 1"});
-    meanings.insert({"gDF2", "Gene discordance factor (%) for alternative split 2"});
+    meanings.insert({"gDF1", "Gene discordance factor (%) for NNI-1 branch"});
+    meanings.insert({"gDF2", "Gene discordance factor (%) for NNI-2 branch"});
     meanings.insert({"gN", "Number of trees decisive for the branch"});
 }
 

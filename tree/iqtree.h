@@ -227,13 +227,13 @@ public:
      *  @brief get non-tabu branches from a set of branches
      *
      *  @param
-     *  	allBranches[IN] the inital branches
+     *      allBranches[IN] the inital branches
      *  @param
-     *  	initTabuSplits[IN] the tabu splits
+     *      initTabuSplits[IN] the tabu splits
      *  @param
-     *		nonTabuBranches[OUT] non-tabu branches from \a allBranches
-     *	@param[OUT]
-     *		tabuBranches branches that are tabu
+     *        nonTabuBranches[OUT] non-tabu branches from \a allBranches
+     *    @param[OUT]
+     *        tabuBranches branches that are tabu
      */
     void getNonTabuBranches(Branches& allBranches, SplitGraph& tabuSplits, Branches& nonTabuBranches, Branches* tabuBranches = NULL);
 
@@ -247,8 +247,8 @@ public:
     int removeNNIBranches(NodeVector& nodes1, NodeVector& nodes2, unordered_map<string, NNIMove> nnis);
 
     /**
-     * 		Perform a series of random NNI moves
-     * 		@return the perturbed newick string
+     *         Perform a series of random NNI moves
+     *         @return the perturbed newick string
      */
     string doRandomNNIs(bool storeTabu = false);
 
@@ -310,8 +310,6 @@ public:
      */
     double swapTaxa(PhyloNode *node1, PhyloNode *node2);
 
-    /** collect boostrap trees from workers to master */
-    void collectBootTrees();
 
     /**
             perform tree search
@@ -322,7 +320,7 @@ public:
     /**
      *  Wrapper function that uses either PLL or IQ-TREE to optimize the branch length
      *  @param maxTraversal
-     *  	maximum number of tree traversal for branch length optimization
+     *      maximum number of tree traversal for branch length optimization
      *  @return NEWICK tree string
      */
     string optimizeBranches(int maxTraversal = 100);
@@ -335,7 +333,7 @@ public:
     double computeLogL();
 
     /**
-     *	Print scores of tree used for generating offsprings
+     *    Print scores of tree used for generating offsprings
      */
     void printBestScores();
 
@@ -420,17 +418,17 @@ public:
     void getSplitBranches(Branches &branches, SplitIntMap &splits, Node *dad = NULL, Node *node = NULL);
 
     /**
-     * 		Do fastNNI using PLL
+     *         Do fastNNI using PLL
      *
      *      @param nniCount (OUT) number of NNIs applied
-     * 		@param nniSteps (OUT) number of NNI steps done
+     *         @param nniSteps (OUT) number of NNI steps done
      */
     double pllOptimizeNNI(int &nniCount, int &nniSteps, SearchInfo &searchinfo);
 
     /**
-     * 		@brief Perform NNI search on the current tree topology
-     * 		@return <number_of_NNIs, number_of_NNI_steps>
-     * 		This function will automatically use the selected kernel (either PLL or IQ-TREE)
+     *         @brief Perform NNI search on the current tree topology
+     *         @return <number_of_NNIs, number_of_NNI_steps>
+     *         This function will automatically use the selected kernel (either PLL or IQ-TREE)
      */
     pair<int, int> doNNISearch();
 
@@ -779,8 +777,8 @@ public:
     /** bootstrap tree strings with branch lengths, for -wbtl option */
 //    StrVector boot_trees_brlen;
 
-	/** number of multiple optimal trees per replicate */
-	IntVector boot_counts;
+    /** number of multiple optimal trees per replicate */
+    IntVector boot_counts;
 
     /** corresponding RELL log-likelihood */
     DoubleVector boot_logl;
@@ -817,8 +815,8 @@ public:
     /** @return bootstrap correlation coefficient for assessing convergence */
     double computeBootstrapCorrelation();
 
-	int getDelete() const;
-	void setDelete(int _delete);
+    int getDelete() const;
+    void setDelete(int _delete);
 
 protected:
     /**** NNI cutoff heuristic *****/
@@ -878,9 +876,9 @@ protected:
     void deleteNonTabuLeaves(PhyloNodeVector &del_leaves);
 
     /**
-     * 		delete a set of leaves from tree
-     * 		non-cherry leaves are selected first
-     * 		@param del_leaves (OUT) the list of deleted leaves
+     *         delete a set of leaves from tree
+     *         non-cherry leaves are selected first
+     *         @param del_leaves (OUT) the list of deleted leaves
      */
     void deleteNonCherryLeaves(PhyloNodeVector &del_leaves);
 
@@ -965,22 +963,6 @@ protected:
 
     string generateParsimonyTree(int randomSeed);
 
-#ifdef _IQTREE_MPI
-    /**
-     *  Receive trees from other processes and add them to the candidate set
-     *
-     *  @param allTrees
-     *      If true, wait for tree from every node
-     *      If false, only collect trees that have been sent
-     *  @param maxNumTrees
-     *      Only received up to maxNumTrees to prevent the function to block because it can constantly receive
-     *      new trees
-     *  @param updateStopRule
-     *      To update the stop rule or not
-     */
-    bool MPI_CollectTrees(bool allTrees, int maxNumTrees, bool updateStopRule);
-#endif
-
     double doTreePerturbation();
 
     void estimateLoglCutoffBS();
@@ -1014,10 +996,10 @@ public:
     Branches getReducedListOfNNIBranches(Branches &previousNNIBranches);
 
 
-	// Diep added for UFBoot2-Corr
+    // Diep added for UFBoot2-Corr
     void refineBootTrees();
     bool on_refine_btree;
     Alignment* saved_aln_on_refine_btree;
-	vector<IntVector> boot_samples_int;
+    vector<IntVector> boot_samples_int;
 };
 #endif

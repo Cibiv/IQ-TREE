@@ -897,6 +897,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     //params.freq_type = FREQ_EMPIRICAL;
     params.freq_type = FREQ_UNKNOWN;
     params.keep_zero_freq = true;
+    params.min_state_freq = MIN_FREQUENCY;
     params.min_rate_cats = 2;
     params.num_rate_cats = 4;
     params.max_rate_cats = 10;
@@ -1534,7 +1535,7 @@ void parseArg(int argc, char *argv[], Params &params) {
                     throw "Positive --scf please";
                 continue;
             }
-            if (strcmp(argv[cnt], "--scf-part") == 0) {
+            if (strcmp(argv[cnt], "--scf-part") == 0 || strcmp(argv[cnt], "--cf-verbose") == 0) {
                 params.site_concordance_partition = true;
                 continue;
             }
@@ -1808,20 +1809,20 @@ void parseArg(int argc, char *argv[], Params &params) {
                 continue;
             }
             
-            if (strcmp(argv[cnt], "--bisymstat") == 0) {
+            if (strcmp(argv[cnt], "--symstat") == 0 || strcmp(argv[cnt], "--bisymstat") == 0) {
                 params.symtest_stat = true;
                 if (!params.symtest)
                     params.symtest = 1;
                 continue;
             }
 
-            if (strcmp(argv[cnt], "--permsymtest") == 0) {
+            if (strcmp(argv[cnt], "--permsymtest") == 0 || strcmp(argv[cnt], "--maxsymtest") == 0) {
                 cnt++;
                 if (cnt >= argc)
-                    throw "Use --permsymtest INT";
+                    throw "Use --maxsymtest INT";
                 params.symtest_shuffle = convert_int(argv[cnt]);
                 if (params.symtest_shuffle <= 0)
-                    throw "--permsymtest must be positive";
+                    throw "--maxsymtest must be positive";
                 if (!params.symtest)
                     params.symtest = 1;
                 continue;
@@ -1910,7 +1911,7 @@ void parseArg(int argc, char *argv[], Params &params) {
             if (strcmp(argv[cnt], "-rclusterf") == 0 || strcmp(argv[cnt], "--rclusterf") == 0) {
 				cnt++;
 				if (cnt >= argc)
-					throw "Use -rcluster <percent>";
+					throw "Use -rclusterf <percent>";
                 params.partfinder_rcluster = convert_double(argv[cnt]);
                 if (params.partfinder_rcluster < 0 || params.partfinder_rcluster > 100)
                     throw "rcluster percentage must be between 0 and 100";
@@ -1925,6 +1926,8 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.partfinder_rcluster_max = convert_int(argv[cnt]);
                 if (params.partfinder_rcluster_max <= 0)
                     throw "rcluster-max must be between > 0";
+                if (params.partfinder_rcluster == 100)
+                    params.partfinder_rcluster = 99.9999;
 				continue;
             }
 
@@ -2106,7 +2109,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 				if (cnt >= argc)
 					throw "Use -n <#iterations>";
                 if (params.gbo_replicates != 0) {
-                    outError("Ultrafast bootstrap does not work with -n option");
+                    throw("Ultrafast bootstrap does not work with -n option");
                 }
 				params.min_iterations = convert_int(argv[cnt]);
 				params.stop_condition = SC_FIXED_ITERATION;
@@ -2341,6 +2344,18 @@ void parseArg(int argc, char *argv[], Params &params) {
                 continue;
             }
 
+            if (strcmp(argv[cnt], "--min-freq") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --min-freq NUM";
+                params.min_state_freq = convert_double(argv[cnt]);
+                if (params.min_state_freq <= 0)
+                    throw "--min-freq must be positive";
+                if (params.min_state_freq >= 1.0)
+                    throw "--min-freq must be < 1.0";
+                continue;
+            }
+
             if (strcmp(argv[cnt], "--inc-zero-freq") == 0) {
                 params.keep_zero_freq = false;
                 continue;
@@ -2477,11 +2492,11 @@ void parseArg(int argc, char *argv[], Params &params) {
 					throw "Use -blmin <min_branch_length>";
 				params.min_branch_length = convert_double(argv[cnt]);
 				if (params.min_branch_length < 0.0)
-					outError("Negative -blmin not allowed!");
+					throw("Negative -blmin not allowed!");
 				if (params.min_branch_length == 0.0)
-					outError("Zero -blmin is not allowed due to numerical problems");
+					throw("Zero -blmin is not allowed due to numerical problems");
 				if (params.min_branch_length > 0.1)
-					outError("-blmin must be < 0.1");
+					throw("-blmin must be < 0.1");
 
 				continue;
 			}
@@ -2491,7 +2506,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 					throw "Use -blmax <max_branch_length>";
 				params.max_branch_length = convert_double(argv[cnt]);
 				if (params.max_branch_length < 0.5)
-					outError("-blmax smaller than 0.5 is not allowed");
+					throw("-blmax smaller than 0.5 is not allowed");
 				continue;
 			}
             if (strcmp(argv[cnt], "--show-lh") == 0) {
@@ -3006,7 +3021,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 				if (cnt >= argc)
 					throw "Use -bb <#replicates>";
                 if (params.stop_condition == SC_FIXED_ITERATION) {
-                    outError("Ultrafast bootstrap does not work with -fast, -te or -n option");
+                    throw("Ultrafast bootstrap does not work with -fast, -te or -n option");
                 }
 				params.gbo_replicates = convert_int(argv[cnt]);
 //				params.avoid_duplicated_trees = true;
@@ -3198,7 +3213,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 			if (strcmp(argv[cnt], "-fast") == 0 || strcmp(argv[cnt], "--fast") == 0) {
                 // fast search option to resemble FastTree
                 if (params.gbo_replicates != 0) {
-                    outError("Ultrafast bootstrap (-bb) does not work with -fast option");
+                    throw("Ultrafast bootstrap (-bb) does not work with -fast option");
                 }
                 params.numInitTrees = 2;
 				params.min_iterations = 2;
@@ -3232,7 +3247,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 
             if (strcmp(argv[cnt], "--adt-pert") == 0) {
                 if (params.tabu == true) {
-                    outError("option -tabu and --adt-pert cannot be combined");
+                    throw("option -tabu and --adt-pert cannot be combined");
                 }
                 params.adaptPertubation = true;
                 params.stableSplitThreshold = 1.0;
@@ -3325,7 +3340,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 				continue;
 			}
 			if (strcmp(argv[cnt], "-pll") == 0) {
-                outError("-pll option is discontinued.");
+                throw("-pll option is discontinued.");
 				params.pll = true;
 				continue;
 			}
@@ -3413,7 +3428,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 					throw "Use -nni-eval <num_evaluation>";
                 params.nni5_num_eval = convert_int(argv[cnt]);
                 if (params.nni5_num_eval < 1)
-                    outError("Positive -nni-eval expected");
+                    throw("Positive -nni-eval expected");
                 continue;
             }
 
@@ -3423,7 +3438,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 					throw "Use -bl-eval <num_evaluation>";
                 params.brlen_num_traversal = convert_int(argv[cnt]);
                 if (params.brlen_num_traversal < 1)
-                    outError("Positive -bl-eval expected");
+                    throw("Positive -bl-eval expected");
                 continue;
             }
             
@@ -3614,7 +3629,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 			if (strcmp(argv[cnt], "-t") == 0 || strcmp(argv[cnt], "-te") == 0 || strcmp(argv[cnt], "--tree") == 0) {
                 if (strcmp(argv[cnt], "-te") == 0) {
                     if (params.gbo_replicates != 0) {
-                        outError("Ultrafast bootstrap does not work with -te option");
+                        throw("Ultrafast bootstrap does not work with -te option");
                     }
                     params.min_iterations = 0;
                     params.stop_condition = SC_FIXED_ITERATION;
@@ -3692,7 +3707,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 					throw "Use -mixlen <number of mixture branch lengths for heterotachy model>";
 				params.num_mixlen = convert_int(argv[cnt]);
 				if (params.num_mixlen < 1)
-					outError("-mixlen must be >= 1");
+					throw("-mixlen must be >= 1");
 				continue;
 			}
             
@@ -3795,19 +3810,49 @@ void parseArg(int argc, char *argv[], Params &params) {
             if (params.root != NULL && params.is_rooted)
                 throw "Not allowed to specify both -o <taxon> and -root";
 
+            if (params.model_test_and_tree && params.partition_type != BRLEN_OPTIMIZE)
+                throw("-mtree not allowed with edge-linked partition model (-spp or -q)");
+            
+            if (params.do_au_test && params.topotest_replicates == 0)
+                throw("For AU test please specify number of bootstrap replicates via -zb option");
+            
+            if (params.lh_mem_save == LM_MEM_SAVE && params.partition_file)
+                throw("-mem option does not work with partition models yet");
+            
+            if (params.gbo_replicates && params.num_bootstrap_samples)
+                throw("UFBoot (-bb) and standard bootstrap (-b) must not be specified together");
+            
+            if ((params.model_name.find("ONLY") != string::npos || (params.model_name.substr(0,2) == "MF" && params.model_name.substr(0,3) != "MFP")) && (params.gbo_replicates || params.num_bootstrap_samples))
+                throw("ModelFinder only cannot be combined with bootstrap analysis");
+            
+            if (params.num_runs > 1 && params.treeset_file)
+                throw("Can't combine --runs and -z options");
+            
+            if (params.num_runs > 1 && params.lmap_num_quartets >= 0)
+                throw("Can't combine --runs and -lmap options");
+
         }
         // try
         catch (const char *str) {
-            outError(str);
+            if (MPIHelper::getInstance().isMaster())
+                outError(str);
+            else
+                exit(EXIT_SUCCESS);
             //} catch (char *str) {
             //outError(str);
         } catch (string str) {
-            outError(str);
+            if (MPIHelper::getInstance().isMaster())
+                outError(str);
+            else
+                exit(EXIT_SUCCESS);
         } catch (...) {
             string err = "Unknown argument \"";
             err += argv[cnt];
             err += "\"";
-            outError(err);
+            if (MPIHelper::getInstance().isMaster())
+                outError(err);
+            else
+                exit(EXIT_SUCCESS);
         }
 
     } // for
@@ -4150,13 +4195,13 @@ void usage_iqtree(char* argv[], bool full_command) {
     << "  --asr-min NUMBER     Min probability of ancestral state (default: equil freq)" << endl
 
     << endl << "TEST OF SYMMETRY:" << endl
-    << "  --bisymtest               Perform three binomial tests of symmetry" << endl
-    << "  --bisymtest-remove-bad    Do --bisymtest and remove bad partitions" << endl
-    << "  --bisymtest-remove-good   Do --bisymtest and remove good partitions" << endl
-    << "  --bisymtest-type MAR|INT  Use MARginal/INTernal test when removing partitions" << endl
-    << "  --bisymtest-pval NUMER    P-value cutoff (default: 0.05)" << endl
-    << "  --bisymtest-keep-zero     Keep NAs in the tests" << endl
-    << "  --permsymtest NUMBER      Replicates for permutation tests of symmetry" << endl
+    << "  --bisymtest             Perform three binomial tests of symmetry" << endl
+    << "  --maxsymtest NUMBER     Replicates for maximum tests of symmetry" << endl
+    << "  --symtest-remove-bad    Do --bisymtest and remove bad partitions" << endl
+    << "  --symtest-remove-good   Do --bisymtest and remove good partitions" << endl
+    << "  --symtest-type MAR|INT  Use MARginal/INTernal test when removing partitions" << endl
+    << "  --symtest-pval NUMER    P-value cutoff (default: 0.05)" << endl
+    << "  --symtest-keep-zero     Keep NAs in the tests" << endl
 
     << endl << "CONCORDANCE FACTOR ANALYSIS:" << endl
     << "  -t FILE              Reference tree to assign concordance factor" << endl
@@ -4164,7 +4209,7 @@ void usage_iqtree(char* argv[], bool full_command) {
     << "  --scf NUMBER         Number of quartets for site concordance factor (sCF)" << endl
     << "  -s FILE              Sequence alignment for --scf" << endl
     << "  -p FILE|DIR          Partition file or directory for --scf" << endl
-    << "  --scf-part           Write sCF per partition to .cf.stat2 file" << endl
+    << "  --cf-verbose         Write CF per tree/locus to cf.stat_tree/_loci" << endl
 
     << endl;
     
