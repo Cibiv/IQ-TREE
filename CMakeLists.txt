@@ -33,6 +33,16 @@
 #
 # cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DIQTREE_FLAGS=single <source_dir>   (sequential version)
 #
+# Xcode project example usages:
+#------------------------------
+#
+# To generate Xcode project without OpenMP:
+# cmake -G Xcode -DIQTREE_FLAGS=single <source_dir>
+#
+# To generate Xcode project with OpenMP support,
+# assuming you installed LLVM via Homebrew: brew install --with-toolchain llvm
+# cmake -G XCode -DCMAKE_XCODE_ATTRIBUTE_CC=/usr/local/opt/llvm/bin/clang -DCMAKE_XCODE_ATTRIBUTE_CXX=/usr/local/opt/llvm/bin/clang++ <source_dir>
+#
 
 
 # Compile OpenMP version: cmake ....
@@ -61,7 +71,7 @@ endif()
 add_definitions(-I${EIGEN3_INCLUDE_DIR})
 
 # Find Boost library
-find_package(Boost)
+find_package(Boost REQUIRED)
 if(Boost_FOUND)
     add_definitions(-I${Boost_INCLUDE_DIRS})
     add_definitions(-DUSE_BOOST)
@@ -71,9 +81,9 @@ endif()
 # The version number.
 set (iqtree_VERSION_MAJOR 1)
 set (iqtree_VERSION_MINOR 7)
-set (iqtree_VERSION_PATCH "-beta7")
+set (iqtree_VERSION_PATCH "-beta10")
 
-set(BUILD_SHARED_LIBS OFF)
+option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
 
 if (CMAKE_C_COMPILER MATCHES "mpic")
     set(IQTREE_FLAGS "${IQTREE_FLAGS} mpi")
@@ -91,9 +101,9 @@ endif()
 
 if (CMAKE_GENERATOR MATCHES "Xcode")
     set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
-    if (NOT CMAKE_XCODE_ATTRIBUTE_COMPILER_INDEX_STORE_ENABLE)
-        set(CMAKE_XCODE_ATTRIBUTE_COMPILER_INDEX_STORE_ENABLE "No")
-    endif()
+#    if (NOT CMAKE_XCODE_ATTRIBUTE_COMPILER_INDEX_STORE_ENABLE)
+#        set(CMAKE_XCODE_ATTRIBUTE_COMPILER_INDEX_STORE_ENABLE "No")
+#    endif()
 endif()
 
 include_directories("${PROJECT_SOURCE_DIR}")
@@ -301,6 +311,17 @@ if (NOT IQTREE_FLAGS MATCHES "single")
         add_definitions(/MT)
     endif()
 
+
+    if(CLANG AND APPLE)
+        link_directories(${PROJECT_SOURCE_DIR}/libmac)
+    elseif (WIN32 OR UNIX)
+        if (BINARY32)
+            link_directories(${PROJECT_SOURCE_DIR}/lib32)
+        else()
+            link_directories(${PROJECT_SOURCE_DIR}/lib)
+        endif()
+    endif()
+
     if (VCC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
         include_directories("${PROJECT_SOURCE_DIR}/pll") # for PThreads headers
@@ -316,8 +337,13 @@ if (NOT IQTREE_FLAGS MATCHES "single")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -pthread")
     elseif (CLANG)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp=libomp -pthread")
-        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp=libomp")
+        if (APPLE)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -pthread")
+            set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Xpreprocessor -fopenmp -lomp")
+        else()
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -pthread")
+            set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp")
+        endif()
     endif()
 else()
     message("OpenMP        : NONE")
@@ -537,6 +563,7 @@ add_subdirectory(tree)
 option(YAML_CPP_BUILD_TESTS "Enable testing" OFF)
 option(YAML_CPP_BUILD_TOOLS "Enable parse tools" OFF)
 option(YAML_CPP_BUILD_CONTRIB "Enable contrib stuff in library" OFF)
+option(YAML_CPP_INSTALL "Enable generation of install target" OFF)
 add_subdirectory(yaml-cpp)
 add_subdirectory(phylo-yaml)
 
@@ -556,18 +583,6 @@ add_library(kernelavx tree/phylotreeavx.cpp)
 add_library(kernelfma tree/phylokernelfma.cpp)
     if (IQTREE_FLAGS MATCHES "KNL")
         add_library(kernelavx512 tree/phylokernelavx512.cpp)
-    endif()
-endif()
-
-if (IQTREE_FLAGS MATCHES "mpi")
-    add_library(mympi utils/TreeCollection.cpp utils/ObjectStream.cpp)
-endif()
-
-if (NOT IQTREE_FLAGS MATCHES "single")
-    if (BINARY32)
-        link_directories(${PROJECT_SOURCE_DIR}/lib32)
-    else()
-        link_directories(${PROJECT_SOURCE_DIR}/lib)
     endif()
 endif()
 
@@ -627,7 +642,6 @@ endif()
 
 set(THREAD_LIB "")
 if (NOT IQTREE_FLAGS MATCHES "single")
-    link_directories(${PROJECT_SOURCE_DIR}/lib)
     if (MSVC)
         if (BINARY32)
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LIBPATH:${PROJECT_SOURCE_DIR}/lib32")
@@ -636,8 +650,6 @@ if (NOT IQTREE_FLAGS MATCHES "single")
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LIBPATH:${PROJECT_SOURCE_DIR}/lib")
             set(THREAD_LIB "pthreadVC2")
         endif()
-    elseif(CLANG AND APPLE)
-        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${PROJECT_SOURCE_DIR}/libmac")
     elseif(CLANG AND WIN32)
         if (BINARY32)
             target_link_libraries(iqtree ${PROJECT_SOURCE_DIR}/lib32/libiomp5md.dll)
@@ -666,7 +678,6 @@ endif()
 
 # MPI libraries
 if (IQTREE_FLAGS MATCHES "mpi")
-    target_link_libraries(iqtree mympi)
     if (NOT CMAKE_CXX_COMPILER MATCHES "mpi")
         target_link_libraries(iqtree ${MPI_CXX_LIBRARIES})
     endif()

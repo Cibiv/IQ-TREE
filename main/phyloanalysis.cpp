@@ -779,8 +779,11 @@ void printOutfilesInfo(Params &params, IQTree &tree) {
         if (!(params.suppress_output_flags & OUT_TREEFILE)) {
             if (params.model_name.find("ONLY") != string::npos || (params.model_name.substr(0,2)=="MF" && params.model_name.substr(0,3)!="MFP"))
                 cout << "  Tree used for ModelFinder:     " << params.out_prefix << ".treefile" << endl;
-            else
+            else {
                 cout << "  Maximum-likelihood tree:       " << params.out_prefix << ".treefile" << endl;
+                if (params.partition_type == BRLEN_OPTIMIZE && tree.isSuperTree())
+                    cout << "  Partition trees:               " << params.out_prefix << ".parttrees" << endl;
+            }
         }
 //        if (params.snni && params.write_local_optimal_trees) {
 //            cout << "  Locally optimal trees (" << tree.candidateTrees.getNumLocalOptTrees() << "):    " << params.out_prefix << ".suboptimal_trees" << endl;
@@ -3984,20 +3987,27 @@ void assignBranchSupportNew(Params &params) {
         << "#   ID: Branch ID" << endl;
     map<string,string>::iterator mit;
     for (mit = meanings.begin(); mit != meanings.end(); mit++)
-        out << "#   " << mit->first << ": " << mit->second << endl;
+        if (mit->first[0] != '*')
+            out << "#   " << mit->first << ": " << mit->second << endl;
     out << "#   Label: Existing branch label" << endl;
     out << "#   Length: Branch length" << endl;
+    for (mit = meanings.begin(); mit != meanings.end(); mit++)
+        if (mit->first[0] == '*')
+            out << "# " << mit->first << ": " << mit->second << endl;
     out << "ID";
     for (mit = meanings.begin(); mit != meanings.end(); mit++)
-        out << "\t" << mit->first;
+        if (mit->first[0] != '*')
+            out << "\t" << mit->first;
     out << "\tLabel\tLength" << endl;
     for (brit = branches.begin(); brit != branches.end(); brit++) {
         Neighbor *branch = brit->second->findNeighbor(brit->first);
         int ID = brit->second->id;
         out << ID;
         for (mit = meanings.begin(); mit != meanings.end(); mit++) {
+            if (mit->first[0] == '*')
+                continue; // ignore NOTES
             out << '\t';
-            double val = 0.0;
+            string val;
             if (branch->getAttr(mit->first, val))
                 out << val;
             else

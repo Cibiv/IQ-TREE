@@ -1209,6 +1209,9 @@ public:
      */
     bool site_concordance_partition;
 
+    /** TRUE to print trees associated with discordance factor 1 (NNI-1 tree) */
+    bool print_df1_trees;
+    
     /** 1 to compute internode certainty */
     int internode_certainty;
     
@@ -1421,6 +1424,9 @@ public:
     /** FALSE to set zero state frequency to 1e-4.
         Default: FALSE (version <= 1.5.5), TRUE (ver >= 1.5.6) */
     bool keep_zero_freq;
+    
+    /** minimal state frequency for optimisation, default=0.0001 */
+    double min_state_freq;
 
 
     /**

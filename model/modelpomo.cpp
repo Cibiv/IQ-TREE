@@ -29,8 +29,7 @@ ModelPoMo::ModelPoMo(const char *model_name,
 void ModelPoMo::init_mutation_model(const char *model_name,
                                         string model_params,
                                         StateFreqType freq_type,
-                                        string freq_params,
-                                        string pomo_heterozygosity)
+                                        string freq_params)
 {
     // Trick ModelDNA constructor by setting the number of states to 4 (DNA).
     phylo_tree->aln->num_states = n_alleles;
@@ -181,8 +180,7 @@ void ModelPoMo::init(const char *model_name,
     init_mutation_model(model_name,
                         model_params,
                         freq_type,
-                        freq_params,
-                        pomo_heterozygosity);
+                        freq_params);
     init_sampling_method();
     init_boundary_frequencies();
     // Initialize heterozygosity and the scale factor of the mutation rates
@@ -192,7 +190,12 @@ void ModelPoMo::init(const char *model_name,
     init_fixed_parameters(model_params, pomo_heterozygosity);
     set_heterozygosity_boundaries();
     setInitialMutCoeff();
-    rate_matrix = new double[num_states*num_states];
+    //rate_matrix = new double[num_states*num_states];
+    ignore_state_freq = true;
+    normalize_matrix = false;
+    half_matrix = false;
+    delete [] rates;
+    rates = new double[num_states*num_states];
     updatePoMoStatesAndRateMatrix();
     decomposeRateMatrix();
 
@@ -329,11 +332,13 @@ void ModelPoMo::updatePoMoStatesAndRateMatrix () {
         for (j = 0; j < num_states; j++)
             if (i != j) {
                 row_sum +=
-                    (rate_matrix[i*num_states+j] =
+                    (rates[i*num_states+j] =
                      computeProbBoundaryMutation(i, j));
             }
         tot_sum += state_freq[i]*row_sum;
-        rate_matrix[i*num_states+i] = -(row_sum);
+        // diagonal will be handled later, should not assign now
+        //rates[i*num_states+i] = -(row_sum);
+        rates[i*num_states+i] = 0.0;
     }
     // Thu Aug 17 16:11:19 BST 2017; Dom. Normalization is preferred. Then,
     // branch lengths can be interpreted in an easy way (the length equals the
@@ -344,7 +349,7 @@ void ModelPoMo::updatePoMoStatesAndRateMatrix () {
     // Normalize rate matrix such that one event happens per unit time.
     for (int i = 0; i < num_states; i++) {
         for (int j = 0; j < num_states; j++) {
-            rate_matrix[i*num_states+j] /= tot_sum;
+            rates[i*num_states+j] /= tot_sum;
         }
     }
 
@@ -608,10 +613,11 @@ void ModelPoMo::writeInfo(ostream &out) {
   report(out);
 }
 
+// TODO: s_freqs is not used.
 void ModelPoMo::computeRateMatrix(double **r_matrix, double *s_freqs, int n_states) {
     for (int i = 0; i < n_states; i++) {
         for (int j = 0; j < n_states; j++) {
-            r_matrix[i][j] = rate_matrix[i*n_states+j];
+            r_matrix[i][j] = rates[i*n_states+j];
         }
     }
 }
@@ -813,7 +819,7 @@ void ModelPoMo::report_model_params(ostream &out, bool reset_scale) {
     for (int i = 0; i < num_states; i++) {
       for (int j = 0; j < num_states; j++) {
         out << setprecision(8);
-        out << setw(8) << rate_matrix[i*num_states+j] << " ";
+        out << setw(8) << rates[i*num_states+j] << " ";
       }
       out << endl;
     }
@@ -1022,45 +1028,51 @@ void ModelPoMo::restoreCheckpoint() {
 // Declaration of helper function; needed by decomposeRateMatrix().
 //int computeStateFreqFromQMatrix (double Q[], double pi[], int n, double space[]);
 
+// void ModelPoMo::decomposeRateMatrix() {
+//     updatePoMoStatesAndRateMatrix();
+//     // Non-reversible.
+//     if (!is_reversible) {
+//         if (phylo_tree->params->matrix_exp_technique == MET_EIGEN_DECOMPOSITION) {
+//             eigensystem_nonrev(rate_matrix, state_freq, eigenvalues, eigenvalues_imag, eigenvectors, inv_eigenvectors, num_states);
+//             return;
+//         }
+//         else if (phylo_tree->params->matrix_exp_technique == MET_SCALING_SQUARING) {
+//             return;
+//         }
+//         else if (phylo_tree->params->matrix_exp_technique == MET_EIGEN3LIB_DECOMPOSITION) {
+//             // Not (yet?) implemented.
+//             // decomposeRateMatrixEigen3lib();
+//             outError("MET_EIGEN3LIB_DECOMPOSITION does not work with PoMo.");
+//         }
+//         else if (phylo_tree->params->matrix_exp_technique == MET_LIE_MARKOV_DECOMPOSITION)
+//             // Not possible?
+//             // decomposeRateMatrixClosedForm();
+//             outError("Matrix decomposition in closed form not available for PoMo.");
+//         else
+//             outError("Matrix decomposition method unknown.");
+//     }
+//     // Reversible.  Alogrithms for symmetric matrizes can be used.
+//     else {
+//         // TODO DS: This leaves room for speed improvements.
+//         // EigenDecomposition::eigensystem_sym() expects a matrix[][]
+//         // object with two indices.  However, it is not used, because
+//         // ModelPoMo::computeRateMatrix() is called anyways from
+//         // within eigensystem_sym().
+// 		double **temp_matrix = new double*[num_states];
+// 		for (int i = 0; i < num_states; i++)
+// 			temp_matrix[i] = new double[num_states];
+// 		eigensystem_sym(temp_matrix, state_freq, eigenvalues, eigenvectors, inv_eigenvectors, num_states);
+// 		for (int i = num_states-1; i >= 0; i--)
+// 			delete [] temp_matrix[i];
+// 		delete [] temp_matrix;
+//     return;
+//     }
+// }
+
 void ModelPoMo::decomposeRateMatrix() {
     updatePoMoStatesAndRateMatrix();
-    // Non-reversible.
-    if (!is_reversible) {
-        if (phylo_tree->params->matrix_exp_technique == MET_EIGEN_DECOMPOSITION) {
-            eigensystem_nonrev(rate_matrix, state_freq, eigenvalues, eigenvalues_imag, eigenvectors, inv_eigenvectors, num_states);
-            return;
-        }
-        else if (phylo_tree->params->matrix_exp_technique == MET_SCALING_SQUARING) {
-            return;
-        }
-        else if (phylo_tree->params->matrix_exp_technique == MET_EIGEN3LIB_DECOMPOSITION) {
-            // Not (yet?) implemented.
-            // decomposeRateMatrixEigen3lib();
-            outError("MET_EIGEN3LIB_DECOMPOSITION does not work with PoMo.");
-        }
-        else if (phylo_tree->params->matrix_exp_technique == MET_LIE_MARKOV_DECOMPOSITION)
-            // Not possible?
-            // decomposeRateMatrixClosedForm();
-            outError("Matrix decomposition in closed form not available for PoMo.");
-        else
-            outError("Matrix decomposition method unknown.");
-    }
-    // Reversible.  Alogrithms for symmetric matrizes can be used.
-    else {
-        // TODO DS: This leaves room for speed improvements.
-        // EigenDecomposition::eigensystem_sym() expects a matrix[][]
-        // object with two indices.  However, it is not used, because
-        // ModelPoMo::computeRateMatrix() is called anyways from
-        // within eigensystem_sym().
-		double **temp_matrix = new double*[num_states];
-		for (int i = 0; i < num_states; i++)
-			temp_matrix[i] = new double[num_states];
-		eigensystem_sym(temp_matrix, state_freq, eigenvalues, eigenvectors, inv_eigenvectors, num_states);
-		for (int i = num_states-1; i >= 0; i--)
-			delete [] temp_matrix[i];
-		delete [] temp_matrix;
+    ModelMarkov::decomposeRateMatrix();
     return;
-    }
 }
 
 void ModelPoMo::set_heterozygosity_boundaries() {
