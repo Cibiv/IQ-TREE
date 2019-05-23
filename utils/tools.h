@@ -840,7 +840,7 @@ public:
     /**
             file containing multiple trees to evaluate at the end
      */
-    char *treeset_file;
+    string treeset_file;
 
     /** number of bootstrap replicates for tree topology test */
     int topotest_replicates;
@@ -1143,6 +1143,11 @@ public:
      TRUE to find best root when optimizing model
      */
     bool root_find;
+
+    /**
+     TRUE to test all rooting positions at the end of the run
+     */
+    bool root_test;
 
     /**
             min branch length, used to create random tree/network

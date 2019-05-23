@@ -1375,6 +1375,13 @@ public:
     virtual double optimizeRootPosition(int root_dist, bool write_info, double logl_epsilon);
 
     /**
+     Test all root positions for rooted tree
+     @param write_info true to write information to cout
+     @param logl_epsilon epsilon of log-likelihood to consider as better
+     */
+    virtual double testRootPosition(bool write_info, double logl_epsilon);
+
+    /**
             inherited from Optimization class, to return to likelihood of the tree
             when the current branceh length is set to value
             @param value current branch length
@@ -1999,6 +2006,12 @@ public:
      */
     virtual uint64_t getMemoryRequired(size_t ncategory = 1, bool full_mem = false);
 
+    /**
+     * compute the memory size for top partitions required for storing partial likelihood vectors
+     * @return memory size required in bytes
+     */
+    virtual uint64_t getMemoryRequiredThreaded(size_t ncategory = 1, bool full_mem = false);
+    
     void getMemoryRequired(uint64_t &partial_lh_entries, uint64_t &scale_num_entries, uint64_t &partial_pars_entries);
 
     /****** following variables are for ultra-fast bootstrap *******/

@@ -51,7 +51,6 @@ ModelMarkov::ModelMarkov(PhyloTree *tree, bool reversible, bool adapt_tree)
     highest_freq_state = num_states-1;
 
     // variables for non-reversible model
-    fixed_parameters = false;
 //    model_parameters = NULL;
     rate_matrix = NULL;
     eigenvalues_imag = NULL;
@@ -297,13 +296,15 @@ string ModelMarkov::getNameParams() {
 	ostringstream retname;
 	retname << name;
 //	if (num_states != 4) retname << num_states;
-	retname << '{';
-	int nrates = getNumRateEntries();
-	for (int i = 0; i < nrates; i++) {
-		if (i>0) retname << ',';
-		retname << rates[i];
-	}
-	retname << '}';
+    if (!fixed_parameters) {
+        retname << '{';
+        int nrates = getNumRateEntries();
+        for (int i = 0; i < nrates; i++) {
+            if (i>0) retname << ',';
+            retname << rates[i];
+        }
+        retname << '}';
+    }
     getNameParamsFreq(retname);
     return retname.str();    
 }
@@ -311,7 +312,8 @@ string ModelMarkov::getNameParams() {
 void ModelMarkov::getNameParamsFreq(ostream &retname) {
      // "+F..." but without {frequencies}
     retname << freqTypeString(freq_type, phylo_tree->aln->seq_type, true);
-
+    if (fixed_parameters)
+        return;
     if (freq_type == FREQ_EMPIRICAL || freq_type == FREQ_ESTIMATE ||
         (freq_type == FREQ_USER_DEFINED && phylo_tree->aln->seq_type == SEQ_DNA)) {
         retname << "{" << state_freq[0];
@@ -776,7 +778,7 @@ void ModelMarkov::adaptStateFrequency(double* freq)
             for (j = 0; j < num_states; j++)
                 if (i != j) {
                     rates[k] = (rates[k])*freq[j];
-                    if (state_freq[j] != 0.0)
+                    if (state_freq[j] > ZERO_FREQ)
                         rates[k] /= state_freq[j];
                     k++;
                 }
@@ -821,10 +823,10 @@ int ModelMarkov::getNDim() {
 	if (fixed_parameters)
 		return 0;
     if (!is_reversible)
-        return (linked_model && linked_model != this) ? 0 : num_params;
+        return num_params;
 
     // reversible model
-    int ndim = (linked_model && linked_model != this) ? 0 : num_params;
+    int ndim = num_params;
 	if (freq_type == FREQ_ESTIMATE) 
 		ndim += num_states-1;
 	return ndim;
@@ -834,6 +836,9 @@ int ModelMarkov::getNDimFreq() {
 
     // BQM, 2017-05-02: getNDimFreq should return degree of freedom, which is not included in getNDim()
     // That's why 0 is returned for FREQ_ESTIMATE, num_states-1 for FREQ_EMPIRICAL
+
+    if (fixed_parameters)
+        return 0;
 
 	if (freq_type == FREQ_EMPIRICAL)
         return num_states-1;
@@ -952,7 +957,7 @@ double ModelMarkov::targetFunk(double x[]) {
     // avoid numerical issue if state_freq is too small
     for (int i = 0; i < num_states; i++)
         if (state_freq[i] < 0 || (state_freq[i] > 0 && state_freq[i] < Params::getInstance().min_state_freq)) {
-            outWarning("Weird state_freq[" + convertIntToString(i) + "]=" + convertDoubleToString(state_freq[i]));
+            //outWarning("Weird state_freq[" + convertIntToString(i) + "]=" + convertDoubleToString(state_freq[i]));
             return 1.0e+30;
         }
 
@@ -1009,6 +1014,10 @@ void ModelMarkov::setBounds(double *lower_bound, double *upper_bound, bool *boun
 }
 
 double ModelMarkov::optimizeParameters(double gradient_epsilon) {
+    
+    if (fixed_parameters)
+        return 0.0;
+    
 	int ndim = getNDim();
 	
 	// return if nothing to be optimized
@@ -1125,13 +1134,13 @@ void ModelMarkov::decomposeRateMatrixNonrev() {
     nondiagonalizable = false; // until proven otherwise
     int n = 0; // the number of states where freq is non-zero
     for (i = 0; i < num_states; i++)
-        if (state_freq[i] != 0.0)
+        if (state_freq[i] > ZERO_FREQ)
             n++;
     int ii, jj;
     MatrixXd Q(n, n);
     VectorXd pi(n);
     for (i = 0, ii = 0; i < num_states; i++)
-        if (state_freq[i] != 0.0) {
+        if (state_freq[i] > ZERO_FREQ) {
             pi(ii) = state_freq[i];
             ii++;
         }
@@ -1142,9 +1151,9 @@ void ModelMarkov::decomposeRateMatrixNonrev() {
         Q = Map<Matrix<double,Dynamic,Dynamic,RowMajor>,Aligned >(rate_matrix, num_states, num_states);
     else {
         for (i = 0, ii = 0; i < num_states; i++)
-            if (state_freq[i] != 0.0) {
+            if (state_freq[i] > ZERO_FREQ) {
                 for (j = 0, jj = 0; j < num_states; j++)
-                    if (state_freq[j] != 0.0) {
+                    if (state_freq[j] > ZERO_FREQ) {
                         Q(ii,jj) = rate_matrix[i*num_states+j];
                         jj++;
                     }
@@ -1169,7 +1178,7 @@ void ModelMarkov::decomposeRateMatrixNonrev() {
     } else {
         // manual copy non-zero entries
         for (i = 0, ii = 0; i < num_states; i++)
-            if (state_freq[i] != 0.0) {
+            if (state_freq[i] > ZERO_FREQ) {
                 ceval[i] = eigensolver.eigenvalues()(ii);
                 ii++;
             } else
@@ -1186,9 +1195,9 @@ void ModelMarkov::decomposeRateMatrixNonrev() {
         for (i = 0, ii = 0; i < num_states; i++) {
             auto *eigenvectors_ptr = cevec + (i*num_states);
             auto *inv_eigenvectors_ptr = cinv_evec + (i*num_states);
-            if (state_freq[i] != 0.0) {
+            if (state_freq[i] > ZERO_FREQ) {
                 for (j = 0, jj = 0; j < num_states; j++)
-                    if (state_freq[j] != 0) {
+                    if (state_freq[j] > ZERO_FREQ) {
                         eigenvectors_ptr[j] = evec(ii,jj);
                         inv_eigenvectors_ptr[j] = inv_evec(ii,jj);
                         jj++;
@@ -1274,13 +1283,13 @@ void ModelMarkov::decomposeRateMatrix(){
         // Use Eigen3 library for eigen decomposition of symmetric matrix
         int n = 0; // the number of states where freq is non-zero
         for (i = 0; i < num_states; i++)
-            if (state_freq[i] != 0.0)
+            if (state_freq[i] > ZERO_FREQ)
                 n++;
         int ii, jj;
         MatrixXd Q(n, n);
         VectorXd pi(n);
         for (i = 0, ii = 0; i < num_states; i++)
-            if (state_freq[i] != 0.0) {
+            if (state_freq[i] > ZERO_FREQ) {
                 pi(ii) = state_freq[i];
                 ii++;
             }
@@ -1293,25 +1302,26 @@ void ModelMarkov::decomposeRateMatrix(){
 
         if (half_matrix) {
             for (i = 0, k = 0, ii = 0; i < num_states; i++)
-            if (state_freq[i] != 0.0){
+            if (state_freq[i] > ZERO_FREQ){
                 Q(ii,ii) = 0.0;
                 for (j = i+1, jj = ii+1; j < num_states; j++, k++)
-                if (state_freq[j] != 0.0) {
+                if (state_freq[j] > ZERO_FREQ) {
                     Q(ii,jj) = Q(jj,ii) = rates[k];
                     jj++;
                 }
                 ASSERT(jj == n);
                 ii++;
-            }
+            } else
+                k += num_states-i-1; // 2019-04-27 BUG FIX: k is not increased properly!
         } else {
             // full matrix
             if (n == num_states)
                 Q = Map<Matrix<double,Dynamic,Dynamic,RowMajor> >(rates,num_states,num_states);
             else {
                 for (i = 0, ii = 0; i < num_states; i++)
-                    if (state_freq[i] != 0.0) {
+                    if (state_freq[i] > ZERO_FREQ) {
                         for (j = 0, jj = 0; j < num_states; j++)
-                            if (state_freq[j] != 0.0) {
+                            if (state_freq[j] > ZERO_FREQ) {
                                 Q(ii,jj) = rates[i*num_states+j];
                                 jj++;
                             }
@@ -1367,7 +1377,7 @@ void ModelMarkov::decomposeRateMatrix(){
         } else {
             // manual copy non-zero entries
             for (i = 0, ii = 0; i < num_states; i++)
-                if (state_freq[i] != 0.0) {
+                if (state_freq[i] > ZERO_FREQ) {
                     eigenvalues[i] = eigensolver.eigenvalues()(ii);
                     ii++;
                 } else
@@ -1377,9 +1387,9 @@ void ModelMarkov::decomposeRateMatrix(){
             for (i = 0, ii = 0; i < num_states; i++) {
                 double *eigenvectors_ptr = eigenvectors + (i*num_states);
                 double *inv_eigenvectors_ptr = inv_eigenvectors + (i*num_states);
-                if (state_freq[i] != 0.0) {
+                if (state_freq[i] > ZERO_FREQ) {
                     for (j = 0, jj = 0; j < num_states; j++)
-                        if (state_freq[j] != 0) {
+                        if (state_freq[j] > ZERO_FREQ) {
                             eigenvectors_ptr[j] = evec(ii,jj);
                             inv_eigenvectors_ptr[j] = inv_evec(ii,jj);
                             jj++;
@@ -1639,8 +1649,6 @@ void ModelMarkov::readParametersString(string &model_str) {
 
 ModelMarkov::~ModelMarkov() {
     // mem space pointing to target model and thus avoid double free here
-    if (linked_model && linked_model != this)
-        return;
 	freeMem();
 }
 

@@ -1092,6 +1092,9 @@ void runModelFinder(Params &params, IQTree &iqtree, ModelCheckpoint &model_info)
                 break;
             }
     }
+    
+    if (params.model_joint)
+        empty_model_found = false;
 
     // Model already specifed, nothing to do here
     if (!empty_model_found && params.model_name.substr(0, 4) != "TEST" && params.model_name.substr(0, 2) != "MF")
@@ -1155,7 +1158,7 @@ void runModelFinder(Params &params, IQTree &iqtree, ModelCheckpoint &model_info)
     StrVector model_names;
     int max_cats = getModelList(params, iqtree.aln, model_names, params.model_test_separate_rate);
     
-    uint64_t mem_size = iqtree.getMemoryRequired(max_cats);
+    uint64_t mem_size = iqtree.getMemoryRequiredThreaded(max_cats);
     cout << "NOTE: ModelFinder requires " << (mem_size / 1024) / 1024 << " MB RAM!" << endl;
     if (mem_size >= getMemorySize()) {
         outError("Memory required exceeds your computer RAM size!");
@@ -3183,24 +3186,24 @@ void performAUTest(Params &params, PhyloTree *tree, double *pattern_lhs, vector<
 }
 
 
-void evaluateTrees(Params &params, IQTree *tree, vector<TreeInfo> &info, IntVector &distinct_ids)
+void evaluateTrees(string treeset_file, Params &params, IQTree *tree, vector<TreeInfo> &info, IntVector &distinct_ids)
 {
-	if (!params.treeset_file)
+	if (treeset_file.empty())
 		return;
 	cout << endl;
-	//MTreeSet trees(params.treeset_file, params.is_rooted, params.tree_burnin, params.tree_max_count);
-	cout << "Reading trees in " << params.treeset_file << " ..." << endl;
-	size_t ntrees = countDistinctTrees(params.treeset_file, params.is_rooted, tree, distinct_ids, params.distinct_trees);
+	//MTreeSet trees(treeset_file, params.is_rooted, params.tree_burnin, params.tree_max_count);
+	cout << "Reading trees in " << treeset_file << " ..." << endl;
+	size_t ntrees = countDistinctTrees(treeset_file.c_str(), params.is_rooted, tree, distinct_ids, params.distinct_trees);
 	if (ntrees < distinct_ids.size()) {
 		cout << "WARNING: " << distinct_ids.size() << " trees detected but only " << ntrees << " distinct trees will be evaluated" << endl;
 	} else {
 		cout << ntrees << (params.distinct_trees ? " distinct" : "") << " trees detected" << endl;
 	}
 	if (ntrees == 0) return;
-	ifstream in(params.treeset_file);
+	ifstream in(treeset_file);
 
 	//if (trees.size() == 1) return;
-	//string tree_file = params.treeset_file;
+	//string tree_file = treeset_file;
 	string tree_file = params.out_prefix;
 	tree_file += ".trees";
 	ofstream treeout;
@@ -3630,10 +3633,10 @@ void evaluateTrees(Params &params, IQTree *tree, vector<TreeInfo> &info, IntVect
 }
 
 
-void evaluateTrees(Params &params, IQTree *tree) {
+void evaluateTrees(string treeset_file, Params &params, IQTree *tree) {
 	vector<TreeInfo> info;
 	IntVector distinct_ids;
-	evaluateTrees(params, tree, info, distinct_ids);
+	evaluateTrees(treeset_file, params, tree, info, distinct_ids);
 }
 
 

@@ -167,7 +167,7 @@ ModelFactory::ModelFactory(Params &params, string &model_name, PhyloTree *tree, 
         else if (tree->aln->seq_type == SEQ_MORPH) model_str = "MK";
         else if (tree->aln->seq_type == SEQ_POMO) model_str = "HKY+P";
         else model_str = "JC";
-        if (tree->aln->seq_type != SEQ_POMO)
+        if (tree->aln->seq_type != SEQ_POMO && !params.model_joint)
             outWarning("Default model "+model_str + " may be under-fitting. Use option '-m TEST' to determine the best-fit model.");
     }
 
@@ -917,7 +917,7 @@ double ModelFactory::initGTRGammaIParameters(RateHeterogeneity *rate, ModelSubst
 double ModelFactory::optimizeParametersOnly(int num_steps, double gradient_epsilon, double cur_logl) {
     double logl;
     /* Optimize substitution and heterogeneity rates independently */
-    if (!joint_optimize || model->linked_model) {
+    if (!joint_optimize) {
         // more steps for fused mix rate model
         int steps;
         if (false && fused_mix_rate && model->getNDim() > 0 && site_rate->getNDim() > 0) {
@@ -931,8 +931,7 @@ double ModelFactory::optimizeParametersOnly(int num_steps, double gradient_epsil
         for (int step = 0; step < steps; step++) {
             double model_lh = 0.0;
             // only optimized if model is not linked
-            if (!model->linked_model)
-                model_lh = model->optimizeParameters(gradient_epsilon);
+            model_lh = model->optimizeParameters(gradient_epsilon);
 
             double rate_lh = site_rate->optimizeParameters(gradient_epsilon);
 

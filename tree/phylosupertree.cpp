@@ -643,6 +643,14 @@ void PhyloSuperTree::computePartitionOrder() {
         
     delete [] cost;
     delete [] id;
+    
+    if (verbose_mode >= VB_MED) {
+        cout << "Partitions ordered by computation costs:" << endl;
+        cout << "#nexus" << endl << "begin sets;" << endl;
+        for (i = 0; i < ntrees; i++)
+            cout << "  charset " << at(part_order[i])->aln->name << " = " << at(part_order[i])->aln->position_spec << ";" << endl;
+        cout << "end;" << endl;
+    }
 #else
     for (i = 0; i < ntrees; i++) {
         part_order[i] = i;
@@ -1179,6 +1187,32 @@ uint64_t PhyloSuperTree::getMemoryRequired(size_t ncategory, bool full_mem) {
 	for (iterator it = begin(); it != end(); it++)
 		mem_size += (*it)->getMemoryRequired(ncategory, full_mem);
 	return mem_size;
+}
+
+// get memory requirement for ModelFinder
+uint64_t PhyloSuperTree::getMemoryRequiredThreaded(size_t ncategory, bool full_mem) {
+    // only get the largest k partitions (k=#threads)
+    int threads = (params->num_threads != 0) ? params->num_threads : params->num_threads_max;
+    threads = min(threads, countPhysicalCPUCores());
+    threads = min(threads, (int)size());
+    
+    // sort partition by computational cost for OpenMP effciency
+    uint64_t *part_mem = new uint64_t[size()];
+    int i;
+    for (i = 0; i < size(); i++) {
+        part_mem[i] = at(i)->getMemoryRequired(ncategory, full_mem);
+    }
+    
+    // sort partition memory in increasing order
+    quicksort<uint64_t, int>(part_mem, 0, size()-1);
+    
+    uint64_t mem = 0;
+    for (i = size()-threads; i < size(); i++)
+        mem += part_mem[i];
+    
+    delete [] part_mem;
+    
+    return mem;
 }
 
 int PhyloSuperTree::countEmptyBranches(PhyloNode *node, PhyloNode *dad) {

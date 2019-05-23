@@ -653,7 +653,7 @@ void ModelProtein::startCheckpoint() {
 
 
 void ModelProtein::saveCheckpoint() {
-    if (num_params > 0) {
+    if (num_params > 0 && !fixed_parameters) {
         startCheckpoint();
         CKP_ARRAY_SAVE(getNumRateEntries(), rates);
         endCheckpoint();
@@ -664,7 +664,7 @@ void ModelProtein::saveCheckpoint() {
 void ModelProtein::restoreCheckpoint() {
     ModelMarkov::restoreCheckpoint();
 
-    if (num_params > 0) {
+    if (num_params > 0 && !fixed_parameters) {
         startCheckpoint();
         CKP_ARRAY_RESTORE(getNumRateEntries(), rates);
         endCheckpoint();
@@ -725,6 +725,9 @@ string ModelProtein::getNameParams() {
     retname << name;
     retname << freqTypeString(freq_type, phylo_tree->aln->seq_type, true);
     
+    if (fixed_parameters)
+        return retname.str();
+
     if (freq_type == FREQ_ESTIMATE) {
         retname << "{" << state_freq[0];
         for (int i = 1; i < num_states; i++)

@@ -212,7 +212,8 @@ void ModelDNA::saveCheckpoint() {
     // up to model_parameters[num_params]
 //    setVariables(model_parameters);
     startCheckpoint();
-    CKP_ARRAY_SAVE(6, rates);
+    if (!fixed_parameters)
+        CKP_ARRAY_SAVE(6, rates);
     endCheckpoint();
     ModelMarkov::saveCheckpoint();
 }
@@ -221,7 +222,8 @@ void ModelDNA::restoreCheckpoint() {
   // curiously, this seems to be the only plase ModelDNA uses model_parameters.
     ModelMarkov::restoreCheckpoint();
     startCheckpoint();
-    CKP_ARRAY_RESTORE(6, rates);
+    if (!fixed_parameters)
+        CKP_ARRAY_RESTORE(6, rates);
     endCheckpoint();
 //    getVariables(model_parameters);       // updates rates and state_freq
     string rate_spec = param_spec;
@@ -290,17 +292,20 @@ void ModelDNA::readRates(string str) throw(const char*) {
 string ModelDNA::getNameParams() {
 	if (num_params == 0) return name;
 	ostringstream retname;
-	retname << name << '{';
-	int nrates = getNumRateEntries();
-	int k = 0;
-	for (int i = 0; i < nrates; i++) {
-		if (param_spec[i] > k) {
-			if (k>0) retname << ',';
-			retname << rates[i];
-			k++;
-		}
-	}
-	retname << '}';
+    retname << name;
+    if (!fixed_parameters) {
+        retname << '{';
+        int nrates = getNumRateEntries();
+        int k = 0;
+        for (int i = 0; i < nrates; i++) {
+            if (param_spec[i] > k) {
+                if (k>0) retname << ',';
+                retname << rates[i];
+                k++;
+            }
+        }
+        retname << '}';
+    }
     getNameParamsFreq(retname);
 	return retname.str();
 }
@@ -392,6 +397,9 @@ int ModelDNA::getNDim() {
 	// possible TO-DO: cache nFreqParams(freq_type) to avoid repeat calls.
 //        return (num_params+nFreqParams(freq_type));
 
+//    if (linked_model && linked_model != this)
+//        return 0;
+    
 	int ndim = num_params;
 	if (freq_type == FREQ_ESTIMATE) 
 		ndim += num_states-1;

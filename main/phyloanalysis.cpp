@@ -863,7 +863,7 @@ void printOutfilesInfo(Params &params, IQTree &tree) {
 
     }
 
-    if (params.treeset_file) {
+    if (!params.treeset_file.empty()) {
         cout << "  Evaluated user trees:          " << params.out_prefix << ".trees" << endl;
 
         if (params.print_tree_lh) {
@@ -1012,13 +1012,24 @@ void reportPhyloAnalysis(Params &params, IQTree &tree, ModelCheckpoint &model_in
                 << endl;
         if (tree.isSuperTree()) {
             if(params.partition_type == BRLEN_SCALE)
-                out    << "Edge-linked-proportional partition model but separate models between partitions" << endl << endl;
+                out << "Edge-linked-proportional partition model with ";
             else if(params.partition_type == BRLEN_FIX)
-                out    << "Edge-linked-equal partition model but separate models between partitions" << endl << endl;
+                out << "Edge-linked-equal partition model with ";
             else if (params.partition_type == BRLEN_OPTIMIZE)
-                out    << "Edge-unlinked partition model and separate models between partitions" << endl << endl;
+                out << "Edge-unlinked partition model with ";
             else
-                out << "Topology-unlinked partition model and separate models between partitions" << endl << endl;
+                out << "Topology-unlinked partition model with ";
+            
+            if (params.model_joint)
+                out << "joint substitution model ";
+            else
+                out << "separate substitution models ";
+            if (params.link_alpha)
+                out << "and joint gamma shape";
+            else
+                out << "and separate rates across sites";
+            out << endl << endl;
+
             PhyloSuperTree *stree = (PhyloSuperTree*) &tree;
             PhyloSuperTree::iterator it;
             int part;
@@ -1042,10 +1053,16 @@ void reportPhyloAnalysis(Params &params, IQTree &tree, ModelCheckpoint &model_in
                 reportModel(out, *(*it));
                 reportRate(out, *(*it));
             }*/
-            if (params.link_model || params.link_alpha) {
+            PartitionModel *part_model = (PartitionModel*)tree.getModelFactory();
+            for (auto itm = part_model->linked_models.begin(); itm != part_model->linked_models.end(); itm++) {
                 for (it = stree->begin(); it != stree->end(); it++)
-                    if (!(*it)->getModel()->linked_model)
-                        reportModel(out, *(*it));
+                    if ((*it)->getModel() == itm->second) {
+                        out << "Linked model of substitution: " << itm->second->getName() << endl << endl;
+                        bool fixed = (*it)->getModel()->fixParameters(false);
+                        reportModel(out, (*it)->aln, (*it)->getModel());
+                        (*it)->getModel()->fixParameters(fixed);
+                        break;
+                    }
             }
         } else {
             reportModel(out, tree);
@@ -1295,8 +1312,8 @@ void reportPhyloAnalysis(Params &params, IQTree &tree, ModelCheckpoint &model_in
         /* evaluate user trees */
         vector<TreeInfo> info;
         IntVector distinct_trees;
-        if (params.treeset_file) {
-            evaluateTrees(params, &tree, info, distinct_trees);
+        if (!params.treeset_file.empty()) {
+            evaluateTrees(params.treeset_file, params, &tree, info, distinct_trees);
             out.precision(4);
             out.setf(ios_base::fixed);
 
@@ -2550,6 +2567,11 @@ void runTreeReconstruction(Params &params, IQTree* &iqtree) {
 
     printMiscInfo(params, *iqtree, pattern_lh);
 
+    if (params.root_test) {
+        cout << "Testing root positions..." << endl;
+        iqtree->testRootPosition(true, params.loglh_epsilon);
+    }
+    
     /****** perform SH-aLRT test ******************/
     if ((params.aLRT_replicates > 0 || params.localbp_replicates > 0 || params.aLRT_test || params.aBayes_test) && !params.pll) {
         double mytime = getRealTime();
@@ -3306,7 +3328,10 @@ void convertAlignment(Params &params, IQTree *iqtree) {
         ((SuperAlignment*)alignment)->printCombinedAlignment(params.aln_output);
         if (params.print_subaln)
             ((SuperAlignment*)alignment)->printSubAlignments(params);
-
+        string partition_info = string(params.aln_output) + ".nex";
+        ((SuperAlignment*)alignment)->printPartition(partition_info.c_str(), params.aln_output);
+        partition_info = (string)params.aln_output + ".partitions";
+        ((SuperAlignment*)alignment)->printPartitionRaxml(partition_info.c_str());
     } else if (params.gap_masked_aln) {
         Alignment out_aln;
         Alignment masked_aln(params.gap_masked_aln, params.sequence_type, params.intype, params.model_name);
@@ -3951,9 +3976,9 @@ void assignBranchSupportNew(Params &params) {
     
     map<string,string> meanings;
     
-    if (params.treeset_file) {
+    if (!params.treeset_file.empty()) {
         bool rooted = params.is_rooted;
-        MTreeSet trees(params.treeset_file, rooted, params.tree_burnin, params.tree_max_count);
+        MTreeSet trees(params.treeset_file.c_str(), rooted, params.tree_burnin, params.tree_max_count);
         double start_time = getRealTime();
         cout << "Computing gene concordance factor..." << endl;
         tree->computeGeneConcordance(trees, meanings);

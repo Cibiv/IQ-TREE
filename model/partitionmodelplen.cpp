@@ -87,22 +87,17 @@ double PartitionModelPlen::optimizeParameters(int fixed_len, bool write_info, do
         tree->part_info[part].cur_score = 0.0;
     }
     
-    if (fixed_len == BRLEN_OPTIMIZE) {
-        tree_lh = tree->optimizeAllBranches(1);
-    } else {
-        tree_lh = tree->computeLikelihood();
-    }
+//    if (fixed_len == BRLEN_OPTIMIZE) {
+//        tree_lh = tree->optimizeAllBranches(1);
+//    } else {
+//        tree_lh = tree->computeLikelihood();
+//    }
+    tree_lh = tree->computeLikelihood();
     
     cout<<"Initial log-likelihood: "<<tree_lh<<endl;
     double begin_time = getRealTime();
     int i;
     for(i = 1; i < tree->params->num_param_iterations; i++){
-        // disable optimizing linked model for the moment
-        for (it = linked_models.begin(); it != linked_models.end(); it++) {
-            fixed_params[it->first] = ((ModelMarkov*)(it->second))->fixed_parameters;
-            ((ModelMarkov*)(it->second))->fixed_parameters = true;
-        }
-
         cur_lh = 0.0;
         if (tree->part_order.empty()) tree->computePartitionOrder();
 #ifdef _OPENMP
@@ -134,17 +129,12 @@ double PartitionModelPlen::optimizeParameters(int fixed_len, bool write_info, do
             cur_lh = optimizeLinkedAlpha(write_info, gradient_epsilon);
         }
 
-        ModelSubst *saved_model = model;
-        for (it = linked_models.begin(); it != linked_models.end(); it++)
-            if (!fixed_params[it->first]) {
-                ((ModelMarkov*)(it->second))->fixed_parameters = false;
-                model = it->second;
-                if (model->getNDim() > 0)
-                    cur_lh = optimizeLinkedModel(write_info, gradient_epsilon);
-                saveCheckpoint();
-                getCheckpoint()->dump();
-            }
-        model = saved_model;
+        // optimize linked models
+        if (!linked_models.empty()) {
+            double new_cur_lh = optimizeLinkedModels(write_info, gradient_epsilon);
+            ASSERT(new_cur_lh > cur_lh - 0.1);
+            cur_lh = new_cur_lh;
+        }
 
         if (verbose_mode >= VB_MED)
             cout << "LnL after optimizing individual models: " << cur_lh << endl;
@@ -191,6 +181,13 @@ double PartitionModelPlen::optimizeParameters(int fixed_len, bool write_info, do
     //    cout <<"OPTIMIZE MODEL has finished"<< endl;
     if (write_info)
         writeInfo(cout);
+
+    // write linked_models
+    if (verbose_mode <= VB_MIN && write_info) {
+        for (auto it = linked_models.begin(); it != linked_models.end(); it++)
+            it->second->writeInfo(cout);
+    }
+
     cout << "Parameters optimization took " << i-1 << " rounds (" << getRealTime()-begin_time << " sec)" << endl << endl;
     
     return tree_lh;
@@ -284,11 +281,18 @@ int PartitionModelPlen::getNParameters(int brlen_type) {
         df += tree->size()-1;
     if (linked_alpha > 0.0)
         df ++;
+    for (auto it = linked_models.begin(); it != linked_models.end(); it++) {
+        bool fixed = it->second->fixParameters(false);
+        df += it->second->getNDim() + it->second->getNDimFreq();
+        it->second->fixParameters(fixed);
+    }
     return df;
 }
 
+/*
 int PartitionModelPlen::getNDim(){
     PhyloSuperTreePlen *tree = (PhyloSuperTreePlen*)site_rate->getTree();
     int ndim = tree->size() -1;
     return ndim;
 }
+*/

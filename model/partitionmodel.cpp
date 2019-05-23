@@ -56,7 +56,6 @@ PartitionModel::PartitionModel(Params &params, PhyloSuperTree *tree, ModelsBlock
         init_by_divmat = true;
         params.model_name_init = NULL;
     }
-    double *sum_state_freq = NULL;
     for (it = tree->begin(), part = 0; it != tree->end(); it++, part++) {
         ASSERT(!((*it)->getModelFactory()));
         string model_name = (*it)->aln->model_name;
@@ -68,18 +67,10 @@ PartitionModel::PartitionModel(Params &params, PhyloSuperTree *tree, ModelsBlock
 
         // link models between partitions
         if (params.link_model) {
-            if (linked_models.find((*it)->getModel()->getName()) != linked_models.end()) {
-                for (int i = 0; i < (*it)->getModel()->num_states; i++)
-                    sum_state_freq[i] += (*it)->getModel()->state_freq[i];
-                (*it)->getModel()->linkModel(linked_models[(*it)->getModel()->getName()]);
-            } else {
+            (*it)->getModel()->fixParameters(true);
+            if (linked_models.find((*it)->getModel()->getName()) == linked_models.end()) {
                 linked_models[(*it)->getModel()->getName()] = (*it)->getModel();
-                if (sum_state_freq)
-                    delete [] sum_state_freq;
-                sum_state_freq = new double[(*it)->getModel()->num_states];
-                (*it)->getModel()->getStateFrequency(sum_state_freq);
             }
-            
         } else if ((*it)->aln->getNSeq() < tree->aln->getNSeq() && params.partition_type != TOPO_UNLINKED &&
             (*it)->getModel()->freq_type == FREQ_EMPIRICAL && (*it)->aln->seq_type != SEQ_CODON) {
         	// modify state_freq to account for empty sequences
@@ -91,14 +82,8 @@ PartitionModel::PartitionModel(Params &params, PhyloSuperTree *tree, ModelsBlock
         //(*it)->copyTree(tree, taxa_set);
         //(*it)->drawTree(cout);
     }
-    if (linked_models.size() > 1) {
-        cout << "Linked models:";
-        for (auto mit = linked_models.begin(); mit != linked_models.end(); mit++)
-            cout << " " << mit->first;
-        cout << endl;
-        outError("Can't link more than one model yet");
-    }
     if (init_by_divmat) {
+        ASSERT(0 && "init_by_div_mat not working");
         int nstates = linked_models.begin()->second->num_states;
         double *pair_freq = new double[nstates * nstates];
         double *state_freq = new double[nstates];
@@ -119,24 +104,57 @@ PartitionModel::PartitionModel(Params &params, PhyloSuperTree *tree, ModelsBlock
 
     } else
     for (auto mit = linked_models.begin(); mit != linked_models.end(); mit++) {
-        double sum = 0.0;
-        int i;
-        for (i = 0; i < mit->second->num_states; i++)
-            sum += sum_state_freq[i];
-        sum = 1.0/sum;
-        for (i = 0; i < mit->second->num_states; i++)
-            sum_state_freq[i] *= sum;
-        ((ModelMarkov*)mit->second)->adaptStateFrequency(sum_state_freq);
-        mit->second->decomposeRateMatrix();
-        cout << "sum_state_freq:";
+        PhyloSuperTree *stree = (PhyloSuperTree*)site_rate->phylo_tree;
+        if (mit->second->freq_type != FREQ_ESTIMATE && mit->second->freq_type != FREQ_EMPIRICAL)
+            continue;
+        // count state occurrences
+        size_t *sum_state_counts = NULL;
+        int num_parts = 0;
+        for (it = stree->begin(); it != stree->end(); it++) {
+            if ((*it)->getModel()->getName() == mit->second->getName()) {
+                num_parts++;
+                if ((*it)->aln->seq_type == SEQ_CODON)
+                    outError("Linking codon models not supported");
+                if ((*it)->aln->seq_type == SEQ_POMO)
+                    outError("Linking POMO models not supported");
+                size_t state_counts[(*it)->aln->STATE_UNKNOWN+1];
+                size_t unknown_states = 0;
+                if( params.partition_type != TOPO_UNLINKED)
+                    unknown_states = (*it)->aln->getNSite() * (tree->aln->getNSeq() - (*it)->aln->getNSeq());
+                (*it)->aln->countStates(state_counts, unknown_states);
+                if (!sum_state_counts) {
+                    sum_state_counts = new size_t[(*it)->aln->STATE_UNKNOWN+1];
+                    memset(sum_state_counts, 0, sizeof(size_t)*((*it)->aln->STATE_UNKNOWN+1));
+                }
+                for (int state = 0; state <= (*it)->aln->STATE_UNKNOWN; state++)
+                    sum_state_counts[state] += state_counts[state];
+            }
+        }
+        cout << "Linking " << mit->first << " model across " << num_parts << " partitions" << endl;
+        int nstates = mit->second->num_states;
+        double sum_state_freq[nstates];
+        // convert counts to frequencies
+        for (it = stree->begin(); it != stree->end(); it++) {
+            if ((*it)->getModel()->getName() == mit->second->getName()) {
+                (*it)->aln->convertCountToFreq(sum_state_counts, sum_state_freq);
+                break;
+            }
+        }
+
+        cout << "Mean state frequencies:";
         int prec = cout.precision(8);
-        for (i = 0; i < mit->second->num_states; i++)
-            cout << " " << sum_state_freq[i];
+        for (int state = 0; state < mit->second->num_states; state++)
+            cout << " " << sum_state_freq[state];
         cout << endl;
         cout.precision(prec);
+
+        for (it = stree->begin(); it != stree->end(); it++)
+            if ((*it)->getModel()->getName() == mit->second->getName()) {
+                ((ModelMarkov*)(*it)->getModel())->adaptStateFrequency(sum_state_freq);
+                (*it)->getModel()->decomposeRateMatrix();
+            }
+        delete [] sum_state_counts;
     }
-    if (sum_state_freq)
-        delete [] sum_state_freq;
 }
 
 void PartitionModel::setCheckpoint(Checkpoint *checkpoint) {
@@ -153,6 +171,13 @@ void PartitionModel::startCheckpoint() {
 void PartitionModel::saveCheckpoint() {
     startCheckpoint();
     CKP_SAVE(linked_alpha);
+    for (auto it = linked_models.begin(); it != linked_models.end(); it++) {
+        checkpoint->startStruct(it->first);
+        bool fixed = it->second->fixParameters(false);
+        it->second->saveCheckpoint();
+        it->second->fixParameters(fixed);
+        checkpoint->endStruct();
+    }
     PhyloSuperTree *tree = (PhyloSuperTree*)site_rate->getTree();
     int part = 0;
     for (PhyloSuperTree::iterator it = tree->begin(); it != tree->end(); it++, part++) {
@@ -178,6 +203,18 @@ void PartitionModel::restoreCheckpoint() {
         checkpoint->endStruct();
     }
 
+    // restore linked models
+    for (auto it = linked_models.begin(); it != linked_models.end(); it++) {
+        checkpoint->startStruct(it->first);
+        for (auto tit = tree->begin(); tit != tree->end(); tit++)
+            if ((*tit)->getModel()->getName() == it->first) {
+                bool fixed = (*tit)->getModel()->fixParameters(false);
+                (*tit)->getModel()->restoreCheckpoint();
+                (*tit)->getModel()->fixParameters(fixed);
+            }
+        checkpoint->endStruct();
+    }
+    
     endCheckpoint();
 }
 
@@ -189,17 +226,28 @@ int PartitionModel::getNParameters(int brlen_type) {
     }
     if (linked_alpha > 0)
         df ++;
+    for (auto it = linked_models.begin(); it != linked_models.end(); it++) {
+        bool fixed = it->second->fixParameters(false);
+        df += it->second->getNDim() + it->second->getNDimFreq();
+        it->second->fixParameters(fixed);
+    }
     return df;
 }
 
 double PartitionModel::computeFunction(double shape) {
     PhyloSuperTree *tree = (PhyloSuperTree*)site_rate->getTree();
     double res = 0.0;
+    int ntrees = tree->size();
     linked_alpha = shape;
-    for (PhyloSuperTree::iterator it = tree->begin(); it != tree->end(); it++) 
-        if ((*it)->getRate()->isGammaRate()) {
-            res += (*it)->getRate()->computeFunction(shape);
-        }
+    if (tree->part_order.empty()) tree->computePartitionOrder();
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+: res) schedule(dynamic) if(tree->num_threads > 1)
+#endif
+    for (int j = 0; j < ntrees; j++) {
+        int i = tree->part_order[j];
+        if (tree->at(i)->getRate()->isGammaRate())
+            res += tree->at(i)->getRate()->computeFunction(shape);
+    }
     if (res == 0.0)
         outError("No partition has Gamma rate heterogeneity!");
 	return res;
@@ -226,16 +274,50 @@ int PartitionModel::getNDim() {
 }
 
 double PartitionModel::targetFunk(double x[]) {
-    bool changed = model->getVariables(x);
-    if (changed) {
-        model->decomposeRateMatrix();
-        site_rate->phylo_tree->clearAllPartialLH();
+    PhyloSuperTree *tree = (PhyloSuperTree*)site_rate->getTree();
+    
+    double res = 0;
+    int ntrees = tree->size();
+    if (tree->part_order.empty()) tree->computePartitionOrder();
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+: res) schedule(dynamic) if(tree->num_threads > 1)
+#endif
+    for (int j = 0; j < ntrees; j++) {
+        int i = tree->part_order[j];
+        ModelSubst *part_model = tree->at(i)->getModel();
+        if (part_model->getName() != model->getName())
+            continue;
+        bool fixed = part_model->fixParameters(false);
+        res += part_model->targetFunk(x);
+        part_model->fixParameters(fixed);
     }
-    return -site_rate->phylo_tree->computeLikelihood();
+    if (res == 0.0)
+        outError("No partition has model ", model->getName());
+    return res;
+}
+
+void PartitionModel::setVariables(double *variables) {
+    model->setVariables(variables);
+}
+
+bool PartitionModel::getVariables(double *variables) {
+    bool changed = false;
+    PhyloSuperTree *tree = (PhyloSuperTree*)site_rate->getTree();
+    for (auto it = tree->begin(); it != tree->end(); it++)
+        if ((*it)->getModel()->getName() == model->getName())
+            changed |= (*it)->getModel()->getVariables(variables);
+    return changed;
+}
+
+void PartitionModel::scaleStateFreq(bool sum_one) {
+    PhyloSuperTree *tree = (PhyloSuperTree*)site_rate->getTree();
+    for (auto it = tree->begin(); it != tree->end(); it++)
+        if ((*it)->getModel()->getName() == model->getName())
+            ((ModelMarkov*)(*it)->getModel())->scaleStateFreq(sum_one);
 }
 
 double PartitionModel::optimizeLinkedModel(bool write_info, double gradient_epsilon) {
-    int ndim = model->getNDim();
+    int ndim = getNDim();
     
     // return if nothing to be optimized
     if (ndim == 0) return 0.0;
@@ -257,8 +339,8 @@ double PartitionModel::optimizeLinkedModel(bool write_info, double gradient_epsi
     
     
     // by BFGS algorithm
-    model->setVariables(variables);
-    model->setVariables(variables2);
+    setVariables(variables);
+    setVariables(variables2);
     ((ModelMarkov*)model)->setBounds(lower_bound, upper_bound, bound_check);
     // expand the bound for linked model
 //    for (int i = 1; i <= ndim; i++) {
@@ -273,7 +355,7 @@ double PartitionModel::optimizeLinkedModel(bool write_info, double gradient_epsi
     // 2017-12-06: more robust optimization using 2 different routines
     // when estimates are at boundary
     score = -minimizeMultiDimen(variables, ndim, lower_bound, upper_bound, bound_check, max(gradient_epsilon, TOL_RATE));
-    bool changed = model->getVariables(variables);
+    bool changed = getVariables(variables);
     
     if (model->isUnstableParameters()) {
         // parameters at boundary, restart with L-BFGS-B with parameters2
@@ -281,21 +363,24 @@ double PartitionModel::optimizeLinkedModel(bool write_info, double gradient_epsi
         if (score2 > score+0.1) {
             if (verbose_mode >= VB_MED)
                 cout << "NICE: L-BFGS-B found better parameters with LnL=" << score2 << " than BFGS LnL=" << score << endl;
-            changed = model->getVariables(variables2);
+            changed = getVariables(variables2);
             score = score2;
         } else {
             // otherwise, revert what BFGS found
-            changed = model->getVariables(variables);
+            changed = getVariables(variables);
         }
     }
     
     // BQM 2015-09-07: normalize state_freq
     if (model->isReversible() && model->freq_type == FREQ_ESTIMATE) {
-        ((ModelMarkov*)model)->scaleStateFreq(true);
+        scaleStateFreq(true);
         changed = true;
     }
     if (changed) {
-        model->decomposeRateMatrix();
+        PhyloSuperTree *tree = (PhyloSuperTree*)site_rate->getTree();
+        for (auto it = tree->begin(); it != tree->end(); it++)
+            if ((*it)->getModel()->getName() == model->getName())
+                (*it)->getModel()->decomposeRateMatrix();
         site_rate->phylo_tree->clearAllPartialLH();
         score = site_rate->phylo_tree->computeLikelihood();
     }
@@ -311,6 +396,34 @@ double PartitionModel::optimizeLinkedModel(bool write_info, double gradient_epsi
     }
 
     return score;
+}
+
+double PartitionModel::optimizeLinkedModels(bool write_info, double gradient_epsilon) {
+    PhyloSuperTree *tree = (PhyloSuperTree*)site_rate->getTree();
+    double tree_lh;
+    for (auto it = linked_models.begin(); it != linked_models.end(); it++) {
+        ModelSubst *saved_model = model;
+        model = it->second;
+        PhyloSuperTree::iterator part_tree;
+        // un-fix model parameters
+        for (part_tree = tree->begin(); part_tree != tree->end(); part_tree++)
+            if ((*part_tree)->getModel()->getName() == model->getName())
+                (*part_tree)->getModel()->fixParameters(false);
+        
+        // main call to optimize linked model parameters
+        tree_lh = optimizeLinkedModel(write_info, gradient_epsilon);
+        
+        // fix model parameters again
+        for (part_tree = tree->begin(); part_tree != tree->end(); part_tree++)
+            if ((*part_tree)->getModel()->getName() == model->getName())
+                (*part_tree)->getModel()->fixParameters(true);
+        
+        saveCheckpoint();
+        getCheckpoint()->dump();
+        model = saved_model;
+    }
+
+    return site_rate->phylo_tree->computeLikelihood();
 }
 
 void PartitionModel::reportLinkedModel(ostream &out) {
@@ -331,15 +444,7 @@ double PartitionModel::optimizeParameters(int fixed_len, bool write_info, double
     double prev_tree_lh = -DBL_MAX, tree_lh = 0.0;
     int ntrees = tree->size();
 
-    unordered_map<string, bool> fixed_params;
-    unordered_map<string, ModelSubst*>::iterator it;
-    
     for (int step = 0; step < Params::getInstance().model_opt_steps; step++) {
-        // disable optimizing linked model for the moment
-        for (it = linked_models.begin(); it != linked_models.end(); it++) {
-            fixed_params[it->first] = ((ModelMarkov*)(it->second))->fixed_parameters;
-            ((ModelMarkov*)(it->second))->fixed_parameters = true;
-        }
         tree_lh = 0.0;
         if (tree->part_order.empty()) tree->computePartitionOrder();
         #ifdef _OPENMP
@@ -357,7 +462,7 @@ double PartitionModel::optimizeParameters(int fixed_len, bool write_info, double
                     write_info && verbose_mode >= VB_MED,
                     logl_epsilon/min(ntrees,10), gradient_epsilon/min(ntrees,10));
             tree_lh += score;
-            if (write_info && !isLinkedModel())
+            if (write_info)
 #ifdef _OPENMP
 #pragma omp critical
 #endif
@@ -380,16 +485,13 @@ double PartitionModel::optimizeParameters(int fixed_len, bool write_info, double
             tree_lh = optimizeLinkedAlpha(write_info, gradient_epsilon);
         }
 
-        ModelSubst *saved_model = model;
-        for (it = linked_models.begin(); it != linked_models.end(); it++)
-            if (!fixed_params[it->first]) {
-                ((ModelMarkov*)(it->second))->fixed_parameters = false;
-                model = it->second;
-                tree_lh = optimizeLinkedModel(write_info, gradient_epsilon);
-                saveCheckpoint();
-                getCheckpoint()->dump();
-            }
-        model = saved_model;
+        // optimize linked models
+        if (!linked_models.empty()) {
+            double new_tree_lh = optimizeLinkedModels(write_info, gradient_epsilon);
+            ASSERT(new_tree_lh > tree_lh - 0.1);
+            tree_lh = new_tree_lh;
+        }
+        
         if (tree_lh-logl_epsilon*10 < prev_tree_lh)
             break;
         prev_tree_lh = tree_lh;
@@ -397,6 +499,11 @@ double PartitionModel::optimizeParameters(int fixed_len, bool write_info, double
     
     if (verbose_mode >= VB_MED || write_info)
 		cout << "Optimal log-likelihood: " << tree_lh << endl;
+    // write linked_models
+    if (verbose_mode <= VB_MIN && write_info) {
+        for (auto it = linked_models.begin(); it != linked_models.end(); it++)
+            it->second->writeInfo(cout);
+    }
     return tree_lh;
 }
 
