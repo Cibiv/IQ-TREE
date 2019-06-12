@@ -123,7 +123,7 @@ int Alignment::checkAbsentStates(string msg) {
                 absent_states += ", ";
             absent_states += convertStateBackStr(i);
             count++;
-        } else if (state_freq[i] <= MIN_FREQUENCY) {
+        } else if (state_freq[i] <= Params::getInstance().min_state_freq) {
             if (!rare_states.empty())
                 rare_states += ", ";
             rare_states += convertStateBackStr(i);
@@ -3068,13 +3068,22 @@ void convert_range(const char *str, int &lower, int &upper, int &step_size, char
     if (*endptr != '-') return;
 
     // parse the upper bound of the range
-    str = endptr+1;
+    endptr++;
+    // skip blank chars
+    for (; *endptr == ' '; endptr++) {}
+    str = endptr;
     d = strtol(str, &endptr, 10);
     if ((d == 0 && endptr == str) || abs(d) == HUGE_VALL) {
-        string err = "Expecting integer, but found \"";
-        err += str;
-        err += "\" instead";
-        throw err;
+        if (str[0] == '.') {
+            // 2019-06-03: special character '.' for whatever ending position
+            d = lower-1;
+            endptr++;
+        } else {
+            string err = "Expecting integer, but found \"";
+            err += str;
+            err += "\" instead";
+            throw err;
+        }
     }
 
     //lower = d_save;
@@ -3107,6 +3116,9 @@ void extractSiteID(Alignment *aln, const char* spec, IntVector &site_id) {
         for (; *str != 0; ) {
             int lower, upper, step;
             convert_range(str, lower, upper, step, str);
+            // 2019-06-03: special '.' character
+            if (upper == lower-1)
+                upper = aln->getNSite();
             lower--;
             upper--;
             nchars += (upper-lower+1)/step;
@@ -4201,7 +4213,7 @@ void Alignment::computeCodonFreq(StateFreqType freq, double *state_freq, double 
             state_freq[i] = ntfreq[codon/16] * ntfreq[(codon%16)/4] * ntfreq[codon%4];
 			if (isStopCodon(i)) {
 //                sum_stop += state_freq[i];
-				state_freq[i] = MIN_FREQUENCY;
+				state_freq[i] = Params::getInstance().min_state_freq;
 			} else {
                 sum += state_freq[i];
             }
@@ -4250,7 +4262,7 @@ void Alignment::computeCodonFreq(StateFreqType freq, double *state_freq, double 
             state_freq[i] = ntfreq[codon/16] * ntfreq[4+(codon%16)/4] * ntfreq[8+codon%4];
 			if (isStopCodon(i)) {
 //                sum_stop += state_freq[i];
-				state_freq[i] = MIN_FREQUENCY;
+				state_freq[i] = Params::getInstance().min_state_freq;
 			} else {
                 sum += state_freq[i];
             }
@@ -4551,9 +4563,9 @@ void Alignment::convfreq(double *stateFrqArr) {
 		freq = stateFrqArr[i];
         // Do not check for a minimum frequency with PoMo because very
         // low frequencies are expected for polymorphic sites.
-		if ((freq < MIN_FREQUENCY) &&
+		if ((freq < Params::getInstance().min_state_freq) &&
             (seq_type != SEQ_POMO)) {
-			stateFrqArr[i] = MIN_FREQUENCY;
+			stateFrqArr[i] = Params::getInstance().min_state_freq;
 		}
 		if (freq > maxfreq) {
 			maxfreq = freq;
