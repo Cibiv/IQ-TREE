@@ -1,0 +1,16 @@
+add_library(terrace_mcmc
+    node.h
+    node.cpp
+    mhrw.cpp
+    mhrw.h
+    srw.h
+    srw.cpp
+    parser.h
+    parser.cpp
+    supermatrix.h
+    supermatrix.cpp
+    terrace.h
+    terrace.cpp
+    utils.h
+    utils.cpp    
+)

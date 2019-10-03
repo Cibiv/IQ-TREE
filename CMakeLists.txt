@@ -499,6 +499,7 @@ add_subdirectory(model)
 add_subdirectory(gsl)
 add_subdirectory(alignment)
 add_subdirectory(tree)
+add_subdirectory(terrace_mcmc)
 
 ##################################################################
 # the main executable
@@ -597,7 +598,7 @@ if (NOT IQTREE_FLAGS MATCHES "single")
 endif()
 
 # basic linking librararies
-target_link_libraries(iqtree pll ncl nclextra utils pda lbfgsb whtest sprng vectorclass model gsl alignment tree ${PLATFORM_LIB} ${STD_LIB} ${THREAD_LIB} ${ATOMIC_LIB})
+target_link_libraries(iqtree pll ncl nclextra utils pda lbfgsb whtest sprng vectorclass model gsl alignment tree terrace_mcmc ${PLATFORM_LIB} ${STD_LIB} ${THREAD_LIB} ${ATOMIC_LIB})
 
 if (NOT IQTREE_FLAGS MATCHES "nosse")
     target_link_libraries(iqtree kernelsse)
