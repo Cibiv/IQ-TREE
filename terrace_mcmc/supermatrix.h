@@ -13,14 +13,21 @@
 #include <vector>
 #include "node.h"
 
+// get rid of these fixed taxa and loci number
 const int M_TAXA = 1320;
 const int M_LOCI = 1200;
+
+
+/*
+ *  Presence/abscence matrix per taxon/loci
+ */
+
 
 class Supermatrix {
 public:
     Supermatrix();
 
-    void readFile(std::string filename);    
+    void readFile(std::string filename);    // the format is one line per loci with names of taxa "with" available sequences
 
     std::map<int, std::string> name;
     std::map<std::string, int> index;

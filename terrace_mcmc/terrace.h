@@ -17,7 +17,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef TERRACE_H2 //why _H2??
+#ifndef TERRACE_H2
 #define TERRACE_H2
 
 #include "supermatrix.h"
@@ -34,43 +34,84 @@ class Terrace {
 public:
 	/**
 	 *  Constructor
-	 *  @param tree tree    //why tree and not the root?
+	 *  @param tree tree
 	 *  @param saln superalignment
 	 */
     Terrace(MCNode* root, Supermatrix* sm);
+    
+    /*
+     *  Destructor
+     */
+    ~Terrace();
+    
+    /*************************************************************************/
 
+    /*
+     * starting/representative tree on the terrace?
+     */
+    MCNode* root;
+    
+    /*
+     * Presence-abscence matrix
+     */
+    Supermatrix* sm;
+    
+    /*
+     *  Terrace size
+     */
+    uint64_t size;
+    
+    /*
+     *  The set of trees on a terrace
+     */
+    std::set<std::string> trees;
+    
+    /*
+     * burnin step for the MCMC sampling
+     */
+    int burnin = -1;
+    
+    /*
+     * printing parameters
+     */
+    
+    bool print_degrees = false;
+    
+    bool print_trees = false;
+    
+    bool print_unrooted = false;
+    
+    /*************************************************************************/
+    
+    void init();
+    
     /**
-     *  @return The terrace size
+     *  @return the terrace size
      */
     uint64_t getSize();
-
-    uint64_t size;
+    
+    /*
+     *  get a sample from the terrace
+     */
    
     std::vector<std::string> getSample(int size);
 
+    /*
+     *  check if the terrace is a trivial one, contains only one tree
+     */
     bool isTrivial();
-
-	void init();
+    
+    /*
+     *  Print out a sample of trees from the terrace
+     */
 
     void printTrees();
 
-    ~Terrace();
-
-    MCNode* root;
-
-    Supermatrix* sm;
-
-    std::set<std::string> trees;
-
+    /*
+     *  Perform a walk on the terrace
+     */
     void completeWalk();
-
-    int burnin = -1;
-
-    bool print_degrees = false;
-
-    bool print_trees = false;
-
-    bool print_unrooted = false;
+    
 
 private:
 
