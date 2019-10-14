@@ -33,6 +33,7 @@
 #include "node.h"
 #include "candidateset.h"
 #include "utils/pllnni.h"
+#include "mcmc/terrace.h"
 
 typedef std::map< string, double > mapString2Double;
 typedef std::multiset< double, std::less< double > > multiSetDB;
@@ -95,7 +96,22 @@ public:
     virtual ~IQTree();
 
     void init();
-
+    
+    /**
+     *  Sampling terraces
+     */
+    Terrace* getTreeTerrace(std::string treeString);
+    
+    std::string getComprehensiveTree(std::string tree);
+    
+    std::string getSubtrees(std::string tree);
+    
+    std::string getHighestLLTreeFromTerraceWithHillClimbing(int sample_size, double threshold = 0, std::string reference_tree = "", double reference_score = -9999999999);
+    
+    void addCandidatesFromSameTerraceAsCurrentTree(int sample_size, bool climb_hill = false);
+    
+    std::string getRandomTreeFromTheCurrentTerrace(int burnin);
+    
     /**
         set checkpoint object
         @param checkpoint
@@ -835,7 +851,7 @@ protected:
 
     //int write_intermediate_trees;
 
-    ofstream out_treels, out_treelh, out_sitelh, out_treebetter;
+    ofstream out_treels, out_treelh, out_sitelh, out_treebetter, out_lukasz, out_terrace;
     string treels_name, out_lh_file, site_lh_file;
 
     void estimateNNICutoff(Params* params);

@@ -73,6 +73,18 @@ void IQTree::init() {
     site_lh_file = Params::getInstance().out_prefix;
     site_lh_file += ".sitelh";
 
+    //-- SAMPLING TERRACES ------------------------------------------
+    string out_lukasz_file = Params::getInstance().out_prefix;
+    out_lukasz_file += ".lukasz";
+    
+    out_lukasz.open(out_lukasz_file.c_str());
+    
+    string out_terrace_file = Params::getInstance().out_prefix;
+    out_terrace_file += ".terrace";
+    
+    out_terrace.open(out_terrace_file.c_str());
+    //----------------------------------------------------------
+    
     if (Params::getInstance().print_tree_lh) {
         out_treelh.open(out_lh_file.c_str());
         out_sitelh.open(site_lh_file.c_str());
@@ -659,6 +671,17 @@ void IQTree::computeInitialTree(LikelihoodKernel kernel) {
 int IQTree::addTreeToCandidateSet(string treeString, double score, bool updateStopRule, int sourceProcID) {
     double curBestScore = candidateTrees.getBestScore();
     int pos = candidateTrees.update(treeString, score);
+    
+    //-- SAMPLING TERRACES ------------------------------------------
+    string comprehensive = "";
+    
+    int i = -1;
+    while (treeString[i++] != ';') {
+        comprehensive += treeString[i];
+    }
+    //---------------------------------------------------------------
+    
+    
     if (updateStopRule) {
         stop_rule.setCurIt(stop_rule.getCurIt() + 1);
         if (score > curBestScore) {
@@ -671,6 +694,12 @@ int IQTree::addTreeToCandidateSet(string treeString, double score, bool updateSt
             bestcandidate_changed = true;
             // COMMENT OUT: not safe with MPI version
 //            printResultTree();
+            
+        //-- SAMPLING TERRACES ------------------------------------------
+            out_lukasz << "newbest " << comprehensive << " " << score << endl;
+        } else {
+            out_lukasz << "newnotbest " << comprehensive << " " << score << endl;
+        //---------------------------------------------------------------
         }
 
         curScore = score;
@@ -814,6 +843,17 @@ void IQTree::initCandidateTreeSet(int nParTrees, int nNNITrees) {
         }
         score = getCurScore();
         candidateTrees.update(treeString,score);
+        
+        // SAMPLING TERRACE ---------------------------------------------------
+        string comprehensive = "";
+        
+        int i = -1;
+        while (treeString[i++] != ';') {
+            comprehensive += treeString[i];
+        }
+        
+        out_lukasz << "initial " << comprehensive << " " << score << endl;
+        //-----------------------------------------------------------------------
     }
 
     if (Params::getInstance().writeDistImdTrees)
@@ -2159,6 +2199,197 @@ string IQTree::optimizeBranches(int maxTraversal) {
     return tree;
 }
 
+// Sampling terrace functions -------------------------------------------------------------------
+Terrace* IQTree::getTreeTerrace(string treeString)
+{
+    static Parser* parser = new Parser();
+    static Supermatrix* sm = NULL;
+    
+    if (sm == NULL) {
+        SuperAlignment* saln = ((SuperAlignment *) aln);
+        
+        sm = new Supermatrix();
+        
+        int n_partitions = saln->taxa_index[0].size();
+        
+        vector<string> labels = saln->getSeqNames();
+        
+        sm->total_taxa = labels.size();
+        sm->total_loci = n_partitions;
+        
+        for (int i=0; i<labels.size(); i++) {
+            int salnSeqId = saln->getSeqID(labels[i]);
+            
+            string label;
+            
+            label = to_string(i);
+            
+            sm->index[label] = i;
+            sm->name[i] = label;
+            
+            if (sm->locus_by_taxon[i] == NULL) {
+                sm->locus_by_taxon[i] = new bitset<MAX_LOCI>();
+            }
+            
+            for (int j=0; j<n_partitions; j++) {
+                if (sm->taxon_by_locus[j] == NULL) {
+                    sm->taxon_by_locus[j] = new bitset<MAX_TAXA>();
+                }
+                
+                Alignment* aln = saln->partitions.at(j);
+                int alnSeqId = aln->getSeqID(labels[i]);
+                
+                if (alnSeqId > -1 && !aln->isGapOnlySeq(alnSeqId)) {
+                    sm->taxon_by_locus[j]->set(i);
+                    sm->locus_by_taxon[i]->set(j);
+                }
+            }
+        }
+    }
+    
+    string comprehensive = getComprehensiveTree(treeString);
+    
+    MCNode* root = parser->from_newick(comprehensive);
+    Terrace* terrace = new Terrace(root, sm);
+    
+    return terrace;
+}
+
+string IQTree::getComprehensiveTree(string treeString)
+{
+    string comprehensive = "";
+    string subtrees = "";
+    bool comprehensiveRead = false;
+    
+    for (int i=0; i<treeString.length(); i++) {
+        if (!comprehensiveRead) {
+            comprehensive += treeString[i];
+        } else {
+            subtrees += treeString[i];
+        }
+        
+        if (!comprehensiveRead && treeString[i] == ';') {
+            comprehensiveRead = true;
+        }
+    }
+    
+    return comprehensive;
+}
+
+string IQTree::getSubtrees(string treeString)
+{
+    string comprehensive = "";
+    string subtrees = "";
+    bool comprehensiveRead = false;
+    
+    for (int i=0; i<treeString.length(); i++) {
+        if (!comprehensiveRead) {
+            comprehensive += treeString[i];
+        } else {
+            subtrees += treeString[i];
+        }
+        
+        if (!comprehensiveRead && treeString[i] == ';') {
+            comprehensiveRead = true;
+        }
+    }
+    
+    return subtrees;
+}
+
+string IQTree::getHighestLLTreeFromTerraceWithHillClimbing(int sample_size, double threshold, string reference_tree, double reference_score)
+{
+    Terrace* terrace = getTreeTerrace(reference_tree);
+    terrace->burnin = 150;
+    
+    double old_curScore = curScore;
+    string old_tree = getTreeString();
+    
+    vector<string> sample;
+    sample = terrace->getSample(sample_size);
+    
+    double best_score = reference_score;
+    string best_tree = reference_tree;
+    
+    string subtrees = getSubtrees(reference_tree);
+    
+    for (int i=0; i<sample_size; i++) {
+        string nwk = sample.at(i);
+        
+        string superstring = nwk;
+        superstring += subtrees;
+        
+        readTreeString(superstring);
+        doNNISearch();
+        
+        if (curScore - best_score > threshold) {
+            best_score = curScore;
+            best_tree = getTreeString();
+        }
+    }
+    
+    readTreeString(best_tree);
+    curScore = best_score;
+    
+    if (best_score > old_curScore) {
+        out_terrace << "terrace_hillclimbing_improvement " << best_score << " " << old_curScore << " " << getComprehensiveTree(old_tree) << " " << getComprehensiveTree(best_tree) << endl;
+    }
+    
+    delete terrace;
+    return best_tree;
+}
+
+string IQTree::getRandomTreeFromTheCurrentTerrace(int burnin)
+{
+    Terrace* terrace = getTreeTerrace(getTreeString());
+    terrace->burnin = burnin;
+    
+    string tree = terrace->getSample(1).at(0);
+    
+    out_terrace << "random_from_current " << tree << endl;
+    
+    string current_tree = getTreeString();
+    tree += getSubtrees(current_tree);
+    
+    delete terrace;
+    return tree;
+}
+
+void IQTree::addCandidatesFromSameTerraceAsCurrentTree(int sample_size, bool climb_hill)
+{
+    Terrace* terrace = getTreeTerrace(getTreeString());
+    
+    vector<string> sample;
+    sample = terrace->getSample(sample_size);
+    
+    string old_tree = getTreeString();
+    double old_curScore = curScore;
+    
+    for (int i =0; i<sample_size; i++) {
+        string tree = sample.at(i);
+        
+        if (climb_hill) {
+            tree += getSubtrees(old_tree);
+            
+            readTreeString(tree);
+            doNNISearch();
+            
+            tree = getTreeString();
+            
+            out_terrace << "candidate_from_current_with_climbing " << getComprehensiveTree(tree) << " " << curScore << " " << old_tree << " " << old_curScore << endl;
+        } else {
+            out_terrace << "candidate_from_current " << tree << " " << curScore << " " << old_tree << endl;
+            tree += getSubtrees(old_tree);
+        }
+        
+        if (curScore > old_curScore + 0.1)
+            addTreeToCandidateSet(tree, curScore, true, MPIHelper::getInstance().getProcessID());
+    }
+    
+    delete terrace;
+}
+
+// End sampling terrace functions -------------------------------------------------------------------
 
 double IQTree::doTreeSearch() {
     cout << "--------------------------------------------------------------------" << endl;
@@ -2239,6 +2470,23 @@ double IQTree::doTreeSearch() {
     /*==============================================================================================================
 	                                       MAIN LOOP OF THE IQ-TREE ALGORITHM
 	 *=============================================================================================================*/
+    
+    // SAMPLING TERRACES --------------------------------------------------------------------
+    vector<string> initTreeStrings = candidateTrees.getBestTreeStrings();
+    vector<double> scores = candidateTrees.getBestScores();
+    
+    for (int i =0; i<scores.size(); i++) {
+        string comprehensive = "";
+        string treeString = initTreeStrings.at(i);
+        
+        int j= -1;
+        while (treeString[j++] != ';') {
+            comprehensive += treeString[j];
+        }
+        
+        out_lukasz << "candidate " << comprehensive << " " << scores.at(i) << endl;
+    }
+    //----------------------------------------------------------------------------------------
 
     bool optimization_looped = false;
     if (!stop_rule.meetStopCondition(stop_rule.getCurIt(), cur_correlation)) {
@@ -2271,14 +2519,40 @@ double IQTree::doTreeSearch() {
          * Perturb the tree
          *---------------------------------------*/
         doTreePerturbation();
+        
+        // SAMPLING TERRACES ---------------------------------------
+        string comprehensive = "";
+        string treeString = getTreeString();
+        
+        int i = -1;
+        while (treeString[i++] != ';') {
+            comprehensive += treeString[i];
+        }
+        
+        out_lukasz << "afterperturbation " << comprehensive << " " << curScore << endl;
+        // --------------------------------------------------------
 
         /*----------------------------------------
          * Optimize tree with NNI
          *----------------------------------------*/
         pair<int, int> nniInfos; // <num_NNIs, num_steps>
         nniInfos = doNNISearch();
+        
+        // SAMPLING TERRACE---------------------------------------
+        //        readTreeString(getRandomTreeFromTheCurrentTerrace(150));
+        //      computeLogL();
+        
+        //getHighestLLTreeFromTerraceWithHillClimbing(10, 0, getTreeString(), curScore);
+        //-------------------------------------------------------------------------------
+        
         curTree = getTreeString();
+        
+        out_lukasz << "afterclimbing " << curTree << " " << curScore << endl; // SAMPLING TERRACE
+        
         int pos = addTreeToCandidateSet(curTree, curScore, true, MPIHelper::getInstance().getProcessID());
+        
+        //addCandidatesFromSameTerraceAsCurrentTree(1, true); // SAMPLING TERRACE
+        
         if (pos != -2 && pos != -1 && (Params::getInstance().fixStableSplits || Params::getInstance().adaptPertubation))
             candidateTrees.computeSplitOccurences(Params::getInstance().stableSplitThreshold);
 
@@ -2382,7 +2656,28 @@ double IQTree::doTreeSearch() {
     if (optimization_looped)
         sendStopMessage();
 
-    readTreeString(candidateTrees.getBestTreeStrings()[0]);
+    // SAMPLING TERRACE -------------------------------------------------------
+    string treeString = candidateTrees.getBestTreeStrings()[0];
+    
+    // this line was commented out in SAMPLING TERRACE and substituted with the following one
+    //readTreeString(candidateTrees.getBestTreeStrings()[0]);
+    
+    readTreeString(treeString);
+    /*computeLogL();
+     
+     cout << "BEFORE " << curScore << endl;
+     
+     getHighestLLTreeFromTerraceWithHillClimbing(100, 0, treeString, curScore);
+     
+     if (treeString != getTreeString()) {
+     cout << "CHANGED" << endl;
+     } else {
+     cout << "UNCHANGED" << endl;;
+     }
+     
+     cout << "AFTER " << curScore << endl;*/
+    
+    // ------------------------------------------------------------------------
 
     if (testNNI)
         outNNI.close();
@@ -2393,6 +2688,11 @@ double IQTree::doTreeSearch() {
         out_sitelh.close();
     }
 
+    // SAMPLING TERRACE---------------
+    out_lukasz.close();
+    out_terrace.close();
+    // -------------------------------
+    
     // DTH: pllUFBoot deallocation
     if (params->pll) {
         pllDestroyUFBootData();
@@ -2866,6 +3166,32 @@ double IQTree::doTreePerturbation() {
                 readTreeString(candidateTrees.getNextCandTree());
             } else {
                 readTreeString(candidateTrees.getRandTopTree(Params::getInstance().popSize));
+                
+                // SAMPLING TERRACE ---------------------------------------------------
+                static map<string,int> seen;
+                static Parser* p = new Parser();
+                string comprehensive = p->rmweights(getComprehensiveTree(getTreeString()));
+                
+                if (seen.find(comprehensive) == seen.end()) {
+                    seen[comprehensive] = 1;
+                    cout << "first" << endl;
+                } else {
+                    int occurences = seen[comprehensive];
+                    cout << occurences << endl;
+                    
+                    if (occurences > 15) {
+                        readTreeString(getRandomTreeFromTheCurrentTerrace(150));
+                    } else if (occurences > 5) {
+                        readTreeString(getRandomTreeFromTheCurrentTerrace(occurences*10));
+                    } else {
+                        readTreeString(getRandomTreeFromTheCurrentTerrace(occurences+1));
+                    }
+                    
+                    seen[comprehensive]++;
+                }
+                // --------------------------------------------------------------------
+                
+                
             }
             if (Params::getInstance().iqp) {
                 doIQP();
