@@ -121,7 +121,9 @@ public:
             @param updatePLL if true, tree is read into PLL
      */
     virtual void readTreeString(const string &tree_string);
-
+    
+    void readTreeFromFile(const char *infile);
+    
     /**
      * save branch lengths into a vector
      */

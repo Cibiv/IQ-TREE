@@ -76,6 +76,11 @@ endif()
 
 include_directories("${PROJECT_SOURCE_DIR}")
 
+# OLGA: the below includes are necessary for the correct compilation using boost headers and to resolve the issue with OpenMP on Mac OS
+include_directories(after system "/Users/Olga/Projects/libraries/boost_1_71_0")
+include_directories(after system "/usr/local/include")
+
+
 ##################################################################
 # Detect target platforms
 ##################################################################

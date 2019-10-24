@@ -345,8 +345,8 @@ void MCNode::getAllNNIs()
     }    
 }
 
-void MCNode::_getOnTerraceNNIs(Supermatrix* supermatrix, int &result_count, MCNode* result[4*(MAX_TAXA-3)])
-{
+{void MCNode::_getOnTerraceNNIs(Supermatrix* supermatrix, int &result_count, MCNode* result[4*(MAX_TAXA-3)])
+
     recalculateLeaves();
     //recalculateLoci();
 

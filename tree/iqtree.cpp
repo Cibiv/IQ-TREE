@@ -31,6 +31,7 @@
 //#include "phylotreemixlen.h"
 //#include "model/modelfactorymixlen.h"
 #include <numeric>
+#include <random>
 #include "utils/tools.h"
 #include "utils/MPIHelper.h"
 #include "utils/pllnni.h"
@@ -74,7 +75,7 @@ void IQTree::init() {
     site_lh_file += ".sitelh";
 
     //-- SAMPLING TERRACES ------------------------------------------
-    string out_lukasz_file = Params::getInstance().out_prefix;
+    /**string out_lukasz_file = Params::getInstance().out_prefix;
     out_lukasz_file += ".lukasz";
     
     out_lukasz.open(out_lukasz_file.c_str());
@@ -82,7 +83,7 @@ void IQTree::init() {
     string out_terrace_file = Params::getInstance().out_prefix;
     out_terrace_file += ".terrace";
     
-    out_terrace.open(out_terrace_file.c_str());
+    out_terrace.open(out_terrace_file.c_str());*/
     //----------------------------------------------------------
     
     if (Params::getInstance().print_tree_lh) {
@@ -673,12 +674,12 @@ int IQTree::addTreeToCandidateSet(string treeString, double score, bool updateSt
     int pos = candidateTrees.update(treeString, score);
     
     //-- SAMPLING TERRACES ------------------------------------------
-    string comprehensive = "";
+    /*string comprehensive = "";
     
     int i = -1;
     while (treeString[i++] != ';') {
         comprehensive += treeString[i];
-    }
+    }*/
     //---------------------------------------------------------------
     
     
@@ -696,9 +697,10 @@ int IQTree::addTreeToCandidateSet(string treeString, double score, bool updateSt
 //            printResultTree();
             
         //-- SAMPLING TERRACES ------------------------------------------
-            out_lukasz << "newbest " << comprehensive << " " << score << endl;
+        /*    out_lukasz << "newbest " << comprehensive << " " << score << endl;
         } else {
             out_lukasz << "newnotbest " << comprehensive << " " << score << endl;
+         */
         //---------------------------------------------------------------
         }
 
@@ -845,14 +847,14 @@ void IQTree::initCandidateTreeSet(int nParTrees, int nNNITrees) {
         candidateTrees.update(treeString,score);
         
         // SAMPLING TERRACE ---------------------------------------------------
-        string comprehensive = "";
+        /*string comprehensive = "";
         
         int i = -1;
         while (treeString[i++] != ';') {
             comprehensive += treeString[i];
         }
         
-        out_lukasz << "initial " << comprehensive << " " << score << endl;
+        out_lukasz << "initial " << comprehensive << " " << score << endl;*/
         //-----------------------------------------------------------------------
     }
 
@@ -2210,7 +2212,8 @@ Terrace* IQTree::getTreeTerrace(string treeString)
         
         sm = new Supermatrix();
         
-        int n_partitions = saln->taxa_index[0].size();
+        //int n_partitions = saln->taxa_index[0].size();
+        int n_partitions = saln->partitions.size(); // despite both are correct, this feels more natural, than the above line
         
         vector<string> labels = saln->getSeqNames();
         
@@ -2388,6 +2391,214 @@ void IQTree::addCandidatesFromSameTerraceAsCurrentTree(int sample_size, bool cli
     
     delete terrace;
 }
+// OLGA's Sampling Terrace
+vector<std::string> IQTree::getTerraceSample(int sample_size,int &burnin){
+    
+    int sampling_frequency = 1;
+    
+    string copy_tree = this->getTreeString();
+    
+    static random_device seed;
+    static mt19937 engine(seed());
+    
+    static uniform_int_distribution<int> upto2(0, 1);
+    static uniform_real_distribution<> dis(0.0, 1.0);
+    
+    vector<std::string> sample;
+    
+    /**
+     1. get next tree on the terrace:
+     - getTerraceNNIs
+     - randomly select a branch
+     - randomly select one of the NNIs
+     - compute the degree for a new tree (getTerraceNNIs or something smarter)
+     - generate a random number p
+     - if p<frac(degree_current/deg_new_candidate) accept a new tree (doNNI?), otherwise generate a new candidate
+     */
+    
+    int succesful_transitions = 0;
+    
+    IQTree* sample_tree = new PhyloSuperTree;
+    sample_tree->copyTree((MTree*) this);
+    ((PhyloSuperTree*) sample_tree)->mapTrees();
+    
+    vector<Branch> terrace_NNI_br;
+    sample_tree->getTerraceNNIs(terrace_NNI_br);
+    
+    int num_terrace_nni_br = terrace_NNI_br.size();
+    if (num_terrace_nni_br == 0) {
+        cout<<"A trivial terrace. Sample contains the only tree from the terrace."<<endl;
+        string next_candidate = sample_tree->getTreeString();
+        sample.push_back(next_candidate);
+        return sample;
+    }
+    
+    // Somewhere here should be getSuccessfulTransition(burnin,freq)
+    
+    int deg_current = num_terrace_nni_br * 2;
+    uniform_int_distribution<int> choose(0, num_terrace_nni_br - 1);
+    
+    int ind = choose(engine); // choose a random branch from terrace nni branches
+    int nni_type = (upto2(engine) % 2 == 0); // choose which of the two nnis on the branch to apply
+    
+    //
+    
+    Node* node1_nei;
+    vector<Node*> node2_neighbours;
+    FOR_NEIGHBOR_DECLARE(terrace_NNI_br[ind].first,terrace_NNI_br[ind].second,it){
+        node1_nei = (*it)->node;
+        break;
+    }
+    FOR_NEIGHBOR(terrace_NNI_br[ind].second,terrace_NNI_br[ind].first,it){
+        node2_neighbours.push_back((*it)->node);
+    }
+    
+    sample_tree->doNNIonTerrace(terrace_NNI_br[ind].first,terrace_NNI_br[ind].second, node1_nei, node2_neighbours[nni_type-1]);
+    
+    vector<Branch> terrace_NNI_br_candidate;
+    sample_tree->getTerraceNNIs(terrace_NNI_br_candidate);
+    int deg = terrace_NNI_br_candidate.size() * 2;
+    
+    double p = dis(engine);
+    double frac = (double)deg_current/deg;
+    
+    if (p > frac) {
+        succesful_transitions++;
+        if(succesful_transitions % sampling_frequency == 0){
+            string next_candidate = sample_tree->getTreeString();
+            sample.push_back(next_candidate);
+        }
+    } else {
+        // the transition is unsuccesful, revert to the initial state
+        sample_tree->doNNIonTerrace(terrace_NNI_br[ind].first,terrace_NNI_br[ind].second, node2_neighbours[nni_type-1],node1_nei);
+    }
+    
+    return sample;
+}
+
+void IQTree::doNNIonTerrace(Node* node1, Node* node2, Node* node_1_nei, Node* node_2_nei){
+    
+    SuperNeighbor *nei1 = (SuperNeighbor*)node1->findNeighbor(node2);
+    SuperNeighbor *nei2 = (SuperNeighbor*)node2->findNeighbor(node1);
+    //SuperNeighbor *node1_nei = (SuperNeighbor*)node1->findNeighbor(node_1_nei);
+    //SuperNeighbor *node2_nei = (SuperNeighbor*)node2->findNeighbor(node_2_nei);
+    
+    ASSERT(node1->degree() == 3 && node2->degree() == 3);
+    NeighborVec::iterator node1Nei_it = node1->findNeighborIt(node_1_nei);
+    NeighborVec::iterator node2Nei_it = node2->findNeighborIt(node_2_nei);
+    SuperNeighbor *node1Nei = (SuperNeighbor*)*(node1Nei_it);
+    SuperNeighbor *node2Nei = (SuperNeighbor*)*(node2Nei_it);
+    
+    string tree_str = this->getTreeString();
+    cout<<"Before NNI:"<<tree_str<<endl;
+    
+    // do the NNI swap
+    node1->updateNeighbor(node1Nei_it, node2Nei);
+    node2Nei->node->updateNeighbor(node2, node1);
+    
+    node2->updateNeighbor(node2Nei_it, node1Nei);
+    node1Nei->node->updateNeighbor(node1, node2);
+    
+    tree_str = this->getTreeString();
+    cout<<"After NNI:"<<tree_str<<endl;
+    
+    int n_partitions = ((PhyloSuperTree*)this)->size();
+    for (int part = 0; part<n_partitions; part++) {
+            ((PhyloSuperTree*)this)->linkBranch(part, nei1, nei2); // since this is an NNI on Terrace, then for each partition tree it's not an NNI, therefore, we just have to relink the branches without any swapping
+    }
+
+    
+}
+
+void IQTree::getTerraceNNIs(vector<Branch> &terrace_NNIs){
+    
+    Branches nniBranches;
+    getInnerBranches(nniBranches);
+    
+    for (Branches::iterator it = nniBranches.begin(); it != nniBranches.end(); it++) {
+        if(isOnTerraceNNI((Node*) it->second.first, (Node*) it->second.second)){
+            Branch branch_terrace;
+            branch_terrace.first = (Node*) it->second.first;
+            branch_terrace.second = (Node*) it->second.second;
+            terrace_NNIs.push_back(branch_terrace);
+        }
+    }
+}
+
+bool IQTree::isOnTerraceNNI(Node* node1, Node* node2){
+    
+    SuperNeighbor *nei1 = ((SuperNeighbor*)node1->findNeighbor(node2));
+    SuperNeighbor *nei2 = ((SuperNeighbor*)node2->findNeighbor(node1));
+    ASSERT(nei1 && nei2);
+    
+    int is_nni_part, is_nni=0;
+    
+    int n_part = ((PhyloSuperTree*) this)->size();
+    
+    for(int part = 0; part<n_part; part++){
+        is_nni_part =0;
+        FOR_NEIGHBOR_DECLARE(node1, NULL, nit) {
+            if (! ((SuperNeighbor*)*nit)->link_neighbors[part]) { is_nni_part = 1; break; }
+        }
+        FOR_NEIGHBOR(node2, NULL, nit) {
+            if (! ((SuperNeighbor*)*nit)->link_neighbors[part]) { is_nni_part = 1; break; }
+        }
+        is_nni=+is_nni_part;
+    }
+
+    if(is_nni == n_part) {
+        return true;
+    }
+    
+    return false;
+}
+
+void IQTree::getTerraceNNI(PhyloNode* node1, PhyloNode* node2, NNIMove &nni_move_terrace){
+
+    // I think this function is not used, if it is the case. Delete it.
+    NNIMove nni;
+    SuperNeighbor *nei1 = ((SuperNeighbor*)node1->findNeighbor(node2));
+    SuperNeighbor *nei2 = ((SuperNeighbor*)node2->findNeighbor(node1));
+    ASSERT(nei1 && nei2);
+    SuperNeighbor *node1_nei = NULL;
+    SuperNeighbor *node2_nei = NULL;
+    SuperNeighbor *node2_nei_other = NULL;
+    
+    FOR_NEIGHBOR_DECLARE(node1, node2, node1_it) {
+        node1_nei = (SuperNeighbor*)(*node1_it);
+        break;
+    }
+    FOR_NEIGHBOR_DECLARE(node2, node1, node2_it) {
+        node2_nei = (SuperNeighbor*)(*node2_it);
+        break;
+    }
+    
+    FOR_NEIGHBOR_IT(node2, node1, node2_it_other)
+    if ((*node2_it_other) != node2_nei) {
+        node2_nei_other = (SuperNeighbor*)(*node2_it_other);
+        break;
+    }
+    
+    
+    
+    
+    
+    
+    bool is_nni_terrace = false;
+    int n_part = ((PhyloSuperTree*) this)->size();
+    for(int part = 0; part<n_part; part++){
+        FOR_NEIGHBOR_DECLARE(node1, NULL, nit) {
+            if (! ((SuperNeighbor*)*nit)->link_neighbors[part]) { is_nni_terrace = true; break; }
+        }
+        FOR_NEIGHBOR(node2, NULL, nit) {
+            if (! ((SuperNeighbor*)*nit)->link_neighbors[part]) { is_nni_terrace = true; break; }
+        }
+    }
+    
+    
+}
+
+
 
 // End sampling terrace functions -------------------------------------------------------------------
 
@@ -2472,7 +2683,7 @@ double IQTree::doTreeSearch() {
 	 *=============================================================================================================*/
     
     // SAMPLING TERRACES --------------------------------------------------------------------
-    vector<string> initTreeStrings = candidateTrees.getBestTreeStrings();
+    /*vector<string> initTreeStrings = candidateTrees.getBestTreeStrings();
     vector<double> scores = candidateTrees.getBestScores();
     
     for (int i =0; i<scores.size(); i++) {
@@ -2486,6 +2697,7 @@ double IQTree::doTreeSearch() {
         
         out_lukasz << "candidate " << comprehensive << " " << scores.at(i) << endl;
     }
+     */
     //----------------------------------------------------------------------------------------
 
     bool optimization_looped = false;
@@ -2521,7 +2733,7 @@ double IQTree::doTreeSearch() {
         doTreePerturbation();
         
         // SAMPLING TERRACES ---------------------------------------
-        string comprehensive = "";
+        /*string comprehensive = "";
         string treeString = getTreeString();
         
         int i = -1;
@@ -2530,6 +2742,7 @@ double IQTree::doTreeSearch() {
         }
         
         out_lukasz << "afterperturbation " << comprehensive << " " << curScore << endl;
+         */
         // --------------------------------------------------------
 
         /*----------------------------------------
@@ -2547,7 +2760,7 @@ double IQTree::doTreeSearch() {
         
         curTree = getTreeString();
         
-        out_lukasz << "afterclimbing " << curTree << " " << curScore << endl; // SAMPLING TERRACE
+        //out_lukasz << "afterclimbing " << curTree << " " << curScore << endl; // SAMPLING TERRACE
         
         int pos = addTreeToCandidateSet(curTree, curScore, true, MPIHelper::getInstance().getProcessID());
         
@@ -2657,12 +2870,13 @@ double IQTree::doTreeSearch() {
         sendStopMessage();
 
     // SAMPLING TERRACE -------------------------------------------------------
-    string treeString = candidateTrees.getBestTreeStrings()[0];
+    //string treeString = candidateTrees.getBestTreeStrings()[0];
     
     // this line was commented out in SAMPLING TERRACE and substituted with the following one
-    //readTreeString(candidateTrees.getBestTreeStrings()[0]);
+    readTreeString(candidateTrees.getBestTreeStrings()[0]);
     
-    readTreeString(treeString);
+    //readTreeString(treeString);
+    
     /*computeLogL();
      
      cout << "BEFORE " << curScore << endl;
@@ -2689,8 +2903,8 @@ double IQTree::doTreeSearch() {
     }
 
     // SAMPLING TERRACE---------------
-    out_lukasz.close();
-    out_terrace.close();
+    //out_lukasz.close();
+    //out_terrace.close();
     // -------------------------------
     
     // DTH: pllUFBoot deallocation
@@ -3168,7 +3382,7 @@ double IQTree::doTreePerturbation() {
                 readTreeString(candidateTrees.getRandTopTree(Params::getInstance().popSize));
                 
                 // SAMPLING TERRACE ---------------------------------------------------
-                static map<string,int> seen;
+                /*static map<string,int> seen;
                 static Parser* p = new Parser();
                 string comprehensive = p->rmweights(getComprehensiveTree(getTreeString()));
                 
@@ -3184,11 +3398,11 @@ double IQTree::doTreePerturbation() {
                     } else if (occurences > 5) {
                         readTreeString(getRandomTreeFromTheCurrentTerrace(occurences*10));
                     } else {
-                        readTreeString(getRandomTreeFromTheCurrentTerrace(occurences+1));
+                        readTreeString(getRandomTreeFromTheCurrentTerrace(occurences+1)); // from here there is a bug, possibly a mistake in SuperTree structure
                     }
                     
                     seen[comprehensive]++;
-                }
+                }*/
                 // --------------------------------------------------------------------
                 
                 

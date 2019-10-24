@@ -21,6 +21,7 @@
 #define SUPERALIGNMENT_H
 
 #include "alignment.h"
+#include "tree/phylotree.h"
 
 
 struct PartitionInfo {

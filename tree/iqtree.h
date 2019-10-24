@@ -33,7 +33,7 @@
 #include "node.h"
 #include "candidateset.h"
 #include "utils/pllnni.h"
-#include "mcmc/terrace.h"
+#include "terrace_mcmc/terrace.h"
 
 typedef std::map< string, double > mapString2Double;
 typedef std::multiset< double, std::less< double > > multiSetDB;
@@ -101,16 +101,20 @@ public:
      *  Sampling terraces
      */
     Terrace* getTreeTerrace(std::string treeString);
-    
     std::string getComprehensiveTree(std::string tree);
-    
     std::string getSubtrees(std::string tree);
-    
     std::string getHighestLLTreeFromTerraceWithHillClimbing(int sample_size, double threshold = 0, std::string reference_tree = "", double reference_score = -9999999999);
-    
     void addCandidatesFromSameTerraceAsCurrentTree(int sample_size, bool climb_hill = false);
-    
     std::string getRandomTreeFromTheCurrentTerrace(int burnin);
+    
+    
+    
+    
+    vector<std::string> getTerraceSample(int sample_size,int &burnin);
+    void getTerraceNNIs(vector<Branch> &terrace_NNIs);
+    void getTerraceNNI(PhyloNode* node1, PhyloNode* node2, NNIMove &nni_move_terrace);
+    bool isOnTerraceNNI(Node* node1, Node* node2);
+    void doNNIonTerrace(Node* node1, Node* node2, Node* node_1_nei, Node* node_2_nei);
     
     /**
         set checkpoint object

@@ -847,7 +847,17 @@ public:
 
     /** use terrace aware data structure for partition models, default: TRUE */
     bool terrace_aware;
+    
+    /** perform terrace sampling */
+    bool terrace_sampling;
+    
+    /** terrace sample size */
+    int terrace_sample_size;
 
+    /** burnin value for terrace sampling */
+    int terrace_burnin;
+    
+    
     /**
             B, D, or P for Binary, DNA, or Protein sequences
      */

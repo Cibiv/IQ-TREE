@@ -245,6 +245,21 @@ void PhyloSuperTree::readTreeString(const string &tree_string) {
 
 }
 
+void PhyloSuperTree::readTreeFromFile(const char *infile){
+    ifstream in;
+    string tree_str;
+    
+    try {
+        in.exceptions(ios::failbit | ios::badbit);
+        in.open(infile);
+        getline(in,tree_str);
+        readTreeString(tree_str);
+        in.close();
+    } catch (ios::failure) {
+        outError(ERR_READ_INPUT, infile);
+    }
+}
+
 
 /**
  * save branch lengths into a vector

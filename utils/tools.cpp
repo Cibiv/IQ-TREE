@@ -786,6 +786,13 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.partfinder_rcluster_fast = false;
     params.remove_empty_seq = true;
     params.terrace_aware = true;
+    
+    // Parameters for terrace sampling
+    params.terrace_sampling = false;
+    params.terrace_sample_size = NULL;
+    params.terrace_burnin = 150;
+    // -------------------------------
+    
     params.sequence_type = NULL;
     params.aln_output = NULL;
     params.aln_site_list = NULL;
@@ -1735,6 +1742,32 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.terrace_aware = false;
 				continue;
 			}
+            
+            if (strcmp(argv[cnt], "-terrace_sampling") == 0) {
+                params.terrace_sampling = true;
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-terrace_s_size") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -terrace_s_size <sample_size>";
+                params.terrace_sample_size = convert_int(argv[cnt]);
+                if (params.terrace_sample_size < 0)
+                    throw "Terrace sample size value must be positive";
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-terrace_bi") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -terrace_bi <burnin_value>";
+                params.terrace_burnin = convert_int(argv[cnt]);
+                if (params.terrace_burnin < 0)
+                    throw "Burnin value must not be negative";
+                continue;
+            }
+            
 			if (strcmp(argv[cnt], "-sf") == 0) {
 				cnt++;
 				if (cnt >= argc)

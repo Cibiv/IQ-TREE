@@ -13,7 +13,8 @@
 #include <bitset>
 #include <vector>
 #include "supermatrix.h"
-#include <boost/uuid/sha1.hpp>  
+// #include <boost/uuid/sha1.hpp>
+#include <boost/uuid/detail/sha1.hpp>
 
 const int MAX_TAXA = 1320;
 const int MAX_LOCI = 1200;

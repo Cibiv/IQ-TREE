@@ -66,7 +66,7 @@
 //#include <unistd.h>
 #include <stdlib.h>
 #include "vectorclass/instrset.h"
-
+#include "terrace_mcmc/phyloTerraceSampling.h"
 #include "utils/MPIHelper.h"
 
 #ifdef _OPENMP
@@ -2545,6 +2545,12 @@ int main(int argc, char *argv[]) {
 		processNCBITree(Params::getInstance());
 	} else if (Params::getInstance().user_file && Params::getInstance().eco_dag_file) { /**ECOpd analysis*/
 		processECOpd(Params::getInstance());
+    } else if (Params::getInstance().terrace_sampling){
+        if(Params::getInstance().terrace_sample_size && Params::getInstance().user_file){ /** Sampling from a terrace */
+            runTerraceSampling(Params::getInstance());
+        } else {
+            cout <<"When sampling from terrace, make sure to include alignment, tree file, sample size..."<< endl;
+        }
 	} else if (Params::getInstance().aln_file || Params::getInstance().partition_file) {
 		if ((Params::getInstance().siteLL_file || Params::getInstance().second_align) && !Params::getInstance().gbo_replicates)
 		{
