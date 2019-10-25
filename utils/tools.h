@@ -407,8 +407,25 @@ enum AlnFormat {
     ALN_PHYLIP, ALN_FASTA
 };
 
+/*
+    outfile file format
+ FORMAT_NORMAL: usual file format used so far
+ FORMAT_CSV: csv file format
+ FORMAT_TSV: tab separated file format
+ */
+enum FileFormat {
+    FORMAT_NORMAL, FORMAT_CSV, FORMAT_TSV
+};
+
 enum ModelTestCriterion {
     MTC_AIC, MTC_AICC, MTC_BIC, MTC_ALL
+};
+
+/**
+ PartitionFinder merging algorithm
+ */
+enum PartitionMerge {
+    MERGE_NONE, MERGE_GREEDY, MERGE_RCLUSTER, MERGE_RCLUSTERF, MERGE_KMEANS
 };
 
 /**
@@ -481,10 +498,22 @@ enum MatrixExpTechnique {
     MET_LIE_MARKOV_DECOMPOSITION
 };
 
+/** ascertainment bias correction type */
+enum ASCType {
+    ASC_NONE, // no ASC
+    ASC_VARIANT, // Lewis's correction for variant sites
+    ASC_VARIANT_MISSING, // Holder's correction for variant sites with missing data
+    ASC_INFORMATIVE, // correction for parsimony-informative sites
+    ASC_INFORMATIVE_MISSING // Holder's correction for informative sites with missing data
+};
+
 enum AncestralSeqType {
     AST_NONE, AST_MARGINAL, AST_JOINT
 };
 
+enum SymTest {
+    SYMTEST_NONE, SYMTEST_BINOM, SYMTEST_MAXDIV
+};
 
 const int BRLEN_OPTIMIZE = 0; // optimize branch lengths
 const int BRLEN_FIX      = 1; // fix branch lengths
@@ -661,6 +690,11 @@ public:
 	 *  logl epsilon for model parameter optimization
 	 */
 	double modelEps;
+    
+    /**
+     logl epsilon for ModelFinder
+     */
+    double modelfinder_eps;
 
 	/**
 	 *  New search heuristics (DEFAULT: ON)
@@ -793,6 +827,12 @@ public:
     /* type of starting tree */
     START_TREE_TYPE start_tree;
 
+    /** TRUE to infer fast ML tree for ModelFinder */
+    bool modelfinder_ml_tree;
+    
+    /** TRUE to perform final model optimization */
+    bool final_model_opt;
+    
     /** name of constraint tree file in NEWICK format */
     char *constraint_tree_file;
 
@@ -810,12 +850,20 @@ public:
     bool phylip_sequential_format;
 
     /**
-     0 to not perform test of symmetry of Jermiin et al. (default)
-     1 to perform symmetry test
-     2 to do symtest and then remove bad loci
-     3 to do symtest and then remove good loci
+     SYMTEST_NONE to not perform test of symmetry of Jermiin et al. (default)
+     SYMTEST_MAXDIV to perform symmetry test on the pair with maximum divergence
+     SYMTEST_BINOM to perform binomial test of all pair p-values
     */
-    int symtest;
+    SymTest symtest;
+    
+    /** TRUE to do symtest then exist */
+    bool symtest_only;
+    
+    /**
+     1 to remove bad loci by SymTest
+     2 to remove good loci by SymTest
+     */
+    int symtest_remove;
     
     /** true to keep zero which may result in many taxon pairs not testable (default: false) */
     bool symtest_keep_zero;
@@ -869,15 +917,24 @@ public:
      */
     int partition_type;
 
+    /** PartitionFinder algorithm, default MERGE_NONE */
+    PartitionMerge partition_merge;
+    
     /** percentage for rcluster algorithm like PartitionFinder */
     double partfinder_rcluster; 
 
     /** absolute limit on #partition pairs for rcluster algorithm */
     size_t partfinder_rcluster_max;
 
-    /** rclusterf algorithm to top 50% pairs instead of only one best pair */
-    bool partfinder_rcluster_fast;
+    /** set of models used for model merging phase */
+    string merge_models;
 
+    /** set of rate models used for model merging phase */
+    string merge_rates;
+
+    /** use logarithm of rates for clustering algorithm */
+    bool partfinder_log_rate;
+    
     /** remove all-gap sequences in partition model to account for terrace default: TRUE */
     bool remove_empty_seq;
 
@@ -929,6 +986,11 @@ public:
             alignment output format
      */
     AlnFormat aln_output_format;
+    
+    /**
+        output file format
+     */
+    FileFormat output_format;
 
     /**
      tree in extended newick format with node label like [&label=""]
@@ -1375,7 +1437,7 @@ public:
     int model_opt_steps;
     
     /** set of models for testing */
-    char *model_set;
+    string model_set;
 
     /** set of models to be added into default set */
     char *model_extra_set;
@@ -1387,8 +1449,11 @@ public:
     char *state_freq_set;
 
     /** set of rate heterogeneity model for testing */
-    char *ratehet_set;
+    string ratehet_set;
 
+    /** all models with score worse than the best score + this threshold will be ignored */
+    double score_diff_thres;
+    
     /** model defition file */
     char *model_def_file;
 
@@ -1574,6 +1639,16 @@ public:
      */
     int rf_dist_mode;
 
+    /**
+     true to compute distance between the same k-th tree in two sets
+     */
+    bool rf_same_pair;
+    
+    /**
+     true to normalize tree distances, false otherwise
+     */
+    bool normalize_tree_dist;
+    
     /**
             compute the site-specific rates by Meyer & von Haeseler method
      */
@@ -1972,6 +2047,9 @@ public:
     
     /** maximum number of threads, default: #CPU scores  */
     int num_threads_max;
+    
+    /** true to parallel ModelFinder by models instead of sites */
+    bool openmp_by_model;
 
     /** either MTC_AIC, MTC_AICc, MTC_BIC */
     ModelTestCriterion model_test_criterion;
@@ -2293,6 +2371,12 @@ string convertInt64ToString(int64_t number);
 
 string convertDoubleToString(double number);
 
+/**
+ case-insensitive comparison between two strings
+ @return true if two strings are equal.
+ */
+bool iEquals(const string a, const string b);
+    
 /**
  *
  * @param SRC

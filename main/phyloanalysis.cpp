@@ -213,7 +213,7 @@ void reportModelSelection(ofstream &out, Params &params, ModelCheckpoint *model_
     int setid = 1;
     out.precision(3);
 
-    vector<ModelInfo> models;
+    CandidateModelSet models;
     model_info->getOrderedModels(tree, models);
     for (auto it = models.begin(); it != models.end(); it++) {
         if (tree->isSuperTree()) {
@@ -222,7 +222,7 @@ void reportModelSelection(ofstream &out, Params &params, ModelCheckpoint *model_
             setid++;
         }
         out.width(15);
-        out << left << it->name << " ";
+        out << left << it->getName() << " ";
         out.width(11);
         out << right << it->logl << " ";
         out.width(11);
@@ -2133,9 +2133,9 @@ void startTreeReconstruction(Params &params, IQTree* &iqtree, ModelCheckpoint &m
 void optimizeConTree(Params &params, IQTree *tree) {
     string contree_file = string(params.out_prefix) + ".contree";
     
-    IntVector rfdist;
+    DoubleVector rfdist;
     tree->computeRFDist(contree_file.c_str(), rfdist);
-    tree->contree_rfdist = rfdist[0];
+    tree->contree_rfdist = (int)rfdist[0];
     
     tree->readTreeFile(contree_file);
     
@@ -2512,7 +2512,9 @@ void runTreeReconstruction(Params &params, IQTree* &iqtree) {
         cout << endl;
     }
 
-    if (params.min_iterations) {
+    if (!params.final_model_opt) {
+        iqtree->setCurScore(iqtree->computeLikelihood());
+    } else if (params.min_iterations) {
         iqtree->readTreeString(iqtree->getBestTrees()[0]);
         iqtree->initializeAllPartialLh();
         iqtree->clearAllPartialLH();
@@ -3324,6 +3326,13 @@ void convertAlignment(Params &params, IQTree *iqtree) {
         alignment = bootstrap_alignment;
         iqtree->aln = alignment;
     }
+
+    int exclude_sites = 0;
+    if (params.aln_nogaps)
+        exclude_sites += EXCLUDE_GAP;
+    if (params.aln_no_const_sites)
+        exclude_sites += EXCLUDE_INVAR;
+
     if (alignment->isSuperAlignment()) {
         ((SuperAlignment*)alignment)->printCombinedAlignment(params.aln_output);
         if (params.print_subaln)
@@ -3337,16 +3346,16 @@ void convertAlignment(Params &params, IQTree *iqtree) {
         Alignment masked_aln(params.gap_masked_aln, params.sequence_type, params.intype, params.model_name);
         out_aln.createGapMaskedAlignment(&masked_aln, alignment);
         out_aln.printPhylip(params.aln_output, false, params.aln_site_list,
-                params.aln_nogaps, params.aln_no_const_sites, params.ref_seq_name);
+                exclude_sites, params.ref_seq_name);
         string str = params.gap_masked_aln;
         str += ".sitegaps";
         out_aln.printSiteGaps(str.c_str());
-    } else if (params.aln_output_format == ALN_PHYLIP)
+    } else if (params.aln_output_format == ALN_PHYLIP) {
         alignment->printPhylip(params.aln_output, false, params.aln_site_list,
-                params.aln_nogaps, params.aln_no_const_sites, params.ref_seq_name);
-    else if (params.aln_output_format == ALN_FASTA)
+                exclude_sites, params.ref_seq_name);
+    } else if (params.aln_output_format == ALN_FASTA)
         alignment->printFasta(params.aln_output, false, params.aln_site_list,
-                params.aln_nogaps, params.aln_no_const_sites, params.ref_seq_name);
+                exclude_sites, params.ref_seq_name);
 }
 
 /**
@@ -3457,14 +3466,36 @@ IQTree *newIQTree(Params &params, Alignment *alignment) {
 void getSymTestID(vector<SymTestResult> &res, set<int> &id, bool bad_res) {
     if (bad_res) {
         // get significant test ID
-        for (auto i = res.begin(); i != res.end(); i++)
-            if (i->pvalue < Params::getInstance().symtest_pcutoff)
-                id.insert(i - res.begin());
+        switch (Params::getInstance().symtest) {
+            case SYMTEST_BINOM:
+                for (auto i = res.begin(); i != res.end(); i++)
+                    if (i->pvalue_binom < Params::getInstance().symtest_pcutoff)
+                        id.insert(i - res.begin());
+                break;
+            case SYMTEST_MAXDIV:
+                for (auto i = res.begin(); i != res.end(); i++)
+                    if (i->pvalue_maxdiv < Params::getInstance().symtest_pcutoff)
+                        id.insert(i - res.begin());
+                break;
+            default:
+                break;
+        }
     } else {
         // get non-significant test ID
-        for (auto i = res.begin(); i != res.end(); i++)
-            if (i->pvalue >= Params::getInstance().symtest_pcutoff)
-                id.insert(i - res.begin());
+        switch (Params::getInstance().symtest) {
+            case SYMTEST_BINOM:
+                for (auto i = res.begin(); i != res.end(); i++)
+                    if (i->pvalue_binom >= Params::getInstance().symtest_pcutoff)
+                        id.insert(i - res.begin());
+                break;
+            case SYMTEST_MAXDIV:
+                for (auto i = res.begin(); i != res.end(); i++)
+                    if (i->pvalue_maxdiv >= Params::getInstance().symtest_pcutoff)
+                        id.insert(i - res.begin());
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -3549,9 +3580,9 @@ void doSymTest(Alignment *alignment, Params &params) {
     if (params.symtest_shuffle > 1) {
         // compute p-value for s-max approach
         for (int part = 0; part < num_parts; part++) {
-            sym[part].perm_pvalue = computePValueSMax(sym, part, num_parts);
-            marsym[part].perm_pvalue = computePValueSMax(marsym, part, num_parts);
-            intsym[part].perm_pvalue = computePValueSMax(intsym, part, num_parts);
+            sym[part].pvalue_perm = computePValueSMax(sym, part, num_parts);
+            marsym[part].pvalue_perm = computePValueSMax(marsym, part, num_parts);
+            intsym[part].pvalue_perm = computePValueSMax(intsym, part, num_parts);
         }
     }
 
@@ -3565,27 +3596,30 @@ void doSymTest(Alignment *alignment, Params &params) {
     << "#    Name:    Partition name" << endl
     << "#    SymSig:  Number of significant sequence pairs by test of symmetry" << endl
     << "#    SymNon:  Number of non-significant sequence pairs by test of symmetry" << endl
-    << "#    SymBi:   P-value for binomial test of symmetry" << endl;
+    << ((Params::getInstance().symtest == SYMTEST_BINOM) ? "#    SymBi:   P-value for binomial test of symmetry" : "#    SymPval: P-value for maximum test of symmetry") << endl;
     if (params.symtest_shuffle > 1)
         out << "#    SymMax:  Maximum of pair statistics by test of symmetry" << endl
             << "#    SymPerm: P-value for permutation test of symmetry" << endl;
     
     out << "#    MarSig:  Number of significant sequence pairs by test of marginal symmetry" << endl
     << "#    MarNon:  Number of non-significant sequence pairs by test of marginal symmetry" << endl
-    << "#    MarBi:   P-value for binomial test of marginal symmetry" << endl;
+    << ((Params::getInstance().symtest == SYMTEST_BINOM) ? "#    MarBi:   P-value for binomial test of marginal symmetry" : "#    MarPval: P-value for maximum test of marginal symmetry") << endl;
     if (params.symtest_shuffle > 1)
         out << "#    MarMax:  Maximum of pair statistics by test of marginal symmetry" << endl
             << "#    MarPerm: P-value for permutation test of marginal symmetry" << endl;
     out << "#    IntSig:  Number of significant sequence pairs by test of internal symmetry" << endl
     << "#    IntNon:  Number of non-significant sequence pairs by test of internal symmetry" << endl
-    << "#    IntBi:   P-value for binomial test of internal symmetry" << endl;
+    << ((Params::getInstance().symtest == SYMTEST_BINOM) ? "#    IntBi:   P-value for binomial test of symmetry" : "#    IntPval: P-value for maximum test of internal symmetry") << endl;
     if (params.symtest_shuffle > 1)
         out << "#    IntMax:  Maximum of pair statistics by test of internal symmetry" << endl
         << "#    IntPerm: P-value for permutation test of internal symmetry" << endl;
     
-    out << "Name,SymSig,SymNon,SymBi" << ((params.symtest_shuffle > 1) ? ",SymMax,SymPerm" : "")
-    << ",MarSig,MarNon,MarBi" << ((params.symtest_shuffle > 1) ? ",MarMax,MarPerm" : "")
-    << ",IntSig,IntNon,IntBi" << ((params.symtest_shuffle > 1) ? ",IntMax,IntPerm" : "") << endl;
+    out << "Name,SymSig,SymNon," << ((Params::getInstance().symtest == SYMTEST_BINOM) ? "SymBi" : "SymPval")
+        << ((params.symtest_shuffle > 1) ? ",SymMax,SymPerm" : "")
+        << ",MarSig,MarNon," << ((Params::getInstance().symtest == SYMTEST_BINOM) ? "MarBi" : "MarPval")
+        << ((params.symtest_shuffle > 1) ? ",MarMax,MarPerm" : "")
+        << ",IntSig,IntNon," << ((Params::getInstance().symtest == SYMTEST_BINOM) ? "IntBi" : "IntPval")
+        << ((params.symtest_shuffle > 1) ? ",IntMax,IntPerm" : "") << endl;
     
     if (alignment->isSuperAlignment()) {
         SuperAlignment *saln = (SuperAlignment*)alignment;
@@ -3598,7 +3632,7 @@ void doSymTest(Alignment *alignment, Params &params) {
 
     if (params.symtest_shuffle > 1) {
         for (int part = num_parts; part < sym.size(); part++) {
-            sym[part].perm_pvalue = marsym[part].perm_pvalue = intsym[part].perm_pvalue = -1.0;
+            sym[part].pvalue_perm = marsym[part].pvalue_perm = intsym[part].pvalue_perm = -1.0;
             out << part % num_parts << ','
             << sym[part] << ',' << marsym[part] << ','  << intsym[part] << endl;
         }
@@ -3617,7 +3651,7 @@ void doSymTest(Alignment *alignment, Params &params) {
     // now filter out partitions
     if (alignment->isSuperAlignment()) {
         set<int> part_id;
-        if (params.symtest == 2) {
+        if (params.symtest_remove == 1) {
             // remove bad loci
             if (params.symtest_type == 0)
                 getSymTestID(sym, part_id, true);
@@ -3625,7 +3659,7 @@ void doSymTest(Alignment *alignment, Params &params) {
                 getSymTestID(marsym, part_id, true);
             else
                 getSymTestID(intsym, part_id, true);
-        } else if (params.symtest == 3) {
+        } else if (params.symtest_remove == 2) {
             // remove good loci
             if (params.symtest_type == 0)
                 getSymTestID(sym, part_id, false);
@@ -3637,18 +3671,20 @@ void doSymTest(Alignment *alignment, Params &params) {
         if (!part_id.empty()) {
             SuperAlignment *saln = (SuperAlignment*)alignment;
             cout << "Removing " << part_id.size()
-            << ((params.symtest == 2)? " bad" : " good") << " partitions (pvalue cutoff = "
+            << ((params.symtest_remove == 1)? " bad" : " good") << " partitions (pvalue cutoff = "
             << params.symtest_pcutoff << ")..." << endl;
             if (part_id.size() < alignment->getNSite())
                 saln->removePartitions(part_id);
             else
                 outError("Can't remove all partitions");
-            string aln_file = (string)params.out_prefix + ((params.symtest == 2)? ".good.phy" : ".bad.phy");
+            string aln_file = (string)params.out_prefix + ((params.symtest_remove == 1)? ".good.phy" : ".bad.phy");
             saln->printCombinedAlignment(aln_file.c_str());
-            string filename = (string)params.out_prefix + ((params.symtest == 2)? ".good.nex" : ".bad.nex");
+            string filename = (string)params.out_prefix + ((params.symtest_remove == 2)? ".good.nex" : ".bad.nex");
             saln->printPartition(filename.c_str(), aln_file.c_str());
         }
     }
+    if (params.symtest_only)
+        exit(EXIT_SUCCESS);
 }
 
 void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
@@ -3665,7 +3701,7 @@ void runPhyloAnalysis(Params &params, Checkpoint *checkpoint) {
         else
             alignment = new SuperAlignment(params);
     } else {
-        alignment = new Alignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
+        alignment = createAlignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
 
         if (params.freq_const_patterns) {
             int orig_nsite = alignment->getNSite();
@@ -3943,7 +3979,7 @@ void assignBranchSupportNew(Params &params) {
             aln = new SuperAlignment(params);
             tree = new PhyloSuperTree((SuperAlignment*)aln);
         } else {
-            aln = new Alignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
+            aln = createAlignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
             tree = new PhyloTree;
         }
     } else {
@@ -4131,10 +4167,14 @@ void assignBootstrapSupport(const char *input_trees, int burnin, int max_count,
         const char *target_tree, bool rooted, const char *output_tree,
         const char *out_prefix, MExtTree &mytree, const char* tree_weight_file,
         Params *params) {
-    //bool rooted = false;
+    bool myrooted = rooted;
     // read the tree file
     cout << "Reading tree " << target_tree << " ..." << endl;
-    mytree.init(target_tree, rooted);
+    mytree.init(target_tree, myrooted);
+    if (mytree.rooted)
+        cout << "rooted tree detected" << endl;
+    else
+        cout << "unrooted tree detected" << endl;
     // reindex the taxa in the tree to aphabetical names
     NodeVector taxa;
     mytree.getTaxa(taxa);
@@ -4179,8 +4219,11 @@ void assignBootstrapSupport(const char *input_trees, int burnin, int max_count,
         }
         scale /= sg.maxWeight();
     } else {
-        boot_trees.init(input_trees, rooted, burnin, max_count,
-                tree_weight_file);
+        myrooted = rooted;
+        boot_trees.init(input_trees, myrooted, burnin, max_count,
+                        tree_weight_file);
+        if (mytree.rooted != boot_trees.isRooted())
+            outError("Target tree and tree set have different rooting");
         if (boot_trees.equal_taxon_set) {
             boot_trees.convertSplits(taxname, sg, hash_ss, SW_COUNT, -1, params->support_tag);
             scale /= boot_trees.sumTreeWeights();
@@ -4206,7 +4249,7 @@ void assignBootstrapSupport(const char *input_trees, int burnin, int max_count,
     else {
         //mytree.createBootstrapSupport(boot_trees);
         cout << "Unequal taxon sets, rereading trees..." << endl;
-        IntVector rfdist;
+        DoubleVector rfdist;
         mytree.computeRFDist(input_trees, rfdist, 1);
     }
     

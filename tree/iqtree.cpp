@@ -571,7 +571,7 @@ void IQTree::computeInitialTree(LikelihoodKernel kernel) {
         setAlignment(aln);
         if (isSuperTree())
             wrapperFixNegativeBranch(params->fixed_branch_length == BRLEN_OPTIMIZE &&
-                                     params->partition_type != TOPO_UNLINKED);
+                                     params->partition_type == BRLEN_OPTIMIZE);
         else
             fixed_number = wrapperFixNegativeBranch(false);
         params->numInitTrees = 1;
@@ -944,7 +944,7 @@ bool IQTree::isInitializedPLL() {
     return pllInst != NULL;
 }
 
-void IQTree::initializeModel(Params &params, string &model_name, ModelsBlock *models_block) {
+void IQTree::initializeModel(Params &params, string model_name, ModelsBlock *models_block) {
     try {
         if (!getModelFactory()) {
             if (isSuperTree()) {
@@ -2085,7 +2085,7 @@ string IQTree::optimizeModelParameters(bool printInfo, double logl_epsilon) {
             cout << endl;
         }
 
-        if (modOptScore < curScore - 1.0) {
+        if (modOptScore < curScore - 1.0 && params->partition_type != TOPO_UNLINKED) {
             cout << "  BUG: Tree logl gets worse after model optimization!" << endl;
             cout << "  Old logl: " << curScore << " / " << "new logl: " << modOptScore << endl;
             printTree("debug.tree");
@@ -2151,9 +2151,12 @@ string IQTree::optimizeBranches(int maxTraversal) {
 }
 
 double IQTree::doTreeSearch() {
-    cout << "--------------------------------------------------------------------" << endl;
-    cout << "|             INITIALIZING CANDIDATE TREE SET                      |" << endl;
-    cout << "--------------------------------------------------------------------" << endl;
+    
+    if (params->numInitTrees > 1) {
+        cout << "--------------------------------------------------------------------" << endl;
+        cout << "|             INITIALIZING CANDIDATE TREE SET                      |" << endl;
+        cout << "--------------------------------------------------------------------" << endl;
+    }
 
     double initCPUTime = getRealTime();
     int treesPerProc = (params->numInitTrees) / MPIHelper::getInstance().getNumProcesses() - candidateTrees.size();
@@ -2890,7 +2893,7 @@ double IQTree::doTreePerturbation() {
 /****************************************************************************
  Fast Nearest Neighbor Interchange by maximum likelihood
  ****************************************************************************/
-pair<int, int> IQTree::doNNISearch() {
+pair<int, int> IQTree::doNNISearch(bool write_info) {
 
     computeLogL();
     double curBestScore = getBestScore();
@@ -2920,7 +2923,7 @@ pair<int, int> IQTree::doNNISearch() {
         // Better tree or score is found
         if (getCurScore() > curBestScore + params->modelEps) {
             // Re-optimize model parameters (the sNNI algorithm)
-            optimizeModelParameters(false, params->modelEps * 10);
+            optimizeModelParameters(write_info, params->modelEps * 10);
             getModelFactory()->saveCheckpoint();
 
             // 2018-01-09: additional optimize root position
@@ -3733,7 +3736,7 @@ void IQTree::writeUFBootTrees(Params &params) {
         NodeVector taxa;
         // change the taxa name from ID to real name
         trees[i]->getOrderedTaxa(taxa);
-        for (j = 0; j < taxa.size(); j++)
+        for (j = 0; j < taxa.size() - (int)rooted; j++)
             taxa[j]->name = aln->getSeqName(taxa[j]->id);
         if (removed_seqs.size() > 0) {
             // reinsert removed seqs into each tree

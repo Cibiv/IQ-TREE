@@ -280,7 +280,7 @@ void PhyloTree::readTree(const char *infile, bool &is_rooted) {
     MTree::readTree(infile, is_rooted);
     // 2015-10-14: has to reset this pointer when read in
     current_it = current_it_back = NULL;
-    if (rooted)
+    if (rooted && root)
         computeBranchDirection();
 }
 
@@ -637,22 +637,40 @@ void PhyloTree::computeAllPartialLh(PhyloNode *node, PhyloNode *dad) {
 }
 */
 
-string PhyloTree::getModelName() {
-    string name = model->getName();
-    if (model_factory->unobserved_ptns.size() > 0)
-        name += "+ASC";
-    if (model_factory->fused_mix_rate) {
-        name += "*" + site_rate->name.substr(1);
-    } else {
-        name += site_rate->name;
+string getASCName(ASCType ASC_type) {
+    switch (ASC_type) {
+        case ASC_NONE:
+            return "";
+        case ASC_VARIANT:
+            return "+ASC";
+        case ASC_VARIANT_MISSING:
+            return "+ASC_MIS";
+        case ASC_INFORMATIVE:
+            return "+ASC_INF";
+        case ASC_INFORMATIVE_MISSING:
+            return "+ASC_INF_MIS";
     }
-    return name;
+}
+
+string PhyloTree::getSubstName() {
+    return model->getName() + getASCName(model_factory->getASC());
+}
+
+string PhyloTree::getRateName() {
+    if (model_factory->fused_mix_rate) {
+        return "*" + site_rate->name.substr(1);
+    } else {
+        return site_rate->name;
+    }
+}
+
+string PhyloTree::getModelName() {
+    return getSubstName() + getRateName();
 }
 
 string PhyloTree::getModelNameParams() {
     string name = model->getNameParams();
-    if (model_factory->unobserved_ptns.size() > 0)
-        name += "+ASC";
+    name += getASCName(model_factory->getASC());
     string rate_name = site_rate->getNameParams();
 
     if (model_factory->fused_mix_rate) {
@@ -840,7 +858,9 @@ void PhyloTree::initializeAllPartialLh() {
     // Minh's question: why getAlnNSite() but not getAlnNPattern() ?
     //size_t mem_size = ((getAlnNSite() % 2) == 0) ? getAlnNSite() : (getAlnNSite() + 1);
     // extra #numStates for ascertainment bias correction
-    size_t mem_size = get_safe_upper_limit(getAlnNPattern()) + get_safe_upper_limit(numStates);
+    size_t mem_size = get_safe_upper_limit(getAlnNPattern()) + max(get_safe_upper_limit(numStates),
+        get_safe_upper_limit(model_factory->unobserved_ptns.size()));
+
     size_t block_size = mem_size * numStates * site_rate->getNRate() * ((model_factory->fused_mix_rate)? 1 : model->getNMixtures());
     // make sure _pattern_lh size is divisible by 4 (e.g., 9->12, 14->16)
     if (!_pattern_lh)
@@ -932,6 +952,8 @@ void PhyloTree::deleteAllPartialLh() {
 uint64_t PhyloTree::getMemoryRequired(size_t ncategory, bool full_mem) {
     // +num_states for ascertainment bias correction
     int64_t nptn = get_safe_upper_limit(aln->getNPattern()) + get_safe_upper_limit(aln->num_states);
+    if (model_factory)
+        nptn = get_safe_upper_limit(aln->getNPattern()) + max(get_safe_upper_limit(aln->num_states), get_safe_upper_limit(model_factory->unobserved_ptns.size()));
     int64_t scale_block_size = nptn;
     if (site_rate)
         scale_block_size *= site_rate->getNRate();
@@ -997,6 +1019,8 @@ uint64_t PhyloTree::getMemoryRequiredThreaded(size_t ncategory, bool full_mem) {
 void PhyloTree::getMemoryRequired(uint64_t &partial_lh_entries, uint64_t &scale_num_entries, uint64_t &partial_pars_entries) {
     // +num_states for ascertainment bias correction
     uint64_t block_size = get_safe_upper_limit(aln->getNPattern()) + get_safe_upper_limit(aln->num_states);
+    if (model_factory)
+        block_size = get_safe_upper_limit(aln->getNPattern()) + max(get_safe_upper_limit(aln->num_states), get_safe_upper_limit(model_factory->unobserved_ptns.size()));
     size_t scale_size = block_size;
     block_size = block_size * aln->num_states;
     if (site_rate) {
@@ -1022,7 +1046,7 @@ void PhyloTree::getMemoryRequired(uint64_t &partial_lh_entries, uint64_t &scale_
 void PhyloTree::initializeAllPartialLh(int &index, int &indexlh, PhyloNode *node, PhyloNode *dad) {
     uint64_t pars_block_size = getBitsBlockSize();
     // +num_states for ascertainment bias correction
-    size_t nptn = get_safe_upper_limit(aln->size())+ get_safe_upper_limit(aln->num_states);
+    size_t nptn = get_safe_upper_limit(aln->size())+ max(get_safe_upper_limit(aln->num_states), get_safe_upper_limit(model_factory->unobserved_ptns.size()));
     uint64_t block_size;
     uint64_t scale_block_size = nptn * site_rate->getNRate() * ((model_factory->fused_mix_rate)? 1 : model->getNMixtures());
     block_size = scale_block_size * model->num_states;
@@ -1157,7 +1181,8 @@ double *PhyloTree::newPartialLh() {
 
 size_t PhyloTree::getPartialLhSize() {
     // +num_states for ascertainment bias correction
-    size_t block_size = get_safe_upper_limit(aln->size())+get_safe_upper_limit(aln->num_states);
+    size_t block_size = get_safe_upper_limit(aln->size())+max(get_safe_upper_limit(aln->num_states),
+        get_safe_upper_limit(model_factory->unobserved_ptns.size()));
     block_size *= model->num_states * site_rate->getNRate() * ((model_factory->fused_mix_rate)? 1 : model->getNMixtures());
     return block_size;
 }
@@ -1168,7 +1193,9 @@ size_t PhyloTree::getPartialLhBytes() {
 }
 
 size_t PhyloTree::getScaleNumSize() {
-    return (get_safe_upper_limit(aln->size())+get_safe_upper_limit(aln->num_states)) * site_rate->getNRate() * ((model_factory->fused_mix_rate)? 1 : model->getNMixtures());
+    size_t block_size = get_safe_upper_limit(aln->size())+max(get_safe_upper_limit(aln->num_states),
+        get_safe_upper_limit(model_factory->unobserved_ptns.size()));
+    return (block_size) * site_rate->getNRate() * ((model_factory->fused_mix_rate)? 1 : model->getNMixtures());
 }
 
 size_t PhyloTree::getScaleNumBytes() {
@@ -2440,10 +2467,10 @@ double PhyloTree::optimizeTreeLengthScaling(double min_scaling, double &scaling,
         }
     }
     if (min_brlen <= 0.0) min_brlen = params->min_branch_length;
-    if (max_scaling > params->max_branch_length / max_brlen)
-        max_scaling = params->max_branch_length / max_brlen;
-    if (min_scaling < params->min_branch_length / min_brlen)
-        min_scaling = params->min_branch_length / min_brlen;
+    if (max_scaling > 10.0*params->max_branch_length / max_brlen)
+        max_scaling = 10.0*params->max_branch_length / max_brlen;
+    if (min_scaling < 0.1*params->min_branch_length / min_brlen)
+        min_scaling = 0.1*params->min_branch_length / min_brlen;
     
     scaling = minimizeOneDimen(min(scaling, min_scaling), scaling, max(max_scaling, scaling), max(TOL_TREE_LENGTH_SCALE, gradient_epsilon), &negative_lh, &ferror);
     if (scaling != current_scaling) {

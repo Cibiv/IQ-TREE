@@ -37,7 +37,7 @@ ModelsBlock *readModelsDefinition(Params &params);
     @param model_name model name string
     @return position of +H or *H in the model string, string::npos if not found
 */
-string::size_type posRateHeterotachy(string &model_name);
+string::size_type posRateHeterotachy(string model_name);
 
 /**
     return the position of +R or *R in the model name
@@ -225,8 +225,13 @@ public:
 	 * encoded constant sites that are unobservable and added in the alignment
 	 * this involves likelihood function for ascertainment bias correction for morphological or SNP data (Lewis 2001)
 	 */
-	string unobserved_ptns;
+	vector<Pattern> unobserved_ptns;
 
+    /** ascertainment bias correction type */
+    ASCType ASC_type;
+    
+    ASCType getASC() { return ASC_type; }
+    
 	/**
 	 * optimize model and site_rate parameters
 	 * @param gradient_epsilon to control stop

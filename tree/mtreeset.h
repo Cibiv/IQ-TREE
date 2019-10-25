@@ -162,14 +162,17 @@ public:
 		@param mode RF_ALL_PAIR or RF_ADJACENT_PAIR
 		@param weight_threshold minimum weight cutoff
 	*/
-	void computeRFDist(int *rfdist, int mode = RF_ALL_PAIR, double weight_threshold = -1000);
+	void computeRFDist(double *rfdist, int mode = RF_ALL_PAIR, double weight_threshold = -1000);
 
 	/**
 		compute the Robinson-Foulds distance between trees
-		@param rfdist (OUT) RF distance
+		@param[out] rfdist output RF distance
+        @param treeset2 second tree set
+        @param k_by_k true to compute distances between corresponding k-th tree of two tree sets,
+            false to do all-by-all
 	*/
-	void computeRFDist(int *rfdist, MTreeSet *treeset2, 
-		const char* info_file = NULL, const char *tree_file = NULL, int *incomp_splits = NULL);
+	void computeRFDist(double *rfdist, MTreeSet *treeset2, bool k_by_k,
+		const char* info_file = NULL, const char *tree_file = NULL, double *incomp_splits = NULL);
 
 	int categorizeDistinctTrees(IntVector &category);
 

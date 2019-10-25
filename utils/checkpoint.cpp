@@ -191,7 +191,7 @@ void Checkpoint::dump(bool force) {
 }
 
 bool Checkpoint::hasKey(string key) {
-	return (find(key) != end());
+	return (find(struct_name + key) != end());
 }
 
 bool Checkpoint::hasKeyPrefix(string key_prefix) {
@@ -342,12 +342,23 @@ void Checkpoint::getSubCheckpoint(Checkpoint *target, string partial_key) {
 }
 
 void Checkpoint::putSubCheckpoint(Checkpoint *source, string partial_key) {
-    startStruct(partial_key);
+    if (!partial_key.empty())
+        startStruct(partial_key);
     for (auto it = source->begin(); it != source->end(); it++) {
         put(it->first, it->second);
     }
-    endStruct();
+    if (!partial_key.empty())
+        endStruct();
 }
+
+void Checkpoint::transferSubCheckpoint(Checkpoint *target, string partial_key, bool overwrite) {
+    int len = partial_key.length();
+    for (auto it = lower_bound(partial_key); it != end() && it->first.substr(0, len) == partial_key; it++) {
+        if (overwrite || !target->hasKey(it->first))
+            target->put(it->first, it->second);
+    }
+}
+
 
 /*-------------------------------------------------------------
  * CheckpointFactory

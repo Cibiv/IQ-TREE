@@ -320,7 +320,7 @@ Alignment *Alignment::removeIdenticalSeq(string not_remove, bool keep_two, StrVe
         if (checked[seq1]) continue;
         bool first_ident_seq = true;
 		for (int seq2 = seq1+1; seq2 < getNSeq(); seq2++) {
-			if (getSeqName(seq2) == not_remove) continue;
+			if (getSeqName(seq2) == not_remove || removed[seq2]) continue;
 			bool equal_seq = true;
 			for (iterator it = begin(); it != end(); it++)
 				if  ((*it)[seq1] != (*it)[seq2]) {
@@ -460,7 +460,7 @@ Alignment::Alignment(char *filename, char *sequence_type, InputType &intype, str
          << num_informative_sites << " parsimony-informative, "
          << num_variant_sites-num_informative_sites << " singleton sites, "
          << (int)(frac_const_sites*getNSite()) << " constant sites" << endl;
-    buildSeqStates();
+    //buildSeqStates();
     checkSeqName();
     // OBSOLETE: identical sequences are handled later
 //	checkIdenticalSeq();
@@ -493,9 +493,14 @@ bool Alignment::isStandardGeneticCode() {
 	return (genetic_code == genetic_code1 || genetic_code == genetic_code11);
 }
 
-void Alignment::buildSeqStates(bool add_unobs_const) {
-	string unobs_const;
-	if (add_unobs_const) unobs_const = getUnobservedConstPatterns();
+/*
+void Alignment::buildSeqStates(vector<vector<int> > &seq_states, bool add_unobs_const) {
+	vector<StateType> unobs_const;
+    if (add_unobs_const) {
+        unobs_const.resize(num_states);
+        for (StateType state = 0; state < num_states; state++)
+            unobs_const[state] = state;
+    }
 	seq_states.clear();
 	seq_states.resize(getNSeq());
 	for (int seq = 0; seq < getNSeq(); seq++) {
@@ -503,14 +508,15 @@ void Alignment::buildSeqStates(bool add_unobs_const) {
 		has_state.resize(STATE_UNKNOWN+1, false);
 		for (int site = 0; site < getNPattern(); site++)
 			has_state[at(site)[seq]] = true;
-		for (string::iterator it = unobs_const.begin(); it != unobs_const.end(); it++)
-			has_state[*it] = true;
+        for (StateType it : unobs_const)
+			has_state[it] = true;
         seq_states[seq].clear();
 		for (int state = 0; state < STATE_UNKNOWN; state++)
 			if (has_state[state])
 				seq_states[seq].push_back(state);
 	}
 }
+*/
 
 int Alignment::readNexus(char *filename) {
     NxsTaxaBlock *taxa_block;
@@ -937,7 +943,7 @@ void Alignment::addConstPatterns(char *freq_const_patterns) {
 			addPattern(pat, nsite++, 1);
 	}
     countConstSite();
-    buildSeqStates();
+//    buildSeqStates();
 }
 
 void Alignment::orderPatternByNumChars(int pat_type) {
@@ -2527,7 +2533,7 @@ bool Alignment::getSiteFromResidue(int seq_id, int &residue_left, int &residue_r
 }
 
 int Alignment::buildRetainingSites(const char *aln_site_list, IntVector &kept_sites,
-		bool exclude_gaps, bool exclude_const_sites, const char *ref_seq_name)
+		int exclude_sites, const char *ref_seq_name)
 {
     if (aln_site_list) {
         int seq_id = -1;
@@ -2570,17 +2576,24 @@ int Alignment::buildRetainingSites(const char *aln_site_list, IntVector &kept_si
     }
 
     int j;
-    if (exclude_gaps) {
+    if (exclude_sites & EXCLUDE_GAP) {
         for (j = 0; j < kept_sites.size(); j++)
             if (kept_sites[j] && at(site_pattern[j]).computeAmbiguousChar(num_states) > 0) {
                 kept_sites[j] = 0;
             }
     }
-    if (exclude_const_sites) {
+    if (exclude_sites & EXCLUDE_INVAR) {
         for (j = 0; j < kept_sites.size(); j++)
         	if (at(site_pattern[j]).isInvariant())
         		kept_sites[j] = 0;
 
+    }
+
+    if (exclude_sites & EXCLUDE_UNINF) {
+        for (j = 0; j < kept_sites.size(); j++)
+            if (!at(site_pattern[j]).isInformative())
+                kept_sites[j] = 0;
+        
     }
 
     int final_length = 0;
@@ -2590,9 +2603,9 @@ int Alignment::buildRetainingSites(const char *aln_site_list, IntVector &kept_si
 }
 
 void Alignment::printPhylip(ostream &out, bool append, const char *aln_site_list,
-                            bool exclude_gaps, bool exclude_const_sites, const char *ref_seq_name, bool print_taxid) {
+                            int exclude_sites, const char *ref_seq_name, bool print_taxid) {
     IntVector kept_sites;
-    int final_length = buildRetainingSites(aln_site_list, kept_sites, exclude_gaps, exclude_const_sites, ref_seq_name);
+    int final_length = buildRetainingSites(aln_site_list, kept_sites, exclude_sites, ref_seq_name);
     if (seq_type == SEQ_CODON)
         final_length *= 3;
 
@@ -2616,7 +2629,7 @@ void Alignment::printPhylip(ostream &out, bool append, const char *aln_site_list
 }
 
 void Alignment::printPhylip(const char *file_name, bool append, const char *aln_site_list,
-                            bool exclude_gaps, bool exclude_const_sites, const char *ref_seq_name) {
+                            int exclude_sites, const char *ref_seq_name) {
     try {
         ofstream out;
         out.exceptions(ios::failbit | ios::badbit);
@@ -2626,7 +2639,7 @@ void Alignment::printPhylip(const char *file_name, bool append, const char *aln_
         else
             out.open(file_name);
 
-        printPhylip(out, append, aln_site_list, exclude_gaps, exclude_const_sites, ref_seq_name);
+        printPhylip(out, append, aln_site_list, exclude_sites, ref_seq_name);
 
         out.close();
         if (verbose_mode >= VB_MED)
@@ -2636,11 +2649,11 @@ void Alignment::printPhylip(const char *file_name, bool append, const char *aln_
     }
 }
 
-void Alignment::printFasta(const char *file_name, bool append, const char *aln_site_list
-                           , bool exclude_gaps, bool exclude_const_sites, const char *ref_seq_name)
+void Alignment::printFasta(const char *file_name, bool append, const char *aln_site_list,
+                           int exclude_sites, const char *ref_seq_name)
 {
     IntVector kept_sites;
-    buildRetainingSites(aln_site_list, kept_sites, exclude_gaps, exclude_const_sites, ref_seq_name);
+    buildRetainingSites(aln_site_list, kept_sites, exclude_sites, ref_seq_name);
     try {
         ofstream out;
         out.exceptions(ios::failbit | ios::badbit);
@@ -2713,7 +2726,7 @@ void Alignment::extractSubAlignment(Alignment *aln, IntVector &seq_id, int min_t
     site_pattern.resize(aln->getNSite() - removed_sites);
     verbose_mode = save_mode;
     countConstSite();
-    buildSeqStates();
+//    buildSeqStates();
     ASSERT(size() <= aln->size());
     if (kept_partitions)
         kept_partitions->push_back(0);
@@ -2756,7 +2769,7 @@ void Alignment::extractPatterns(Alignment *aln, IntVector &ptn_id) {
     site_pattern.resize(site);
     verbose_mode = save_mode;
     countConstSite();
-    buildSeqStates();
+//    buildSeqStates();
     ASSERT(size() <= aln->size());
 }
 
@@ -2798,7 +2811,7 @@ void Alignment::extractPatternFreqs(Alignment *aln, IntVector &ptn_freq) {
     site_pattern.resize(site);
     verbose_mode = save_mode;
     countConstSite();
-    buildSeqStates();
+//    buildSeqStates();
     ASSERT(size() <= aln->size());
 }
 
@@ -2833,7 +2846,7 @@ void Alignment::extractSites(Alignment *aln, IntVector &site_id) {
     }
     verbose_mode = save_mode;
     countConstSite();
-    buildSeqStates();
+//    buildSeqStates();
     // sanity check
     for (iterator it = begin(); it != end(); it++)
     	if (it->at(0) == -1)
@@ -2936,7 +2949,7 @@ void Alignment::convertToCodonOrAA(Alignment *aln, char *gene_code_id, bool nt2a
         outError(err_str.str());
     verbose_mode = save_mode;
     countConstSite();
-    buildSeqStates();
+//    buildSeqStates();
     // sanity check
     for (iterator it = begin(); it != end(); it++)
     	if (it->at(0) == -1)
@@ -2989,7 +3002,7 @@ Alignment *Alignment::convertCodonToAA() {
     }
     verbose_mode = save_mode;
     res->countConstSite();
-    res->buildSeqStates();
+//    res->buildSeqStates();
     return res;
 }
 
@@ -3043,7 +3056,7 @@ Alignment *Alignment::convertCodonToDNA() {
     }
     verbose_mode = save_mode;
     res->countConstSite();
-    res->buildSeqStates();
+//    res->buildSeqStates();
     return res;
 }
 
@@ -3294,7 +3307,7 @@ void Alignment::createBootstrapAlignment(Alignment *aln, IntVector* pattern_freq
     }
     verbose_mode = save_mode;
     countConstSite();
-    buildSeqStates();
+//    buildSeqStates();
 }
 
 void Alignment::createBootstrapAlignment(IntVector &pattern_freq, const char *spec) {
@@ -3451,7 +3464,7 @@ void Alignment::buildFromPatternFreq(Alignment & aln, IntVector new_pattern_freq
     }
 
     countConstSite();
-    buildSeqStates();
+//    buildSeqStates();
 //    checkSeqName();
 }
 
@@ -3498,7 +3511,7 @@ void Alignment::createGapMaskedAlignment(Alignment *masked_aln, Alignment *aln) 
     }
     verbose_mode = save_mode;
     countConstSite();
-    buildSeqStates();
+//    buildSeqStates();
 }
 
 void Alignment::shuffleAlignment() {
@@ -3530,7 +3543,7 @@ void Alignment::concatenateAlignment(Alignment *aln) {
     }
     verbose_mode = save_mode;
     countConstSite();
-    buildSeqStates();
+//    buildSeqStates();
 }
 
 void Alignment::copyAlignment(Alignment *aln) {
@@ -3564,7 +3577,7 @@ void Alignment::copyAlignment(Alignment *aln) {
     }
     verbose_mode = save_mode;
     countConstSite();
-    buildSeqStates();
+//    buildSeqStates();
 }
 
 void Alignment::countConstSite() {
@@ -3587,19 +3600,110 @@ void Alignment::countConstSite() {
     frac_invariant_sites = ((double)num_invariant_sites) / getNSite();
 }
 
-string Alignment::getUnobservedConstPatterns() {
-	string ret = "";
-	for (char state = 0; state < num_states; state++)
-    if (!isStopCodon(state))
-    {
-		Pattern pat;
-		pat.resize(getNSeq(), state);
-		if (pattern_index.find(pat) == pattern_index.end()) {
-			// constant pattern is unobserved
-			ret.push_back(state);
-		}
-	}
-	return ret;
+/**
+ * generate all subsets of a set
+ * @param inset input set
+ * @param[out] subsets vector of all subsets of inset
+ */
+template<class T>
+void generateSubsets(vector<T> &inset, vector<vector<T> > &subsets) {
+    if (inset.size() > 30)
+        outError("Cannot work with more than 31 states");
+    uint64_t total = ((uint64_t)1 << inset.size());
+    for (uint64_t binrep = 0; binrep < total; binrep++) {
+        vector<T> subset;
+        for (uint64_t i = 0; i < inset.size(); i++)
+            if (binrep & (1 << i))
+                subset.push_back(inset[i]);
+        subsets.push_back(subset);
+    }
+}
+
+void Alignment::generateUninfPatterns(StateType repeat, vector<StateType> &singleton, vector<int> &seq_pos, vector<Pattern> &unobserved_ptns) {
+    int seqs = getNSeq();
+    if (seq_pos.size() == singleton.size()) {
+        Pattern pat;
+        pat.resize(seqs, repeat);
+        for (int i = 0; i < seq_pos.size(); i++)
+            pat[seq_pos[i]] = singleton[i];
+        unobserved_ptns.push_back(pat);
+        return;
+    }
+    for (int seq = 0; seq < seqs; seq++) {
+        bool dup = false;
+        for (auto s: seq_pos)
+            if (seq == s) { dup = true; break; }
+        if (dup) continue;
+        vector<int> seq_pos_new = seq_pos;
+        seq_pos_new.push_back(seq);
+        generateUninfPatterns(repeat, singleton, seq_pos_new, unobserved_ptns);
+    }
+}
+
+void Alignment::getUnobservedConstPatterns(ASCType ASC_type, vector<Pattern> &unobserved_ptns) {
+    switch (ASC_type) {
+        case ASC_NONE: break;
+        case ASC_VARIANT: {
+            // Lewis's correction for variant sites
+            unobserved_ptns.reserve(num_states);
+            for (StateType state = 0; state < num_states; state++)
+                if (!isStopCodon(state))
+                    {
+                    Pattern pat;
+                    pat.resize(getNSeq(), state);
+                    if (pattern_index.find(pat) == pattern_index.end()) {
+                        // constant pattern is unobserved
+                        unobserved_ptns.push_back(pat);
+                    }
+                    }
+            break;
+        }
+        case ASC_VARIANT_MISSING: {
+            // Holder's correction for variant sites with missing data
+            size_t orig_nptn = getNPattern();
+            size_t max_orig_nptn = get_safe_upper_limit(orig_nptn);
+            unobserved_ptns.reserve(max_orig_nptn*num_states);
+            int nseq = getNSeq();
+            for (StateType state = 0; state < num_states; state++)
+                for (size_t ptn = 0; ptn < max_orig_nptn; ptn++) {
+                    Pattern new_ptn;
+                    if (ptn < orig_nptn) {
+                        new_ptn.reserve(nseq);
+                        for (auto state_ptn: at(ptn)) {
+                            if (state_ptn < num_states)
+                                new_ptn.push_back(state);
+                            else
+                                new_ptn.push_back(STATE_UNKNOWN);
+                        }
+                    } else
+                        new_ptn.resize(nseq, STATE_UNKNOWN);
+                    unobserved_ptns.push_back(new_ptn);
+                }
+            break;
+        }
+        case ASC_INFORMATIVE: {
+            // Holder correction for informative sites
+            for (StateType repeat = 0; repeat < num_states; repeat++) {
+                vector<StateType> rest;
+                rest.reserve(num_states-1);
+                for (StateType s = 0; s < num_states; s++)
+                    if (s != repeat) rest.push_back(s);
+                vector<vector<StateType> > singletons;
+                generateSubsets(rest, singletons);
+                for (auto singleton : singletons)
+                    if (singleton.size() < getNSeq()-1 || (singleton.size() == getNSeq()-1 && repeat == 0)) {
+                        vector<int> seq_pos;
+                        generateUninfPatterns(repeat, singleton, seq_pos, unobserved_ptns);
+                    }
+            }
+            break;
+        }
+        case ASC_INFORMATIVE_MISSING: {
+            // Holder correction for informative sites with missing data
+            ASSERT(0 && "Not supported yet");
+            break;
+        }
+    }
 }
 
 int Alignment::countProperChar(int seq_id) {
@@ -4404,22 +4508,26 @@ double binomial_cdf(int x, int n, double p) {
 
 void SymTestResult::computePvalue() {
     if (significant_pairs <= 0) {
-        pvalue = 1.0;
+        pvalue_binom = 1.0;
         return;
     }
 #ifdef USE_BOOST
     boost::math::binomial binom(included_pairs, Params::getInstance().symtest_pcutoff);
-    pvalue = cdf(complement(binom, significant_pairs-1));
+    pvalue_binom = cdf(complement(binom, significant_pairs-1));
 #else
-    pvalue = binomial_cdf(significant_pairs, included_pairs, Params::getInstance().symtest_pcutoff);
+    pvalue_binom = binomial_cdf(significant_pairs, included_pairs, Params::getInstance().symtest_pcutoff);
 #endif
 }
 
 std::ostream& operator<<(std::ostream& stream, const SymTestResult& res) {
     stream << res.significant_pairs << ","
-        << res.included_pairs - res.significant_pairs << "," << res.pvalue;
+    << res.included_pairs - res.significant_pairs << ",";
+    if (Params::getInstance().symtest == SYMTEST_BINOM)
+        stream << res.pvalue_binom;
+    else
+        stream << res.pvalue_maxdiv;
     if (Params::getInstance().symtest_shuffle > 1)
-        stream << "," << res.max_stat << ',' << res.perm_pvalue;
+        stream << "," << res.max_stat << ',' << res.pvalue_perm;
     return stream;
 }
 
@@ -4434,6 +4542,9 @@ void Alignment::doSymTest(size_t vecid, vector<SymTestResult> &vec_sym, vector<S
     sym.max_stat = -1.0;
     marsym.max_stat = -1.0;
     intsym.max_stat = -1.0;
+    sym.pvalue_maxdiv = 1.0;
+    marsym.pvalue_maxdiv = 1.0;
+    intsym.pvalue_maxdiv = 1.0;
     
     vector<Pattern> ptn_shuffled;
     
@@ -4450,6 +4561,8 @@ void Alignment::doSymTest(size_t vecid, vector<SymTestResult> &vec_sym, vector<S
     if (stats)
         stats->reserve(nseq*(nseq-1)/2);
 
+    double max_divergence = 0.0;
+    
     for (int seq1 = 0; seq1 < nseq; seq1++)
         for (int seq2 = seq1+1; seq2 < nseq; seq2++) {
             MatrixXd pair_freq = MatrixXd::Zero(num_states, num_states);
@@ -4465,12 +4578,17 @@ void Alignment::doSymTest(size_t vecid, vector<SymTestResult> &vec_sym, vector<S
                 }
             }
             
+            double divergence = pair_freq.sum() - pair_freq.diagonal().sum();
+            
             // performing test of symmetry
             int i, j;
             
             SymTestStat stat;
             stat.seq1 = seq1;
             stat.seq2 = seq2;
+            stat.pval_sym = nan("");
+            stat.pval_marsym = nan("");
+            stat.pval_intsym = nan("");
             
             int df_sym = num_states*(num_states-1)/2;
             bool applicable = true;
@@ -4538,6 +4656,16 @@ void Alignment::doSymTest(size_t vecid, vector<SymTestResult> &vec_sym, vector<S
             }
             if (stats)
                 stats->push_back(stat);
+            if (divergence > max_divergence) {
+                sym.pvalue_maxdiv = stat.pval_sym;
+                intsym.pvalue_maxdiv = stat.pval_intsym;
+                marsym.pvalue_maxdiv = stat.pval_marsym;
+                max_divergence = divergence;
+            } else if (divergence == max_divergence && random_double(rstream) < 0.5) {
+                sym.pvalue_maxdiv = stat.pval_sym;
+                intsym.pvalue_maxdiv = stat.pval_intsym;
+                marsym.pvalue_maxdiv = stat.pval_marsym;
+            }
         }
     
     sym.computePvalue();

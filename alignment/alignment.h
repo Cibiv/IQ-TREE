@@ -28,7 +28,7 @@ class SymTestResult {
 public:
     SymTestResult() {
         significant_pairs = included_pairs = excluded_pairs = 0;
-        pvalue = -1.0;
+        pvalue_binom = -1.0;
     }
     
     /** compute pvalue using bionomial test */
@@ -37,9 +37,10 @@ public:
     int significant_pairs; // number of significant sequence pairs
     int included_pairs; // total number of included sequence pairs
     int excluded_pairs; // number of excluded sequence pairs
-    double pvalue; // pvalue of binomial test of symmetry
     double max_stat; // maximum of the pair statistics
-    double perm_pvalue; // p-value of permutation test of symmetry
+    double pvalue_binom; // pvalue of binomial test of symmetry
+    double pvalue_maxdiv; // p-value of the sequence pair with maximum divergence
+    double pvalue_perm; // p-value of permutation test of symmetry
 };
 
 /** class storing all pairwise statistics */
@@ -81,6 +82,10 @@ typedef unordered_map<vector<StateType>, int, hashPattern> PatternIntMap;
 typedef map<vector<StateType>, int> PatternIntMap;
 #endif
 
+
+constexpr int EXCLUDE_GAP   = 1; // exclude gaps
+constexpr int EXCLUDE_INVAR = 2; // exclude invariant sites
+constexpr int EXCLUDE_UNINF = 4; // exclude uninformative sites
 
 /**
 Multiple Sequence Alignment. Stored by a vector of site-patterns
@@ -293,16 +298,16 @@ public:
     bool getSiteFromResidue(int seq_id, int &residue_left, int &residue_right);
 
     int buildRetainingSites(const char *aln_site_list, IntVector &kept_sites,
-            bool exclude_gaps, bool exclude_const_sites, const char *ref_seq_name);
+            int exclude_sites, const char *ref_seq_name);
 
     void printPhylip(const char *filename, bool append = false, const char *aln_site_list = NULL,
-    		bool exclude_gaps = false, bool exclude_const_sites = false, const char *ref_seq_name = NULL);
+    		int exclude_sites = 0, const char *ref_seq_name = NULL);
 
     void printPhylip(ostream &out, bool append = false, const char *aln_site_list = NULL,
-    		bool exclude_gaps = false, bool exclude_const_sites = false, const char *ref_seq_name = NULL, bool print_taxid = false);
+    		int exclude_sites = 0, const char *ref_seq_name = NULL, bool print_taxid = false);
 
     void printFasta(const char *filename, bool append = false, const char *aln_site_list = NULL,
-    		bool exclude_gaps = false, bool exclude_const_sites = false, const char *ref_seq_name = NULL);
+    		int exclude_sites = 0, const char *ref_seq_name = NULL);
 
     /**
             Print the number of gaps per site
@@ -703,9 +708,15 @@ public:
     virtual void countConstSite();
 
     /**
-     * @return unobserved constant patterns, each entry encoding for one constant character
+     * generate uninformative patterns
      */
-    string getUnobservedConstPatterns();
+    void generateUninfPatterns(StateType repeat, vector<StateType> &singleton, vector<int> &seq_pos, vector<Pattern> &unobserved_ptns);
+        
+    /**
+     * @param missing_data TRUE for missing data aware correction (for Mark Holder)
+     * @param[out] unobserved_ptns unobserved constant patterns, each entry encoding for one constant character
+     */
+    void getUnobservedConstPatterns(ASCType ASC_type, vector<Pattern> &unobserved_ptns);
 
     /**
             @return the number of ungappy and unambiguous characters from a sequence
@@ -782,8 +793,6 @@ public:
   vector<uint32_t> pomo_sampled_states;
   IntIntMap pomo_sampled_states_index; // indexing, to quickly find if a PoMo-2-state is already present
 
-    vector<vector<int> > seq_states; // state set for each sequence in the alignment
-
     /* for site-specific state frequency model with Huaichun, Edward, Andrew */
     
     /* site to model ID map */
@@ -807,7 +816,7 @@ public:
     /* build seq_states containing set of states per sequence
      * @param add_unobs_const TRUE to add all unobserved constant states (for +ASC model)
      */
-    virtual void buildSeqStates(bool add_unobs_const = false);
+    //virtual void buildSeqStates(vector<vector<int> > &seq_states, bool add_unobs_const = false);
 
     /** Added by MA
             Compute the probability of this alignment according to the multinomial distribution with parameters determined by the reference alignment
@@ -891,5 +900,14 @@ protected:
 
 
 void extractSiteID(Alignment *aln, const char* spec, IntVector &site_id);
+
+/**
+ create a new Alignment object with possibility of comma-separated file names
+ @param aln_file alignment file name, can be a comma-separated list of file names
+ @param sequence_type sequence data type
+ @param input input file format
+ @param model_name model name
+ */
+Alignment *createAlignment(string aln_file, const char *sequence_type, InputType intype, string model_name);
 
 #endif

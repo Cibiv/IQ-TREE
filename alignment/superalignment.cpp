@@ -24,6 +24,25 @@
 #include "nclextra/myreader.h"
 #include "main/phylotesting.h"
 
+Alignment *createAlignment(string aln_file, const char *sequence_type, InputType intype, string model_name) {
+    bool is_dir = isDirectory(aln_file.c_str());
+
+    if (!is_dir && aln_file.find(',') == string::npos)
+        return new Alignment((char*)aln_file.c_str(), (char*)sequence_type, intype, model_name);
+
+    SuperAlignment *super_aln = new SuperAlignment;
+    if (is_dir)
+        super_aln->readPartitionDir(aln_file, (char*)sequence_type, intype, model_name, true);
+    else
+        super_aln->readPartitionList(aln_file, (char*)sequence_type, intype, model_name, true);
+    super_aln->init();
+    Alignment *aln = super_aln->concatenateAlignments();
+    if (aln->isSuperAlignment())
+        outError("Cannot concatenate alignments of different data type ", aln_file);
+    delete super_aln;
+    return aln;
+}
+
 SuperAlignment::SuperAlignment() : Alignment() {
     max_num_states = 0;
 }
@@ -50,7 +69,10 @@ SuperAlignment::SuperAlignment(Params &params) : Alignment()
 void SuperAlignment::readFromParams(Params &params) {
     if (isDirectory(params.partition_file)) {
         // reading all files in the directory
-        readPartitionDir(params);
+        readPartitionDir(params.partition_file, params.sequence_type, params.intype, params.model_name, params.remove_empty_seq);
+    } else if (strstr(params.partition_file, ",") != nullptr) {
+        // reading all files in a comma-separated list
+        readPartitionList(params.partition_file, params.sequence_type, params.intype, params.model_name, params.remove_empty_seq);
     } else {
         cout << "Reading partition model file " << params.partition_file << " ..." << endl;
         if (detectInputFile(params.partition_file) == IN_NEXUS) {
@@ -146,7 +168,7 @@ void SuperAlignment::buildPattern() {
 	}
 	verbose_mode = save_mode;
 	countConstSite();
-    buildSeqStates();
+//    buildSeqStates();
 }
 
 void SuperAlignment::readPartition(Params &params) {
@@ -177,7 +199,7 @@ void SuperAlignment::readPartition(Params &params) {
 //            info.nniMoves[1].ptnlh = NULL;
 //            info.cur_ptnlh = NULL;
 //            part_info.push_back(info);
-            Alignment *part_aln = new Alignment((char*)info.aln_file.c_str(), (char*)info.sequence_type.c_str(), params.intype, info.model_name);
+            Alignment *part_aln = createAlignment(info.aln_file, info.sequence_type.c_str(), params.intype, info.model_name);
             if (!info.position_spec.empty()) {
                 Alignment *new_aln = new Alignment();
                 new_aln->extractSites(part_aln, info.position_spec.c_str());
@@ -219,7 +241,7 @@ void SuperAlignment::readPartitionRaxml(Params &params) {
         if (!params.aln_file)
             outError("Please supply an alignment with -s option");
         
-        input_aln = new Alignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
+        input_aln = createAlignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
         
         cout << endl << "Partition file is not in NEXUS format, assuming RAxML-style partition file..." << endl;
         
@@ -305,7 +327,7 @@ void SuperAlignment::readPartitionRaxml(Params &params) {
             else
                 new_aln = part_aln;
             // also rebuild states set of each sequence for likelihood computation
-            new_aln->buildSeqStates();
+//            new_aln->buildSeqStates();
             
             if (part_aln != new_aln) delete part_aln;
 
@@ -345,7 +367,7 @@ void SuperAlignment::readPartitionNexus(Params &params) {
     
     Alignment *input_aln = NULL;
     if (params.aln_file) {
-        input_aln = new Alignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
+        input_aln = createAlignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
     }
     
     bool empty_partition = true;
@@ -395,7 +417,7 @@ void SuperAlignment::readPartitionNexus(Params &params) {
 //            part_info.push_back(info);
             Alignment *part_aln;
             if ((*it)->aln_file != "") {
-                part_aln = new Alignment((char*)(*it)->aln_file.c_str(), (char*)(*it)->sequence_type.c_str(), params.intype, (*it)->model_name);
+                part_aln = createAlignment((*it)->aln_file, (*it)->sequence_type.c_str(), params.intype, (*it)->model_name);
             } else {
                 part_aln = input_aln;
             }
@@ -417,7 +439,7 @@ void SuperAlignment::readPartitionNexus(Params &params) {
             else
                 new_aln = part_aln;
             // also rebuild states set of each sequence for likelihood computation
-            new_aln->buildSeqStates();
+//            new_aln->buildSeqStates();
             
             if (part_aln != new_aln && part_aln != input_aln) delete part_aln;
             new_aln->name = (*it)->name;
@@ -425,6 +447,7 @@ void SuperAlignment::readPartitionNexus(Params &params) {
             new_aln->aln_file = (*it)->aln_file;
             new_aln->position_spec = (*it)->position_spec;
             new_aln->sequence_type = (*it)->sequence_type;
+            new_aln->tree_len = (*it)->tree_len;
             partitions.push_back(new_aln);
 //            PhyloTree *tree = new PhyloTree(new_aln);
 //            push_back(tree);
@@ -437,23 +460,24 @@ void SuperAlignment::readPartitionNexus(Params &params) {
     delete sets_block;
 }
 
-void SuperAlignment::readPartitionDir(Params &params) {
+void SuperAlignment::readPartitionDir(string partition_dir, char *sequence_type,
+                                      InputType &intype, string model, bool remove_empty_seq) {
     //    Params origin_params = params;
 
     StrVector filenames;
-    string dir = params.partition_file;
+    string dir = partition_dir;
     if (dir.back() != '/')
         dir.append("/");
-    getFilesInDir(params.partition_file, filenames);
+    getFilesInDir(partition_dir.c_str(), filenames);
     if (filenames.empty())
-        outError("No file found in ", params.partition_file);
+        outError("No file found in ", partition_dir);
     std::sort(filenames.begin(), filenames.end());
-    cout << "Reading " << filenames.size() << " alignment files in directory " << params.partition_file << endl;
+    cout << "Reading " << filenames.size() << " alignment files in directory " << partition_dir << endl;
     
     for (auto it = filenames.begin(); it != filenames.end(); it++)
     {
         Alignment *part_aln;
-        part_aln = new Alignment((char*)(dir+*it).c_str(), params.sequence_type, params.intype, params.model_name);
+        part_aln = createAlignment(dir+*it, sequence_type, intype, model_name);
 //        if (part_aln->seq_type == SEQ_DNA && (strncmp(params.sequence_type, "CODON", 5) == 0 || strncmp(params.sequence_type, "NT2AA", 5) == 0)) {
 //            Alignment *new_aln = new Alignment();
 //            new_aln->convertToCodonOrAA(part_aln, params.sequence_type+5, strncmp(params.sequence_type, "NT2AA", 5) == 0);
@@ -461,22 +485,65 @@ void SuperAlignment::readPartitionDir(Params &params) {
 //            part_aln = new_aln;
 //        }
         Alignment *new_aln;
-        if (params.remove_empty_seq)
+        if (remove_empty_seq)
             new_aln = part_aln->removeGappySeq();
         else
             new_aln = part_aln;
         // also rebuild states set of each sequence for likelihood computation
-        new_aln->buildSeqStates();
+//        new_aln->buildSeqStates();
         
         if (part_aln != new_aln) delete part_aln;
         new_aln->name = *it;
-        new_aln->model_name = params.model_name;
+        new_aln->model_name = model_name;
         new_aln->aln_file = dir + *it;
         new_aln->position_spec = "";
-        if (params.sequence_type)
-            new_aln->sequence_type = params.sequence_type;
+        if (sequence_type)
+            new_aln->sequence_type = sequence_type;
         partitions.push_back(new_aln);
     }
+}
+
+void SuperAlignment::readPartitionList(string file_list, char *sequence_type,
+    InputType &intype, string model, bool remove_empty_seq)
+{
+    //    Params origin_params = params;
+    
+    StrVector filenames;
+    stringstream ss(file_list);
+    string token;
+    while (getline(ss, token, ','))
+        filenames.push_back(token);
+    if (filenames.empty())
+        outError("No file found in ", file_list);
+    cout << "Reading " << filenames.size() << " alignment files..." << endl;
+    
+    for (auto it = filenames.begin(); it != filenames.end(); it++)
+        {
+        Alignment *part_aln;
+        part_aln = createAlignment(*it, sequence_type, intype, model_name);
+        //        if (part_aln->seq_type == SEQ_DNA && (strncmp(params.sequence_type, "CODON", 5) == 0 || strncmp(params.sequence_type, "NT2AA", 5) == 0)) {
+        //            Alignment *new_aln = new Alignment();
+        //            new_aln->convertToCodonOrAA(part_aln, params.sequence_type+5, strncmp(params.sequence_type, "NT2AA", 5) == 0);
+        //            delete part_aln;
+        //            part_aln = new_aln;
+        //        }
+        Alignment *new_aln;
+        if (remove_empty_seq)
+            new_aln = part_aln->removeGappySeq();
+        else
+            new_aln = part_aln;
+        // also rebuild states set of each sequence for likelihood computation
+//        new_aln->buildSeqStates();
+        
+        if (part_aln != new_aln) delete part_aln;
+        new_aln->name = *it;
+        new_aln->model_name = model_name;
+        new_aln->aln_file = *it;
+        new_aln->position_spec = "";
+        if (sequence_type)
+            new_aln->sequence_type = sequence_type;
+        partitions.push_back(new_aln);
+        }
 }
 
 void SuperAlignment::printPartition(const char *filename, const char *aln_file) {
@@ -803,7 +870,7 @@ Alignment *SuperAlignment::removeIdenticalSeq(string not_remove, bool keep_two, 
         if (checked[seq1]) continue;
         bool first_ident_seq = true;
 		for (int seq2 = seq1+1; seq2 < getNSeq(); seq2++) {
-			if (getSeqName(seq2) == not_remove) continue;
+			if (getSeqName(seq2) == not_remove || removed[seq2]) continue;
 			bool equal_seq = true;
 			int part = 0;
 			// check if seq1 and seq2 are identical over all partitions
@@ -1355,10 +1422,11 @@ void SuperAlignment::printSubAlignments(Params &params) {
 		else
 			filename = params.out_prefix;
 		filename += "." + (*pit)->name;
+        int exclude_sites = (params.aln_nogaps) ? EXCLUDE_GAP : 0;
 		 if (params.aln_output_format == ALN_PHYLIP)
-			(*pit)->printPhylip(filename.c_str(), false, NULL, params.aln_nogaps, false, NULL);
+			(*pit)->printPhylip(filename.c_str(), false, NULL, exclude_sites, NULL);
 		else if (params.aln_output_format == ALN_FASTA)
-			(*pit)->printFasta(filename.c_str(), false, NULL, params.aln_nogaps, false, NULL);
+			(*pit)->printFasta(filename.c_str(), false, NULL, exclude_sites, NULL);
 	}
 }
 
@@ -1458,7 +1526,7 @@ Alignment *SuperAlignment::concatenateAlignments(set<int> &ids) {
     	}
     }
     aln->countConstSite();
-    aln->buildSeqStates();
+//    aln->buildSeqStates();
 
 	return aln;
 }

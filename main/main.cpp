@@ -1364,30 +1364,62 @@ void calcDistribution(Params &params) {
     }
 }
 
-void printRFDist(ostream &out, int *rfdist, int n, int m, int rf_dist_mode) {
+void printRFDist(string filename, double *rfdist, int n, int m, int rf_dist_mode, bool print_msg = true) {
     int i, j;
-    if (rf_dist_mode == RF_ADJACENT_PAIR) {
-        out << "XXX        ";
-        out << 1 << " " << n << endl;
-        for (i = 0; i < n; i++)
-            out << " " << rfdist[i];
-        out << endl;
-    } else {
-        // all pairs
-        out << n << " " << m << endl;
-        for (i = 0; i < n; i++)  {
-            out << "Tree" << i << "      ";
-            for (j = 0; j < m; j++)
-                out << " " << rfdist[i*m+j];
+
+    try {
+        ofstream out;
+        out.exceptions(ios::failbit | ios::badbit);
+        out.open(filename);
+        if (Params::getInstance().output_format == FORMAT_CSV) {
+            out << "# Robinson-Foulds distances" << endl
+            << "# This file can be read in MS Excel or in R with command:" << endl
+            << "#    dat=read.csv('" <<  filename << "',comment.char='#')" << endl
+            << "# Columns are comma-separated with following meanings:" << endl
+            << "#    ID1:     Tree 1 ID" << endl
+            << "#    ID2:     Tree 2 ID" << endl
+            << "#    Dist:    Robinson-Foulds distance" << endl
+            << "ID1,ID2,Dist" << endl;
+            if (rf_dist_mode == RF_ADJACENT_PAIR) {
+                for (i = 0; i < n; i++)
+                    out << i+1 << ',' << i+2 << ',' << rfdist[i] << endl;
+            } else if (Params::getInstance().rf_same_pair) {
+                for (i = 0; i < n; i++)
+                    out << i+1 << ',' << i+1 << ',' << rfdist[i] << endl;
+            } else {
+                for (i = 0; i < n; i++)  {
+                    for (j = 0; j < m; j++)
+                        out << i+1 << ',' << j+1 << ',' << rfdist[i*m+j] << endl;
+                }
+            }
+        } else if (rf_dist_mode == RF_ADJACENT_PAIR || Params::getInstance().rf_same_pair) {
+            out << "XXX        ";
+            out << 1 << " " << n << endl;
+            for (i = 0; i < n; i++)
+                out << " " << rfdist[i];
             out << endl;
+        } else {
+            // all pairs
+            out << n << " " << m << endl;
+            for (i = 0; i < n; i++)  {
+                out << "Tree" << i << "      ";
+                for (j = 0; j < m; j++)
+                    out << " " << rfdist[i*m+j];
+                out << endl;
+            }
         }
+        out.close();
+        if (print_msg)
+            cout << "Robinson-Foulds distances printed to " << filename << endl;
+    } catch (ios::failure) {
+        outError(ERR_WRITE_OUTPUT, filename);
     }
 }
 
 void computeRFDistExtended(const char *trees1, const char *trees2, const char *filename) {
     cout << "Reading input trees 1 file " << trees1 << endl;
     int ntrees = 0, ntrees2 = 0;
-    int *rfdist_raw = NULL;
+    double *rfdist_raw = NULL;
     try {
         ifstream in;
         in.exceptions(ios::failbit | ios::badbit);
@@ -1401,7 +1433,7 @@ void computeRFDistExtended(const char *trees1, const char *trees2, const char *f
             tree.readTree(in, is_rooted);
             if (verbose_mode >= VB_DEBUG)
                 cout << ntrees << " " << endl;
-            IntVector dist;
+            DoubleVector dist;
             tree.computeRFDist(trees2, dist);
             ntrees2 = dist.size();
             rfdist.insert(rfdist.end(), dist.begin(), dist.end());
@@ -1416,24 +1448,65 @@ void computeRFDistExtended(const char *trees1, const char *trees2, const char *f
 
         in.close();
         ASSERT(ntrees * ntrees2 == rfdist.size());
-        rfdist_raw = new int[rfdist.size()];
+        rfdist_raw = new double[rfdist.size()];
         copy(rfdist.begin(), rfdist.end(), rfdist_raw);
 
     } catch (ios::failure) {
         outError(ERR_READ_INPUT, trees1);
     }
 
-    try {
-        ofstream out;
-        out.exceptions(ios::failbit | ios::badbit);
-        out.open(filename);
-        printRFDist(out, rfdist_raw, ntrees, ntrees2, RF_TWO_TREE_SETS_EXTENDED);
-        out.close();
-        cout << "Robinson-Foulds distances printed to " << filename << endl;
-    } catch (ios::failure) {
-        outError(ERR_WRITE_OUTPUT, filename);
-    }
+    printRFDist(filename, rfdist_raw, ntrees, ntrees2, RF_TWO_TREE_SETS_EXTENDED);
+    delete [] rfdist_raw;
+}
 
+void computeRFDistSamePair(const char *trees1, const char *trees2, const char *filename) {
+    cout << "Reading input trees 1 file " << trees1 << endl;
+    int ntrees = 0, ntrees2 = 0;
+    double *rfdist_raw = NULL;
+    try {
+        ifstream in;
+        in.exceptions(ios::failbit | ios::badbit);
+        in.open(trees1);
+
+        ifstream in2;
+        in2.exceptions(ios::failbit | ios::badbit);
+        in2.open(trees2);
+
+        DoubleVector rfdist;
+        for (ntrees = 1; !in.eof() && !in2.eof(); ntrees++) {
+            MTree tree;
+            bool is_rooted = false;
+            // read in the tree and convert into split system for indexing
+            tree.readTree(in, is_rooted);
+
+            if (verbose_mode >= VB_DEBUG)
+                cout << ntrees << " " << endl;
+            DoubleVector dist;
+            tree.computeRFDist(in2, dist, 0, true);
+            ntrees2 = dist.size();
+            rfdist.insert(rfdist.end(), dist.begin(), dist.end());
+            char ch;
+            in.exceptions(ios::goodbit);
+            (in) >> ch;
+            if (in.eof()) break;
+            in.unget();
+            in.exceptions(ios::failbit | ios::badbit);
+            
+        }
+        
+        in.close();
+        in2.close();
+        ASSERT(ntrees * ntrees2 == rfdist.size());
+        rfdist_raw = new double[rfdist.size()];
+        copy(rfdist.begin(), rfdist.end(), rfdist_raw);
+        
+    } catch (ios::failure) {
+        outError(ERR_READ_INPUT, trees1);
+    }
+    
+    printRFDist(filename, rfdist_raw, ntrees, ntrees2, RF_TWO_TREE_SETS_EXTENDED);
+
+    delete [] rfdist_raw;
 }
 
 void computeRFDist(Params &params) {
@@ -1448,10 +1521,15 @@ void computeRFDist(Params &params) {
         return;
     }
 
+    if (params.rf_same_pair) {
+        computeRFDistSamePair(params.user_file, params.second_tree, filename.c_str());
+        return;
+    }
+
     MTreeSet trees(params.user_file, params.is_rooted, params.tree_burnin, params.tree_max_count);
     int n = trees.size(), m = trees.size();
-    int *rfdist;
-    int *incomp_splits = NULL;
+    double *rfdist;
+    double *incomp_splits = NULL;
     string infoname = params.out_prefix;
     infoname += ".rfinfo";
     string treename = params.out_prefix;
@@ -1460,47 +1538,38 @@ void computeRFDist(Params &params) {
         MTreeSet treeset2(params.second_tree, params.is_rooted, params.tree_burnin, params.tree_max_count);
         cout << "Computing Robinson-Foulds distances between two sets of trees" << endl;
         m = treeset2.size();
-        rfdist = new int [n*m];
-        memset(rfdist, 0, n*m* sizeof(int));
+        size_t size = n*m;
+        if (params.rf_same_pair) {
+            if (m != n)
+                outError("Tree sets has different number of trees");
+            size = n;
+        }
+        rfdist = new double [size];
+        memset(rfdist, 0, size*sizeof(double));
         if (verbose_mode >= VB_MAX) {
-            incomp_splits = new int [n*m];
-            memset(incomp_splits, 0, n*m* sizeof(int));
+            incomp_splits = new double [size];
+            memset(incomp_splits, 0, size*sizeof(double));
         }
         if (verbose_mode >= VB_MED)
-            trees.computeRFDist(rfdist, &treeset2, infoname.c_str(),treename.c_str(), incomp_splits);
+            trees.computeRFDist(rfdist, &treeset2, params.rf_same_pair,
+                                infoname.c_str(),treename.c_str(), incomp_splits);
         else
-            trees.computeRFDist(rfdist, &treeset2);
+            trees.computeRFDist(rfdist, &treeset2, params.rf_same_pair);
     } else {
-        rfdist = new int [n*n];
-        memset(rfdist, 0, n*n* sizeof(int));
+        rfdist = new double [n*n];
+        memset(rfdist, 0, n*n* sizeof(double));
         trees.computeRFDist(rfdist, params.rf_dist_mode, params.split_weight_threshold);
     }
 
-    if (verbose_mode >= VB_MED) printRFDist(cout, rfdist, n, m, params.rf_dist_mode);
+    //if (verbose_mode >= VB_MED) printRFDist(cout, rfdist, n, m, params.rf_dist_mode);
 
-    try {
-        ofstream out;
-        out.exceptions(ios::failbit | ios::badbit);
-        out.open(filename.c_str());
-        printRFDist(out, rfdist, n, m, params.rf_dist_mode);
-        out.close();
-        cout << "Robinson-Foulds distances printed to " << filename << endl;
-    } catch (ios::failure) {
-        outError(ERR_WRITE_OUTPUT, filename);
-    }
+    printRFDist(filename, rfdist, n, m, params.rf_dist_mode);
 
-    if (incomp_splits)
-    try {
+    if (incomp_splits) {
         filename = params.out_prefix;
         filename += ".incomp";
-        ofstream out;
-        out.exceptions(ios::failbit | ios::badbit);
-        out.open(filename.c_str());
-        printRFDist(out, incomp_splits, n, m, params.rf_dist_mode);
-        out.close();
+        printRFDist(filename, incomp_splits, n, m, params.rf_dist_mode, false);
         cout << "Number of incompatible splits in printed to " << filename << endl;
-    } catch (ios::failure) {
-        outError(ERR_WRITE_OUTPUT, filename);
     }
 
     if (incomp_splits) delete [] incomp_splits;

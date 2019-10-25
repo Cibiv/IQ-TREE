@@ -692,7 +692,7 @@ void MTree::readTree(istream &in, bool &is_rooted)
             if (branch_len[0] == -1.0) branch_len[0] = 0.0;
             if (branch_len[0] < 0.0)
                 throw ERR_NEG_BRANCH;
-            is_rooted = true;
+            rooted = is_rooted = true;
             root = newNode(leafNum, ROOT_NAME);
             root->addNeighbor(node, branch_len);
             node->addNeighbor(root, branch_len);
@@ -2270,7 +2270,7 @@ void MTree::assignBranchSupport(istream &in, map<int,BranchSupportInfo> &branch_
 }
 */
 
-void MTree::computeRFDist(const char *trees_file, IntVector &dist, int assign_sup) {
+void MTree::computeRFDist(const char *trees_file, DoubleVector &dist, int assign_sup) {
 	cout << "Reading input trees file " << trees_file << endl;
 	try {
 		ifstream in;
@@ -2283,7 +2283,7 @@ void MTree::computeRFDist(const char *trees_file, IntVector &dist, int assign_su
 	}
 }
 
-void MTree::computeRFDist(istream &in, IntVector &dist, int assign_sup) {
+void MTree::computeRFDist(istream &in, DoubleVector &dist, int assign_sup, bool one_tree) {
 	SplitGraph mysg;
     NodeVector nodes;
 	convertSplits(mysg, &nodes, root->neighbors[0]->node);
@@ -2365,7 +2365,11 @@ void MTree::computeRFDist(istream &in, IntVector &dist, int assign_sup) {
 		}
 
 		//cout << "common_splits = " << common_splits << endl;
-        int rf_val = branchNum-leafNum + tree.branchNum-tree.leafNum - 2*common_splits;
+        double max_dist = branchNum-leafNum + tree.branchNum-tree.leafNum;
+        double rf_val = max_dist - 2*common_splits;
+        if (Params::getInstance().normalize_tree_dist) {
+            rf_val = rf_val / max_dist;
+        }
 		dist.push_back(rf_val);
 		char ch;
 		in.exceptions(ios::goodbit);
@@ -2373,6 +2377,9 @@ void MTree::computeRFDist(istream &in, IntVector &dist, int assign_sup) {
 		if (in.eof()) break;
 		in.unget();
 		in.exceptions(ios::failbit | ios::badbit);
+        
+        if (one_tree)
+            break;
 
 	}
     if (assign_sup)
@@ -2426,7 +2433,7 @@ void MTree::createBootstrapSupport(vector<string> &taxname, MTreeSet &trees, Spl
 				  tmp << "/" << sp->getWeight();
                   
                 // assign tag
-                if (tag && (strcmp(tag, "ALL")==0 || (*it)->node->name == tag))
+                if (tag && (iEquals(tag, "ALL") || (*it)->node->name == tag))
                     tmp << sp->getName();                
 				(*it)->node->name.append(tmp.str());
 			} else {

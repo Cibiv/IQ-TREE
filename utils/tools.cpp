@@ -220,6 +220,17 @@ string convertDoubleToString(double number) {
     return ss.str(); //return a string with the contents of the stream
 }
 
+bool iEquals(const string a, const string b)
+{
+    unsigned int sz = a.size();
+    if (b.size() != sz)
+        return false;
+    for (unsigned int i = 0; i < sz; ++i)
+        if (tolower(a[i]) != tolower(b[i]))
+            return false;
+    return true;
+}
+
 //From Tung
 
 bool copyFile(const char SRC[], const char DEST[]) {
@@ -825,7 +836,9 @@ void parseArg(int argc, char *argv[], Params &params) {
 
     params.aln_file = NULL;
     params.phylip_sequential_format = false;
-    params.symtest = false;
+    params.symtest = SYMTEST_NONE;
+    params.symtest_only = false;
+    params.symtest_remove = 0;
     params.symtest_keep_zero = false;
     params.symtest_type = 0;
     params.symtest_pcutoff = 0.05;
@@ -841,7 +854,10 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.partition_type = BRLEN_OPTIMIZE;
     params.partfinder_rcluster = 100;
     params.partfinder_rcluster_max = 0;
-    params.partfinder_rcluster_fast = false;
+    params.partition_merge = MERGE_NONE;
+    params.merge_models = "1";
+    params.merge_rates = "1";
+    params.partfinder_log_rate = true;
     params.remove_empty_seq = true;
     params.terrace_aware = true;
     params.terrace_analysis = false;
@@ -849,6 +865,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.aln_output = NULL;
     params.aln_site_list = NULL;
     params.aln_output_format = ALN_PHYLIP;
+    params.output_format = FORMAT_NORMAL;
     params.newick_extended_format = false;
     params.gap_masked_aln = NULL;
     params.concatenate_aln = NULL;
@@ -883,11 +900,12 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.model_name = "";
     params.model_name_init = NULL;
     params.model_opt_steps = 10;
-    params.model_set = NULL;
+    params.model_set = "ALL";
     params.model_extra_set = NULL;
     params.model_subset = NULL;
     params.state_freq_set = NULL;
-    params.ratehet_set = NULL;
+    params.ratehet_set = "AUTO";
+    params.score_diff_thres = 10.0;
     params.model_def_file = NULL;
     params.modelomatic = false;
     params.model_test_again = false;
@@ -924,6 +942,8 @@ void parseArg(int argc, char *argv[], Params &params) {
 //    params.avoid_duplicated_trees = false;
     params.writeDistImdTrees = false;
     params.rf_dist_mode = 0;
+    params.rf_same_pair = false;
+    params.normalize_tree_dist = false;
     params.mvh_site_rate = false;
     params.rate_mh_type = true;
     params.discard_saturated_site = false;
@@ -1015,6 +1035,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.pll = false;
 #endif
     params.modelEps = 0.01;
+    params.modelfinder_eps = 0.1;
     params.parbran = false;
     params.binary_aln_file = NULL;
     params.maxtime = 1000000;
@@ -1043,6 +1064,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.tree_freq_file = NULL;
     params.num_threads = 1;
     params.num_threads_max = 10000;
+    params.openmp_by_model = false;
     params.model_test_criterion = MTC_BIC;
 //    params.model_test_stop_rule = MTC_ALL;
     params.model_test_sample_size = 0;
@@ -1061,6 +1083,8 @@ void parseArg(int argc, char *argv[], Params &params) {
 	params.lh_mem_save = LM_PER_NODE; // auto detect
     params.buffer_mem_save = false;
 	params.start_tree = STT_PLL_PARSIMONY;
+    params.modelfinder_ml_tree = true;
+    params.final_model_opt = true;
 	params.print_splits_file = false;
     params.print_splits_nex_file = true;
     params.ignore_identical_seqs = true;
@@ -1772,30 +1796,46 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.phylip_sequential_format = true;
                 continue;
             }
-            if (strcmp(argv[cnt], "--symtest") == 0 || strcmp(argv[cnt], "--bisymtest") == 0) {
-                params.symtest = 1;
+            if (strcmp(argv[cnt], "--symtest") == 0) {
+                params.symtest = SYMTEST_MAXDIV;
                 continue;
             }
 
-            if (strcmp(argv[cnt], "--symtest-remove-bad") == 0 || strcmp(argv[cnt], "--bisymtest-remove-bad") == 0) {
-                params.symtest = 2;
+            if (strcmp(argv[cnt], "--bisymtest") == 0) {
+                params.symtest = SYMTEST_BINOM;
                 continue;
             }
 
-            if (strcmp(argv[cnt], "--symtest-remove-good") == 0 || strcmp(argv[cnt], "--bisymtest-remove-good") == 0) {
-                params.symtest = 3;
+            if (strcmp(argv[cnt], "--symtest-only") == 0) {
+                params.symtest_only = true;
+                if (params.symtest == SYMTEST_NONE)
+                    params.symtest = SYMTEST_MAXDIV;
                 continue;
             }
 
-            if (strcmp(argv[cnt], "--symtest-keep-zero") == 0 || strcmp(argv[cnt], "--bisymtest-keep-zero") == 0) {
+            if (strcmp(argv[cnt], "--symtest-remove-bad") == 0) {
+                params.symtest_remove = 1;
+                if (params.symtest == SYMTEST_NONE)
+                    params.symtest = SYMTEST_MAXDIV;
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--symtest-remove-good") == 0) {
+                params.symtest_remove = 2;
+                if (params.symtest == SYMTEST_NONE)
+                    params.symtest = SYMTEST_MAXDIV;
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--symtest-keep-zero") == 0) {
                 params.symtest_keep_zero = true;
                 continue;
             }
 
-            if (strcmp(argv[cnt], "--symtest-type") == 0 || strcmp(argv[cnt], "--bisymtest-type") == 0) {
+            if (strcmp(argv[cnt], "--symtest-type") == 0) {
                 cnt++;
                 if (cnt >= argc)
-                    throw "Use --bisymtest-type SYM|MAR|INT";
+                    throw "Use --symtest-type SYM|MAR|INT";
                 if (strcmp(argv[cnt], "SYM") == 0)
                     params.symtest_type = 0;
                 else if (strcmp(argv[cnt], "MAR") == 0)
@@ -1803,40 +1843,40 @@ void parseArg(int argc, char *argv[], Params &params) {
                 else if (strcmp(argv[cnt], "INT") == 0)
                     params.symtest_type = 2;
                 else
-                    throw "Use --bisymtest-type SYM|MAR|INT";
-                if (!params.symtest)
-                    params.symtest = 1;
+                    throw "Use --symtest-type SYM|MAR|INT";
+                if (params.symtest == SYMTEST_NONE)
+                    params.symtest = SYMTEST_MAXDIV;
                 continue;
             }
 
-            if (strcmp(argv[cnt], "--symtest-pval") == 0 || strcmp(argv[cnt], "--bisymtest-pval") == 0) {
+            if (strcmp(argv[cnt], "--symtest-pval") == 0) {
                 cnt++;
                 if (cnt >= argc)
-                    throw "Use --bisymtest-pval PVALUE_CUTOFF";
+                    throw "Use --symtest-pval PVALUE_CUTOFF";
                 params.symtest_pcutoff = convert_double(argv[cnt]);
                 if (params.symtest_pcutoff <= 0 || params.symtest_pcutoff >= 1)
-                    throw "--bisymtest-pval must be between 0 and 1";
-                if (!params.symtest)
-                    params.symtest = 1;
+                    throw "--symtest-pval must be between 0 and 1";
+                if (params.symtest == SYMTEST_NONE)
+                    params.symtest = SYMTEST_MAXDIV;
                 continue;
             }
             
-            if (strcmp(argv[cnt], "--symstat") == 0 || strcmp(argv[cnt], "--bisymstat") == 0) {
+            if (strcmp(argv[cnt], "--symstat") == 0) {
                 params.symtest_stat = true;
-                if (!params.symtest)
-                    params.symtest = 1;
+                if (params.symtest == SYMTEST_NONE)
+                    params.symtest = SYMTEST_MAXDIV;
                 continue;
             }
 
-            if (strcmp(argv[cnt], "--permsymtest") == 0 || strcmp(argv[cnt], "--maxsymtest") == 0) {
+            if (strcmp(argv[cnt], "--symtest-perm") == 0) {
                 cnt++;
                 if (cnt >= argc)
-                    throw "Use --maxsymtest INT";
+                    throw "Use --symtest-perm INT";
                 params.symtest_shuffle = convert_int(argv[cnt]);
                 if (params.symtest_shuffle <= 0)
-                    throw "--maxsymtest must be positive";
-                if (!params.symtest)
-                    params.symtest = 1;
+                    throw "--symtest-perm must be positive";
+                if (params.symtest == SYMTEST_NONE)
+                    params.symtest = SYMTEST_MAXDIV;
                 continue;
             }
 
@@ -1875,7 +1915,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.partition_file = argv[cnt];
 				continue;
 			}
-			if (strcmp(argv[cnt], "-spp") == 0 || strcmp(argv[cnt], "-p") == 0) {
+			if (strcmp(argv[cnt], "-spp") == 0 || strcmp(argv[cnt], "-p") == 0 || strcmp(argv[cnt], "--partition") == 0) {
 				cnt++;
 				if (cnt >= argc)
 					throw "Use -p <partition_file>";
@@ -1911,6 +1951,20 @@ void parseArg(int argc, char *argv[], Params &params) {
                 continue;
             }
             
+            if (strcmp(argv[cnt], "--edge") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --edge equal|scale|unlink";
+                if (strcmp(argv[cnt], "equal") == 0)
+                    params.partition_type = BRLEN_FIX;
+                else if (strcmp(argv[cnt], "scale") == 0)
+                    params.partition_type = BRLEN_SCALE;
+                else if (strcmp(argv[cnt], "unlink") == 0)
+                    params.partition_type = BRLEN_OPTIMIZE;
+                else
+                    throw "Use --edge equal|scale|unlink";
+            }
+            
             if (strcmp(argv[cnt], "-rcluster") == 0 || strcmp(argv[cnt], "--rcluster") == 0) {
 				cnt++;
 				if (cnt >= argc)
@@ -1918,6 +1972,7 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.partfinder_rcluster = convert_double(argv[cnt]);
                 if (params.partfinder_rcluster < 0 || params.partfinder_rcluster > 100)
                     throw "rcluster percentage must be between 0 and 100";
+                params.partition_merge = MERGE_RCLUSTER;
 				continue;
             }
             if (strcmp(argv[cnt], "-rclusterf") == 0 || strcmp(argv[cnt], "--rclusterf") == 0) {
@@ -1927,11 +1982,11 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.partfinder_rcluster = convert_double(argv[cnt]);
                 if (params.partfinder_rcluster < 0 || params.partfinder_rcluster > 100)
                     throw "rcluster percentage must be between 0 and 100";
-                params.partfinder_rcluster_fast = true;
+                params.partition_merge = MERGE_RCLUSTERF;
 				continue;
             }
 
-            if (strcmp(argv[cnt], "-rcluster-max") == 0 || strcmp(argv[cnt], "--rclusterm") == 0) {
+            if (strcmp(argv[cnt], "-rcluster-max") == 0 || strcmp(argv[cnt], "--rcluster-max") == 0) {
 				cnt++;
 				if (cnt >= argc)
 					throw "Use -rcluster-max <num>";
@@ -1940,7 +1995,76 @@ void parseArg(int argc, char *argv[], Params &params) {
                     throw "rcluster-max must be between > 0";
                 if (params.partfinder_rcluster == 100)
                     params.partfinder_rcluster = 99.9999;
+                if (params.partition_merge != MERGE_RCLUSTER && params.partition_merge != MERGE_RCLUSTERF)
+                    params.partition_merge = MERGE_RCLUSTERF;
 				continue;
+            }
+
+            if (strcmp(argv[cnt], "--merge") == 0) {
+                if (cnt >= argc-1 || argv[cnt+1][0] == '-') {
+                    if (params.partfinder_rcluster == 100)
+                        params.partfinder_rcluster = 99.9999;
+                    params.partition_merge = MERGE_RCLUSTERF;
+                    continue;
+                }
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --merge [none|greedy|rcluster|rclusterf|kmeans]";
+                if (strcmp(argv[cnt], "none") == 0)
+                    params.partition_merge = MERGE_NONE;
+                else if (strcmp(argv[cnt], "greedy") == 0)
+                    params.partition_merge = MERGE_GREEDY;
+                else if (strcmp(argv[cnt], "rcluster") == 0) {
+                    if (params.partfinder_rcluster == 100)
+                        params.partfinder_rcluster = 99.9999;
+                    params.partition_merge = MERGE_RCLUSTER;
+                } else if (strcmp(argv[cnt], "rclusterf") == 0) {
+                    if (params.partfinder_rcluster == 100)
+                        params.partfinder_rcluster = 99.9999;
+                    params.partition_merge = MERGE_RCLUSTERF;
+                } else if (strcmp(argv[cnt], "rcluster") == 0)
+                    params.partition_merge = MERGE_KMEANS;
+                else
+                    throw "Use --merge [none|greedy|rcluster|rclusterf|kmeans]";
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--merge-model") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --merge-model 1|4|ALL|model1,...,modelK";
+                params.merge_models = argv[cnt];
+                if (params.partition_merge == MERGE_NONE) {
+                    if (params.partfinder_rcluster == 100)
+                        params.partfinder_rcluster = 99.9999;
+                    params.partition_merge = MERGE_RCLUSTERF;
+                    continue;
+                }
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--merge-rate") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --merge-rate rate1,...,rateK";
+                params.merge_rates = argv[cnt];
+                if (params.partition_merge == MERGE_NONE) {
+                    if (params.partfinder_rcluster == 100)
+                        params.partfinder_rcluster = 99.9999;
+                    params.partition_merge = MERGE_RCLUSTERF;
+                    continue;
+                }
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--merge-log-rate") == 0) {
+                params.partfinder_log_rate = true;
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--merge-normal-rate") == 0) {
+                params.partfinder_log_rate = false;
+                continue;
             }
 
 			if (strcmp(argv[cnt], "-keep_empty_seq") == 0) {
@@ -2049,6 +2173,17 @@ void parseArg(int argc, char *argv[], Params &params) {
 				continue;
 			}
 
+
+            if (strcmp(argv[cnt], "--out-csv") == 0) {
+                params.output_format = FORMAT_CSV;
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "--out-tsv") == 0) {
+                params.output_format = FORMAT_TSV;
+                continue;
+            }            
+
             if (strcmp(argv[cnt], "--figtree") == 0) {
                 params.newick_extended_format = true;
                 continue;
@@ -2147,11 +2282,10 @@ void parseArg(int argc, char *argv[], Params &params) {
 //				params.avoid_duplicated_trees = true;
 				continue;
 			}
-			if (strcmp(argv[cnt], "-mod") == 0
-					|| strcmp(argv[cnt], "-m") == 0) {
+			if (strcmp(argv[cnt], "--model") == 0 || strcmp(argv[cnt], "-m") == 0) {
 				cnt++;
 				if (cnt >= argc)
-					throw "Use -mod <model_name>";
+					throw "Use --model <model_name>";
 				params.model_name = argv[cnt];
 				continue;
 			}
@@ -2169,7 +2303,7 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.model_opt_steps = convert_int(argv[cnt]);
                 continue;
             }
-			if (strcmp(argv[cnt], "-mset") == 0 || strcmp(argv[cnt], "--mset") == 0) {
+			if (strcmp(argv[cnt], "-mset") == 0 || strcmp(argv[cnt], "--mset") == 0 || strcmp(argv[cnt], "--models") == 0 ) {
 				cnt++;
 				if (cnt >= argc)
 					throw "Use -mset <model_set>";
@@ -2183,27 +2317,39 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.model_extra_set = argv[cnt];
 				continue;
 			}
-			if (strcmp(argv[cnt], "-msub") == 0 || strcmp(argv[cnt], "--msub") == 0) {
+			if (strcmp(argv[cnt], "-msub") == 0 || strcmp(argv[cnt], "--msub") == 0 || strcmp(argv[cnt], "--model-sub") == 0) {
 				cnt++;
 				if (cnt >= argc)
 					throw "Use -msub <model_subset>";
 				params.model_subset = argv[cnt];
 				continue;
 			}
-			if (strcmp(argv[cnt], "-mfreq") == 0 || strcmp(argv[cnt], "--mfreq") == 0) {
+			if (strcmp(argv[cnt], "-mfreq") == 0 || strcmp(argv[cnt], "--freqs") == 0) {
 				cnt++;
 				if (cnt >= argc)
 					throw "Use -mfreq <state_freq_set>";
 				params.state_freq_set = argv[cnt];
 				continue;
 			}
-			if (strcmp(argv[cnt], "-mrate") == 0 || strcmp(argv[cnt], "--mrate") == 0) {
+			if (strcmp(argv[cnt], "-mrate") == 0 || strcmp(argv[cnt], "--rates") == 0) {
 				cnt++;
 				if (cnt >= argc)
 					throw "Use -mrate <rate_set>";
 				params.ratehet_set = argv[cnt];
 				continue;
 			}
+            
+            if (strcmp(argv[cnt], "--score-diff") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --score-diff <score>";
+                if (iEquals(argv[cnt], "all"))
+                    params.score_diff_thres = -1.0;
+                else
+                    params.score_diff_thres = convert_double(argv[cnt]);
+                continue;
+            }
+            
 			if (strcmp(argv[cnt], "-mdef") == 0 || strcmp(argv[cnt], "--mdef") == 0) {
 				cnt++;
 				if (cnt >= argc)
@@ -2215,7 +2361,7 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.modelomatic = true;
                 continue;
             }
-			if (strcmp(argv[cnt], "-mredo") == 0 || strcmp(argv[cnt], "--mredo") == 0) {
+			if (strcmp(argv[cnt], "-mredo") == 0 || strcmp(argv[cnt], "--model-redo") == 0) {
 				params.model_test_again = true;
 				continue;
 			}
@@ -2402,7 +2548,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.freq_const_patterns = argv[cnt];
 				continue;
 			}
-			if (strcmp(argv[cnt], "--rates") == 0) {
+			if (strcmp(argv[cnt], "--nrate") == 0) {
 				cnt++;
 				if (cnt >= argc)
 					throw "Use -c <#rate_category>";
@@ -2712,6 +2858,15 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.second_tree = argv[cnt];
 				continue;
 			}
+            if (strcmp(argv[cnt], "-rf1") == 0 || strcmp(argv[cnt], "--tree-dist1") == 0) {
+                params.rf_dist_mode = RF_TWO_TREE_SETS;
+                params.rf_same_pair = true;
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --tree-dist1 <second_tree>";
+                params.second_tree = argv[cnt];
+                continue;
+            }
 			if (strcmp(argv[cnt], "-rf2") == 0 || strcmp(argv[cnt], "--tree-dist2") == 0) {
 				params.rf_dist_mode = RF_TWO_TREE_SETS_EXTENDED;
 				cnt++;
@@ -2720,6 +2875,12 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.second_tree = argv[cnt];
 				continue;
 			}
+            
+            if (strcmp(argv[cnt], "--normalize-dist") == 0) {
+                params.normalize_tree_dist = true;
+                continue;
+            }
+            
 			if (strcmp(argv[cnt], "-aLRT") == 0) {
 				cnt++;
 				if (cnt + 1 >= argc)
@@ -3373,7 +3534,20 @@ void parseArg(int argc, char *argv[], Params &params) {
 					throw "Model epsilon must not be larger than 1.0";
 				continue;
 			}
-			if (strcmp(argv[cnt], "-pars_ins") == 0) {
+
+            if (strcmp(argv[cnt], "--mf-epsilon") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --mf-epsilon <modelfinder_epsilon>";
+                params.modelfinder_eps = convert_double(argv[cnt]);
+                if (params.modelfinder_eps <= 0.0)
+                    throw "ModelFinder epsilon must be positive";
+                if (params.modelEps > 1.0)
+                    throw "ModelFinder epsilon must not be larger than 1.0";
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "-pars_ins") == 0) {
 				params.reinsert_par = true;
 				continue;
 			}
@@ -3577,11 +3751,12 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.model_test_sample_size = convert_int(argv[cnt]);
 				continue;
 			}
-			if (strcmp(argv[cnt], "-nt") == 0 || strcmp(argv[cnt], "-c") == 0) {
+			if (strcmp(argv[cnt], "-nt") == 0 || strcmp(argv[cnt], "-c") == 0 ||
+                strcmp(argv[cnt], "-T") == 0  || strcmp(argv[cnt], "--threads") == 0) {
 				cnt++;
 				if (cnt >= argc)
 				throw "Use -nt <num_threads|AUTO>";
-                if (strcmp(argv[cnt], "AUTO") == 0)
+                if (iEquals(argv[cnt], "AUTO"))
                     params.num_threads = 0;
                 else {
                     params.num_threads = convert_int(argv[cnt]);
@@ -3601,6 +3776,16 @@ void parseArg(int argc, char *argv[], Params &params) {
                 continue;
             }
             
+            if (strcmp(argv[cnt], "--thread-model") == 0) {
+                params.openmp_by_model = true;
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--thread-site") == 0) {
+                params.openmp_by_model = false;
+                continue;
+            }
+
 //			if (strcmp(argv[cnt], "-rootstate") == 0) {
 //                cnt++;
 //                if (cnt >= argc)
@@ -3671,6 +3856,11 @@ void parseArg(int argc, char *argv[], Params &params) {
 				continue;
 			}
             
+            if (strcmp(argv[cnt], "--no-ml-tree") == 0) {
+                params.modelfinder_ml_tree = false;
+                continue;
+            }
+            
             if (strcmp(argv[cnt], "--tree-fix") == 0) {
                 if (params.gbo_replicates != 0) {
                     outError("Ultrafast bootstrap does not work with -te option");
@@ -3691,7 +3881,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 				cnt++;
 				if (cnt >= argc)
 					throw "Use -lmap <likelihood_mapping_num_quartets>";
-                if (strcmp(argv[cnt],"ALL") == 0) {
+                if (iEquals(argv[cnt], "ALL")) {
                     params.lmap_num_quartets = 0;
                 } else {
                     params.lmap_num_quartets = convert_int64(argv[cnt]);
@@ -3910,17 +4100,24 @@ void parseArg(int argc, char *argv[], Params &params) {
             if (params.out_prefix[strlen(params.out_prefix)-1] == '/' || params.out_prefix[strlen(params.out_prefix)-1] == '\\') {
                 params.out_prefix[strlen(params.out_prefix)-1] = 0;
             }
-        }
-        else if (params.aln_file)
+        } else if (params.aln_file) {
             params.out_prefix = params.aln_file;
-        else if (params.ngs_file)
+            if (params.out_prefix[strlen(params.out_prefix)-1] == '/' || params.out_prefix[strlen(params.out_prefix)-1] == '\\') {
+                params.out_prefix[strlen(params.out_prefix)-1] = 0;
+            }
+        } else if (params.ngs_file)
             params.out_prefix = params.ngs_file;
         else if (params.ngs_mapped_reads)
             params.out_prefix = params.ngs_mapped_reads;
         else
             params.out_prefix = params.user_file;
     }
-//    if (MPIHelper::getInstance().isWorker()) {
+
+    if (params.model_name.find("LINK") != string::npos || params.model_name.find("MERGE") != string::npos)
+        if (params.partition_merge == MERGE_NONE)
+            params.partition_merge = MERGE_RCLUSTERF;
+
+    //    if (MPIHelper::getInstance().isWorker()) {
     // BUG: setting out_prefix this way cause access to stack, which is cleaned up after returning from this function
 //        string newPrefix = string(params.out_prefix) + "."  + NumberToString(MPIHelper::getInstance().getProcessID()) ;
 //        params.out_prefix = (char *) newPrefix.c_str();
@@ -4015,7 +4212,7 @@ void usage_iqtree(char* argv[], bool full_command) {
     << "  --runs NUMBER        Number of indepedent runs (default: 1)" << endl
     << "  --redo               Ignore checkpoint and overwrite outputs (default: OFF)" << endl
 #ifdef _OPENMP
-    << "  -c NUMBER|AUTO       No. cores/threads or AUTO-detect (default: 1)" << endl
+    << "  -T NUMBER|AUTO       No. cores/threads or AUTO-detect (default: 1)" << endl
 #endif
     << endl << "PARTITION MODEL:" << endl
     << "  -p FILE|DIR          NEXUS/RAxML partition file or directory with alignments" << endl
@@ -4078,25 +4275,18 @@ void usage_iqtree(char* argv[], bool full_command) {
     << "  -m TEST              Standard model selection followed by tree inference" << endl
     << "  -m MF                Extended model selection with FreeRate heterogeneity" << endl
     << "  -m MFP               Extended model selection followed by tree inference" << endl
-    << "  -m TESTMERGEONLY     Find best partition scheme (like PartitionFinder)" << endl
-    << "  -m TESTMERGE         Find best partition scheme followed by tree inference" << endl
-    << "  -m MF+MERGE          Find best partition scheme incl. FreeRate heterogeneity" << endl
-    << "  -m MFP+MERGE         Like -m MF+MERGE followed by tree inference" << endl
-    << "  --rcluster NUMBER    Percentage of partition pairs (relaxed clustering alg.)" << endl
-    << "  --rclusterf NUMBER   Percentage of partition pairs (fast relaxed clustering)" << endl
-    << "  --rclusterm NUMBER   Max number of partition pairs (default: 10*partitions)" << endl
-    << "  --mset STRING        Restrict search to models supported by other programs" << endl
-    << "                       (raxml, phyml or mrbayes)" << endl
     << "  -m ...+LM            Additionally test Lie Markov models" << endl
     << "  -m ...+LMRY          Additionally test Lie Markov models with RY symmetry" << endl
     << "  -m ...+LMWS          Additionally test Lie Markov models with WS symmetry" << endl
     << "  -m ...+LMMK          Additionally test Lie Markov models with MK symmetry" << endl
     << "  -m ...+LMSS          Additionally test strand-symmetric models" << endl
-    << "  --mset STR,...,STR   Comma-separated model list (e.g. -mset WAG,LG,JTT)" << endl
+    << "  --mset STRING        Restrict search to models supported by other programs" << endl
+    << "                       (raxml, phyml or mrbayes)" << endl
+    << "  --mset STR,...       Comma-separated model list (e.g. -mset WAG,LG,JTT)" << endl
     << "  --msub STRING        Amino-acid model source" << endl
     << "                       (nuclear, mitochondrial, chloroplast or viral)" << endl
-    << "  --mfreq STR,...,STR  List of state frequencies" << endl
-    << "  --mrate STR,...,STR  List of rate heterogeneity among sites" << endl
+    << "  --mfreq STR,...      List of state frequencies" << endl
+    << "  --mrate STR,...      List of rate heterogeneity among sites" << endl
     << "                       (e.g. -mrate E,I,G,I+G,R is used for -m MF)" << endl
     << "  --cmin NUMBER        Min categories for FreeRate model [+R] (default: 2)" << endl
     << "  --cmax NUMBER        Max categories for FreeRate model [+R] (default: 10)" << endl
@@ -4104,9 +4294,23 @@ void usage_iqtree(char* argv[], bool full_command) {
 //            << "  -msep                Perform model selection and then rate selection" << endl
     << "  --mtree              Perform full tree search for every model" << endl
     << "  --mredo              Ignore .model.gz checkpoint file (default: OFF)" << endl
-    << "  --madd STR,...,STR   List of mixture models to consider" << endl
+    << "  --madd STR,...       List of mixture models to consider" << endl
     << "  --mdef FILE          Model definition NEXUS file (see Manual)" << endl
     << "  --modelomatic        Find best codon/protein/DNA models (Whelan et al. 2015)" << endl
+
+    << endl << "PARTITION-FINDER:" << endl
+    << "  --merge              Merge partitions to increase model fit" << endl
+    << "  --merge greedy|rcluster|rclusterf" << endl
+    << "                       Set merging algorithm (default: rclusterf)" << endl
+    << "  --merge-model 1|all  Use only 1 or all models for merging (default: 1)" << endl
+    << "  --merge-model STR,..." << endl
+    << "                       Comma-separated model list for merging" << endl
+    << "  --merge-rate 1|all   Use only 1 or all rate heterogeneity (default: 1)" << endl
+    << "  --merge-rate STR,..." << endl
+    << "                       Comma-separated rate list for merging" << endl
+    << "  --rcluster NUM       Percentage of partition pairs for rcluster algorithm" << endl
+    << "  --rclusterf NUM      Percentage of partition pairs for rclusterf algorithm" << endl
+    << "  --rcluster-max NUM   Max number of partition pairs (default: 10*partitions)" << endl
 
     << endl << "SUBSTITUTION MODEL:" << endl
     << "  -m STRING            Model name string (e.g. GTR+F+I+G)" << endl
@@ -4169,7 +4373,7 @@ void usage_iqtree(char* argv[], bool full_command) {
     << "  -m ...+WB|WH|S]      Weighted binomial sampling"       << endl
     << "  -m ...+WH            Weighted hypergeometric sampling" << endl
     << "  -m ...+S             Sampled sampling"              << endl
-    << "  -m...+G[n]           Discrete Gamma rate with n categories (default n=4)"    << endl
+    << "  -m ...+G[n]          Discrete Gamma rate with n categories (default n=4)"    << endl
 // TODO DS: Maybe change default to +WH.
 
     << endl << "COMPLEX MODELS:" << endl
@@ -4192,10 +4396,12 @@ void usage_iqtree(char* argv[], bool full_command) {
     << "  --asr-min NUMBER     Min probability of ancestral state (default: equil freq)" << endl
 
     << endl << "TEST OF SYMMETRY:" << endl
-    << "  --bisymtest             Perform three binomial tests of symmetry" << endl
-    << "  --maxsymtest NUMBER     Replicates for maximum tests of symmetry" << endl
-    << "  --symtest-remove-bad    Do --bisymtest and remove bad partitions" << endl
-    << "  --symtest-remove-good   Do --bisymtest and remove good partitions" << endl
+    << "  --symtest               Perform three tests of symmetry" << endl
+    << "  --symtest-only          Do --symtest then exist" << endl
+//    << "  --bisymtest             Perform three binomial tests of symmetry" << endl
+//    << "  --symtest-perm NUMBER   Replicates for permutation tests of symmetry" << endl
+    << "  --symtest-remove-bad    Do --symtest and remove bad partitions" << endl
+    << "  --symtest-remove-good   Do --symtest and remove good partitions" << endl
     << "  --symtest-type MAR|INT  Use MARginal/INTernal test when removing partitions" << endl
     << "  --symtest-pval NUMER    P-value cutoff (default: 0.05)" << endl
     << "  --symtest-keep-zero     Keep NAs in the tests" << endl

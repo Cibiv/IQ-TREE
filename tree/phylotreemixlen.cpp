@@ -104,7 +104,7 @@ void PhyloTreeMixlen::setMixlen(int mixlen) {
 	this->mixlen = mixlen;
 }
 
-void PhyloTreeMixlen::initializeModel(Params &params, string &model_name, ModelsBlock *models_block) {
+void PhyloTreeMixlen::initializeModel(Params &params, string model_name, ModelsBlock *models_block) {
     try {
         if (!getModelFactory()) {
             setModelFactory(new ModelFactoryMixlen(params, model_name, this, models_block));
@@ -784,8 +784,10 @@ void PhyloTreeMixlen::computeFuncDerv(double value, double &df, double &ddf) {
 	    	for (ptn = 0; ptn < nptn; ptn++) {
 				double *partial_lh_dad = dad_branch->partial_lh + ptn*block;
 				double *theta = theta_all + ptn*block;
+                
+                // TODO: check with vectorclass!
 				double *lh_tip = tip_partial_lh +
-						((int)((ptn < orig_nptn) ? (aln->at(ptn))[dad->id] :  model_factory->unobserved_ptns[ptn-orig_nptn]))*statemix;
+						((int)((ptn < orig_nptn) ? (aln->at(ptn))[dad->id] :  model_factory->unobserved_ptns[ptn-orig_nptn][dad->id]))*statemix;
 				for (m = 0; m < nmixture; m++) {
 					for (i = 0; i < statecat; i++) {
 						theta[m*statecat+i] = lh_tip[m*nstates + i%nstates] * partial_lh_dad[m*statecat+i];

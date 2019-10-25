@@ -403,10 +403,13 @@ public:
     /**
      target model that this model is linked with
      */
-    ModelSubst *linked_model;
+  ModelSubst *linked_model;
 
   // Target model that exchangeabilities are linked with.
   ModelSubst *linked_exchangeabilities_target_model;
+
+  /** state set for each sequence in the alignment */
+  //vector<vector<int> > seq_states;
 
 	/**
 		destructor
