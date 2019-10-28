@@ -28,12 +28,22 @@ void runTerraceSampling(Params &params){
     stringstream tree_stream;
     tree->printTree(tree_stream, WT_SORT_TAXA);
     
-    cout<<tree_stream.str()<<endl;
+    //cout<<tree_stream.str()<<endl;
     
     
     //Terrace* terrace = tree->getTreeTerrace(tree_stream.str());
     vector<string> terraceSample;
-    terraceSample = tree->getTerraceSample(params.terrace_sample_size,params.terrace_burnin);
+    terraceSample = tree->getTerraceSample(params.terrace_sample_size,params.terrace_sample_freq,params.terrace_burnin);
+    
+    ofstream out_file;
+    string file_name = params.out_prefix;
+    file_name += ".terrace_sample";
+    out_file.open(file_name);
+    
+    for(int i = 0; i < terraceSample.size(); i++){
+        out_file<<terraceSample[i]<<endl;
+    }
+    out_file.close();
     
 /*terrace->burnin = params.terrace_burnin;
     

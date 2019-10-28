@@ -107,14 +107,14 @@ public:
     void addCandidatesFromSameTerraceAsCurrentTree(int sample_size, bool climb_hill = false);
     std::string getRandomTreeFromTheCurrentTerrace(int burnin);
     
-    
-    
-    
-    vector<std::string> getTerraceSample(int sample_size,int &burnin);
+    /**
+     *  Olga's terrace sampling
+     */
+    vector<std::string> getTerraceSample(int sample_size,int sample_freq, int &burnin);
     void getTerraceNNIs(vector<Branch> &terrace_NNIs);
-    void getTerraceNNI(PhyloNode* node1, PhyloNode* node2, NNIMove &nni_move_terrace);
     bool isOnTerraceNNI(Node* node1, Node* node2);
     void doNNIonTerrace(Node* node1, Node* node2, Node* node_1_nei, Node* node_2_nei);
+    void getSuccessfulTransition(vector<Branch> &terrace_NNI_br);
     
     /**
         set checkpoint object

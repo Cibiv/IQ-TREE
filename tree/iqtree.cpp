@@ -2391,86 +2391,67 @@ void IQTree::addCandidatesFromSameTerraceAsCurrentTree(int sample_size, bool cli
     
     delete terrace;
 }
-// OLGA's Sampling Terrace
-vector<std::string> IQTree::getTerraceSample(int sample_size,int &burnin){
-    
-    int sampling_frequency = 1;
-    
+
+/* ===============================================================================================
+*      OLGA's Sampling Terrace
+*  =============================================================================================== */
+
+vector<std::string> IQTree::getTerraceSample(int sample_size,int sample_freq,int &burnin){
     string copy_tree = this->getTreeString();
-    
-    static random_device seed;
-    static mt19937 engine(seed());
-    
-    static uniform_int_distribution<int> upto2(0, 1);
-    static uniform_real_distribution<> dis(0.0, 1.0);
-    
     vector<std::string> sample;
-    
-    /**
-     1. get next tree on the terrace:
-     - getTerraceNNIs
-     - randomly select a branch
-     - randomly select one of the NNIs
-     - compute the degree for a new tree (getTerraceNNIs or something smarter)
-     - generate a random number p
-     - if p<frac(degree_current/deg_new_candidate) accept a new tree (doNNI?), otherwise generate a new candidate
-     */
     
     int succesful_transitions = 0;
     
-    IQTree* sample_tree = new PhyloSuperTree;
-    sample_tree->copyTree((MTree*) this);
+    //============================================
+    // OPTION 1: does not work, trees from the "sample" do not belong to the same terrace
+    // When performing the tree search you'll need that the initial tree is unchanged. While sampling from terrace changes the topology and messes up all partial likelihoods, and the rest. So find a correct way to copy PhyloSuperTree.
+    //IQTree* sample_tree = new PhyloSuperTree;
+    //sample_tree->copyTree((MTree*) this);
+     
+    // OPTION 2: works, trees from the sample lie on the same terrace. At least this one can be used for a task: "input a tree with a supermatrix, get a sample from the terrace"
+    IQTree* sample_tree = this;
+    //============================================
+    
+    
+    
     ((PhyloSuperTree*) sample_tree)->mapTrees();
+    //((PhyloSuperTree*) sample_tree)->printMapInfo();
+    //sample_tree->drawTree(cout,  WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE | WT_BR_ID);
     
+    //((MTree*)sample_tree)->drawTree(cout, WT_INT_NODE);
+    //((PhyloSuperTree*) sample_tree)->printMapInfo();
+     
+     
     vector<Branch> terrace_NNI_br;
+    //cout<<"Finding branches with NNIs on terrace"<<endl;
     sample_tree->getTerraceNNIs(terrace_NNI_br);
+    //cout<<"Number of NNI neighbours that remain on the terrace is "<<terrace_NNI_br.size()<<endl;
     
-    int num_terrace_nni_br = terrace_NNI_br.size();
-    if (num_terrace_nni_br == 0) {
-        cout<<"A trivial terrace. Sample contains the only tree from the terrace."<<endl;
-        string next_candidate = sample_tree->getTreeString();
+    if (terrace_NNI_br.size() == 0) {
+        cout<<"A trivial terrace (or a disconnected component). Sample contains the only tree from the terrace."<<endl;
+        string next_candidate = ((PhyloTree*)sample_tree)->getTreeString();
         sample.push_back(next_candidate);
         return sample;
     }
     
-    // Somewhere here should be getSuccessfulTransition(burnin,freq)
-    
-    int deg_current = num_terrace_nni_br * 2;
-    uniform_int_distribution<int> choose(0, num_terrace_nni_br - 1);
-    
-    int ind = choose(engine); // choose a random branch from terrace nni branches
-    int nni_type = (upto2(engine) % 2 == 0); // choose which of the two nnis on the branch to apply
-    
-    //
-    
-    Node* node1_nei;
-    vector<Node*> node2_neighbours;
-    FOR_NEIGHBOR_DECLARE(terrace_NNI_br[ind].first,terrace_NNI_br[ind].second,it){
-        node1_nei = (*it)->node;
-        break;
-    }
-    FOR_NEIGHBOR(terrace_NNI_br[ind].second,terrace_NNI_br[ind].first,it){
-        node2_neighbours.push_back((*it)->node);
-    }
-    
-    sample_tree->doNNIonTerrace(terrace_NNI_br[ind].first,terrace_NNI_br[ind].second, node1_nei, node2_neighbours[nni_type-1]);
-    
-    vector<Branch> terrace_NNI_br_candidate;
-    sample_tree->getTerraceNNIs(terrace_NNI_br_candidate);
-    int deg = terrace_NNI_br_candidate.size() * 2;
-    
-    double p = dis(engine);
-    double frac = (double)deg_current/deg;
-    
-    if (p > frac) {
-        succesful_transitions++;
-        if(succesful_transitions % sampling_frequency == 0){
-            string next_candidate = sample_tree->getTreeString();
-            sample.push_back(next_candidate);
+    if(burnin > 0){
+        int burnin_check = 0;
+        while(burnin_check < burnin){
+            sample_tree->getSuccessfulTransition(terrace_NNI_br);
+            burnin_check++;
         }
-    } else {
-        // the transition is unsuccesful, revert to the initial state
-        sample_tree->doNNIonTerrace(terrace_NNI_br[ind].first,terrace_NNI_br[ind].second, node2_neighbours[nni_type-1],node1_nei);
+    }
+    
+    cout<<"Sample from a terrace:"<<endl;
+    while(sample.size()<sample_size){
+        sample_tree->getSuccessfulTransition(terrace_NNI_br);
+        succesful_transitions++;
+        if(succesful_transitions % sample_freq == 0){
+            stringstream next_candidate;
+            ((MTree*)sample_tree)->printTree(next_candidate,WT_SORT_TAXA);
+            sample.push_back(next_candidate.str());
+            cout<<sample.size()<<": "<<next_candidate.str()<<endl;
+        }
     }
     
     return sample;
@@ -2489,8 +2470,14 @@ void IQTree::doNNIonTerrace(Node* node1, Node* node2, Node* node_1_nei, Node* no
     SuperNeighbor *node1Nei = (SuperNeighbor*)*(node1Nei_it);
     SuperNeighbor *node2Nei = (SuperNeighbor*)*(node2Nei_it);
     
-    string tree_str = this->getTreeString();
-    cout<<"Before NNI:"<<tree_str<<endl;
+    
+    /*
+    * //string tree_str = this->getTreeString();
+    * stringstream tree_stream;
+    * printTree(tree_stream, WT_TAXON_ID + WT_SORT_TAXA);
+    * string tree_str=tree_stream.str();
+    *cout<<"Before NNI:"<<tree_str<<endl;
+    */
     
     // do the NNI swap
     node1->updateNeighbor(node1Nei_it, node2Nei);
@@ -2499,14 +2486,21 @@ void IQTree::doNNIonTerrace(Node* node1, Node* node2, Node* node_1_nei, Node* no
     node2->updateNeighbor(node2Nei_it, node1Nei);
     node1Nei->node->updateNeighbor(node1, node2);
     
-    tree_str = this->getTreeString();
-    cout<<"After NNI:"<<tree_str<<endl;
+    /*
+    * //tree_str = this->getTreeString();
+    * tree_stream.str("");
+    * printTree(tree_stream, WT_TAXON_ID + WT_SORT_TAXA);
+    * tree_str=tree_stream.str();
+    * cout<<"After NNI:"<<tree_str<<endl;
+    */
     
     int n_partitions = ((PhyloSuperTree*)this)->size();
     for (int part = 0; part<n_partitions; part++) {
             ((PhyloSuperTree*)this)->linkBranch(part, nei1, nei2); // since this is an NNI on Terrace, then for each partition tree it's not an NNI, therefore, we just have to relink the branches without any swapping
     }
 
+    ((PhyloSuperTree*)this)->mapTrees();
+    //((PhyloSuperTree*)this)->printMapInfo();
     
 }
 
@@ -2514,6 +2508,8 @@ void IQTree::getTerraceNNIs(vector<Branch> &terrace_NNIs){
     
     Branches nniBranches;
     getInnerBranches(nniBranches);
+    
+    //cout<<"NUM NNI branches:"<<nniBranches.size()<<endl;
     
     for (Branches::iterator it = nniBranches.begin(); it != nniBranches.end(); it++) {
         if(isOnTerraceNNI((Node*) it->second.first, (Node*) it->second.second)){
@@ -2527,78 +2523,105 @@ void IQTree::getTerraceNNIs(vector<Branch> &terrace_NNIs){
 
 bool IQTree::isOnTerraceNNI(Node* node1, Node* node2){
     
+    //cout<<"Evaluation of new branch for NNI on terrace: "<<node1->id<<"-"<<node2->id<<endl;
+    
     SuperNeighbor *nei1 = ((SuperNeighbor*)node1->findNeighbor(node2));
     SuperNeighbor *nei2 = ((SuperNeighbor*)node2->findNeighbor(node1));
     ASSERT(nei1 && nei2);
     
-    int is_nni_part, is_nni=0;
+    int is_nni_part=0, is_nni=0;
     
     int n_part = ((PhyloSuperTree*) this)->size();
     
+    //cout<<"Before the loop over partitions: "<<is_nni<<" | "<<is_nni_part<<endl;
     for(int part = 0; part<n_part; part++){
+        //cout<<endl<<"Partition ("<<part<<") loop, before the loop over link_neighbours: "<<is_nni<<" | "<<is_nni_part<<endl;
         is_nni_part =0;
         FOR_NEIGHBOR_DECLARE(node1, NULL, nit) {
-            if (! ((SuperNeighbor*)*nit)->link_neighbors[part]) { is_nni_part = 1; break; }
+            //cout<<"Partition ("<<part<<"), in the loop over link_neighbours: "<<is_nni<<" | "<<is_nni_part<<endl;
+            if (! ((SuperNeighbor*)*nit)->link_neighbors[part]) {
+                //cout<<"partition "<<part<<" : "<<node1->id<<" "<<((SuperNeighbor*)*nit)->node->id<<" : "<<" Terrace NNI"<<endl;
+                is_nni_part = 1;
+                //cout<<"Partition ("<<part<<"), Node_1-"<<node1->id<<" NO link_neighbours: "<<is_nni<<" | "<<is_nni_part<<"Neiboughr-node->"<<((SuperNeighbor*)*nit)->node->id<<endl;
+                break;
+            //} else {
+             //   cout<<"partition "<<part<<" : "<<node1->id<<" "<<((SuperNeighbor*)*nit)->node->id<<" : "<<((SuperNeighbor*)*nit)->link_neighbors[part]->node->id<<endl;
+            }
         }
+
         FOR_NEIGHBOR(node2, NULL, nit) {
-            if (! ((SuperNeighbor*)*nit)->link_neighbors[part]) { is_nni_part = 1; break; }
+            if (! ((SuperNeighbor*)*nit)->link_neighbors[part]) {
+                //cout<<"partition "<<part<<" : "<<node2->id<<" "<<((SuperNeighbor*)*nit)->node->id<<" : "<<" Terrace NNI"<<endl;
+                is_nni_part = 1;
+                //cout<<"Partition ("<<part<<"), Node_2-"<<node2->id<<" NO link_neighbours: "<<is_nni<<" | "<<is_nni_part<<"Neiboughr-node->"<<((SuperNeighbor*)*nit)->node->id<<endl;
+                break;
+            //} else {
+             //   cout<<"partition "<<part<<" : "<<node2->id<<" "<<((SuperNeighbor*)*nit)->node->id<<" : "<<((SuperNeighbor*)*nit)->link_neighbors[part]->node->id<<endl;
+            }
         }
-        is_nni=+is_nni_part;
+        //cout<<endl<<"Partition ("<<part<<") loop, after the loop over link_neighbours: "<<is_nni<<" | "<<is_nni_part<<endl;
+        is_nni+=is_nni_part;
+        //cout<<"Partition ("<<part<<") is_nni = "<<is_nni<<endl;
     }
 
+    //cout<<endl<<"Final is_nni = "<<is_nni<<endl<<endl<<endl;
     if(is_nni == n_part) {
+        //cout<<"TERRACE NNI"<<endl<<endl;
         return true;
     }
     
     return false;
 }
 
-void IQTree::getTerraceNNI(PhyloNode* node1, PhyloNode* node2, NNIMove &nni_move_terrace){
-
-    // I think this function is not used, if it is the case. Delete it.
-    NNIMove nni;
-    SuperNeighbor *nei1 = ((SuperNeighbor*)node1->findNeighbor(node2));
-    SuperNeighbor *nei2 = ((SuperNeighbor*)node2->findNeighbor(node1));
-    ASSERT(nei1 && nei2);
-    SuperNeighbor *node1_nei = NULL;
-    SuperNeighbor *node2_nei = NULL;
-    SuperNeighbor *node2_nei_other = NULL;
+void IQTree::getSuccessfulTransition(vector<Branch> &terrace_NNI_br){
     
-    FOR_NEIGHBOR_DECLARE(node1, node2, node1_it) {
-        node1_nei = (SuperNeighbor*)(*node1_it);
+    static random_device rd_num_generator;          // generator for a seed for mt19937 random number generator
+    static mt19937 generator(rd_num_generator());   // mt19937 is a standard mersenne_twister_engine; random number generator that requires a seed
+    
+    static uniform_int_distribution<int> dist_0_1_int(0, 1);
+    static uniform_real_distribution<> dist_0_1_real(0.0, 1.0);
+    
+    int num_terrace_nni_br = terrace_NNI_br.size();
+    int deg_current = num_terrace_nni_br * 2;
+    
+    uniform_int_distribution<int> dist_0_nni_int(0, num_terrace_nni_br - 1);
+    
+    int ind = dist_0_nni_int(generator); // choose a random branch from terrace nni branches
+    int nni_type = dist_0_1_int(generator); // choose which of the two nnis on the branch to apply
+    
+    Node* node1_nei;
+    vector<Node*> node2_neighbours;
+    FOR_NEIGHBOR_DECLARE(terrace_NNI_br[ind].first,terrace_NNI_br[ind].second,it){
+        node1_nei = (*it)->node;
         break;
     }
-    FOR_NEIGHBOR_DECLARE(node2, node1, node2_it) {
-        node2_nei = (SuperNeighbor*)(*node2_it);
-        break;
+    FOR_NEIGHBOR(terrace_NNI_br[ind].second,terrace_NNI_br[ind].first,it){
+        node2_neighbours.push_back((*it)->node);
     }
     
-    FOR_NEIGHBOR_IT(node2, node1, node2_it_other)
-    if ((*node2_it_other) != node2_nei) {
-        node2_nei_other = (SuperNeighbor*)(*node2_it_other);
-        break;
-    }
+    //cout<<"nni_type = "<<nni_type<<endl;
+    this->doNNIonTerrace(terrace_NNI_br[ind].first,terrace_NNI_br[ind].second, node1_nei,node2_neighbours[nni_type]);
     
+    vector<Branch> terrace_NNI_br_candidate;
+    this->getTerraceNNIs(terrace_NNI_br_candidate);
+    int deg = terrace_NNI_br_candidate.size() * 2;
     
+    double p = dist_0_1_real(generator);
+    double frac = (double)deg_current/deg;
     
-    
-    
-    
-    bool is_nni_terrace = false;
-    int n_part = ((PhyloSuperTree*) this)->size();
-    for(int part = 0; part<n_part; part++){
-        FOR_NEIGHBOR_DECLARE(node1, NULL, nit) {
-            if (! ((SuperNeighbor*)*nit)->link_neighbors[part]) { is_nni_terrace = true; break; }
+    if (p <= frac) {
+        // transition is successful, update the terrace_NNI_br vector by a vector for a new tree
+        terrace_NNI_br.clear();
+        for(int i=0; i<terrace_NNI_br_candidate.size(); i++){
+            terrace_NNI_br.push_back(terrace_NNI_br_candidate[i]);
         }
-        FOR_NEIGHBOR(node2, NULL, nit) {
-            if (! ((SuperNeighbor*)*nit)->link_neighbors[part]) { is_nni_terrace = true; break; }
-        }
+    } else {
+        // the transition is unsuccesful, revert to the initial state
+        this->doNNIonTerrace(terrace_NNI_br[ind].first,terrace_NNI_br[ind].second, node2_neighbours[nni_type],node1_nei);
+        this->getSuccessfulTransition(terrace_NNI_br);
     }
-    
     
 }
-
-
 
 // End sampling terrace functions -------------------------------------------------------------------
 

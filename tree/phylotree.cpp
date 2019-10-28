@@ -3268,7 +3268,7 @@ void PhyloTree::doNNI(NNIMove &move, bool clearLH) {
      }
      if (node2->findNeighbor(nodeA)->id != nodeA->findNeighbor(node2)->id) {
      cout << node2->findNeighbor(nodeA)->id << "<->" << nodeA->findNeighbor(node2)->id << endl;
-     cout << node2->id << "," << nodeA->id << endl;
+     cout << node2->id << "," << nodefA->id << endl;
      outError("Wrong ID");
      }*/
 

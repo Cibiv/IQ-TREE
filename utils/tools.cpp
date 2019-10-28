@@ -791,6 +791,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.terrace_sampling = false;
     params.terrace_sample_size = NULL;
     params.terrace_burnin = 150;
+    params.terrace_sample_freq = 1;
     // -------------------------------
     
     params.sequence_type = NULL;
@@ -1753,7 +1754,7 @@ void parseArg(int argc, char *argv[], Params &params) {
                 if (cnt >= argc)
                     throw "Use -terrace_s_size <sample_size>";
                 params.terrace_sample_size = convert_int(argv[cnt]);
-                if (params.terrace_sample_size < 0)
+                if (params.terrace_sample_size < 1)
                     throw "Terrace sample size value must be positive";
                 continue;
             }
@@ -1764,7 +1765,17 @@ void parseArg(int argc, char *argv[], Params &params) {
                     throw "Use -terrace_bi <burnin_value>";
                 params.terrace_burnin = convert_int(argv[cnt]);
                 if (params.terrace_burnin < 0)
-                    throw "Burnin value must not be negative";
+                    throw "Burnin value must be positive";
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-terrace_s_freq") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -terrace_s_freq <sampling_frequency>";
+                params.terrace_sample_freq = convert_int(argv[cnt]);
+                if (params.terrace_sample_freq < 1)
+                    throw "Sampling frequency must be positive";
                 continue;
             }
             

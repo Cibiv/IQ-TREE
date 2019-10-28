@@ -857,6 +857,8 @@ public:
     /** burnin value for terrace sampling */
     int terrace_burnin;
     
+    /** sampling frequency for terrace sampling */
+    int terrace_sample_freq;
     
     /**
             B, D, or P for Binary, DNA, or Protein sequences
