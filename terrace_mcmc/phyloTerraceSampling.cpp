@@ -30,9 +30,11 @@ void runTerraceSampling(Params &params){
     
     //cout<<tree_stream.str()<<endl;
     
-    
-    //Terrace* terrace = tree->getTreeTerrace(tree_stream.str());
     vector<string> terraceSample;
+    
+    bool terrace_code_iq = true;
+    // Olga's code
+    if(terrace_code_iq){
     terraceSample = tree->getTerraceSample(params.terrace_sample_size,params.terrace_sample_freq,params.terrace_burnin);
     
     ofstream out_file;
@@ -45,8 +47,12 @@ void runTerraceSampling(Params &params){
     }
     out_file.close();
     
-/*terrace->burnin = params.terrace_burnin;
     
+    }else{
+    // Lukasz code
+    // getTreeTerrace terminates, investigate, what's up
+    Terrace* terrace = tree->getTreeTerrace(tree_stream.str());
+        
     if(terrace->isTrivial()){
         cout<<"A terrace is a trivial one or has disconnected components"<<endl;
     } else {
@@ -59,5 +65,5 @@ void runTerraceSampling(Params &params){
             cout<<(*it)<<endl;
         }
     }
- */
+    }
 }
