@@ -794,6 +794,12 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.terrace_sample_freq = 1;
     // -------------------------------
     
+    // Parameters for terrace check
+    params.terrace_check = false;
+    params.terrace_rep_file = NULL;
+    params.terrace_query_set = NULL;
+    // -------------------------------
+    
     params.sequence_type = NULL;
     params.aln_output = NULL;
     params.aln_site_list = NULL;
@@ -1776,6 +1782,23 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.terrace_sample_freq = convert_int(argv[cnt]);
                 if (params.terrace_sample_freq < 1)
                     throw "Sampling frequency must be positive";
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-terrace_rep") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -terrace_rep <terrace_rep_file>";
+                params.terrace_rep_file = argv[cnt];
+                params.terrace_check = true;
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-terrace_query") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -terrace_query <terrace_query_set_file>";
+                params.terrace_query_set = argv[cnt];
                 continue;
             }
             

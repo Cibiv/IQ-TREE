@@ -2405,7 +2405,7 @@ vector<std::string> IQTree::getTerraceSample(int sample_size,int sample_freq,int
     //============================================
     // OPTION 1: does not work, trees from the "sample" do not belong to the same terrace
     // When performing the tree search you'll need that the initial tree is unchanged. While sampling from terrace changes the topology and messes up all partial likelihoods, and the rest. So find a correct way to copy PhyloSuperTree.
-    //IQTree* sample_tree = new PhyloSuperTree;
+    //IQTree* sample_tree = new PhyloSuperTree();
     //sample_tree->copyTree((MTree*) this);
      
     // OPTION 2: works, trees from the sample lie on the same terrace. At least this one can be used for a task: "input a tree with a supermatrix, get a sample from the terrace"

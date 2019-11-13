@@ -528,6 +528,7 @@ void MTreeSet::computeRFDist(int *rfdist, int mode, double weight_threshold) {
 		SplitIntMap *hs = new SplitIntMap();
 
 		(*it)->convertSplits(taxname, *sg);
+ 
 		// make sure that taxon 0 is included
 		for (SplitGraph::iterator sit = sg->begin(); sit != sg->end(); sit++) {
 			if (!(*sit)->containTaxon(0)) (*sit)->invert();

@@ -68,6 +68,7 @@
 #include "vectorclass/instrset.h"
 #include "terrace_mcmc/phyloTerraceSampling.h"
 #include "utils/MPIHelper.h"
+#include "terrace_mcmc/terracecheck.hpp"
 
 #ifdef _OPENMP
 	#include <omp.h>
@@ -2551,6 +2552,8 @@ int main(int argc, char *argv[]) {
         } else {
             cout <<"When sampling from terrace, make sure to include alignment, tree file, sample size..."<< endl;
         }
+    } else if (Params::getInstance().terrace_check) { /** terrace_check, whether trees belong to teh same terrace */
+        runTerraceCheck(Params::getInstance());
 	} else if (Params::getInstance().aln_file || Params::getInstance().partition_file) {
 		if ((Params::getInstance().siteLL_file || Params::getInstance().second_align) && !Params::getInstance().gbo_replicates)
 		{

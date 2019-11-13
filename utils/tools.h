@@ -860,6 +860,15 @@ public:
     /** sampling frequency for terrace sampling */
     int terrace_sample_freq;
     
+    /** check if trees belong to the same terrace */
+    bool terrace_check;
+    
+    /** file with a tree that represents a terrace */
+    char *terrace_rep_file;
+    
+    /** file with tree set to be tested, whether from the same terrace with the representative tree */
+    char *terrace_query_set;
+    
     /**
             B, D, or P for Binary, DNA, or Protein sequences
      */

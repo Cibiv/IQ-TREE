@@ -1,4 +1,10 @@
 add_library(terrace_mcmc
+    phyloTerraceSampling.h
+    phyloTerraceSampling.cpp
+    terracecheck.hpp
+    terracecheck.cpp
+    terrace_iq.hpp
+    terrace_iq.cpp
     node.h
     node.cpp
     mhrw.cpp
