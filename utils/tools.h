@@ -399,14 +399,6 @@ enum StateFreqType {
     FREQ_DNA_2113, FREQ_DNA_2131, FREQ_DNA_2311, 
 };
 
-/**
-        alignment format type
- */
-
-enum AlnFormat {
-    ALN_PHYLIP, ALN_FASTA
-};
-
 /*
     outfile file format
  FORMAT_NORMAL: usual file format used so far
@@ -985,7 +977,7 @@ public:
     /**
             alignment output format
      */
-    AlnFormat aln_output_format;
+    InputType aln_output_format;
     
     /**
         output file format
@@ -1610,6 +1602,12 @@ public:
     /** 1 or 2 to perform transfer boostrap expectation (TBE) */
     int transfer_bootstrap;
     
+    /** subsampling some number of partitions / sites for analysis */
+    int subsampling;
+
+    /** random seed number for subsampling */
+    int subsampling_seed;
+
     /**
             1 if output all intermediate trees (initial trees, NNI-optimal trees and trees after each NNI step)
             2 if output all intermediate trees + 1-NNI-away trees
