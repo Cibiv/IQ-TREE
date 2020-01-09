@@ -49,5 +49,10 @@ public:
      */
     bool checkTree(MTree* tree);
     
+    /*
+     * Print out induced partition trees
+     */
+    void printInducedTrees(ostream &out);
+    
 };
 #endif /* terrace_iq_hpp */

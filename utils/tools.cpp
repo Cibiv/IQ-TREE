@@ -789,15 +789,19 @@ void parseArg(int argc, char *argv[], Params &params) {
     
     // Parameters for terrace sampling
     params.terrace_sampling = false;
-    params.terrace_sample_size = NULL;
+    params.terrace_sample_size = 0;
     params.terrace_burnin = 150;
     params.terrace_sample_freq = 1;
     // -------------------------------
     
     // Parameters for terrace check
     params.terrace_check = false;
-    params.terrace_rep_file = NULL;
-    params.terrace_query_set = NULL;
+    params.terrace_rep_file = nullptr;
+    params.terrace_query_set = nullptr;
+    // -------------------------------
+    
+    // Parameters for print induced trees
+    params.terrace_print_induced_trees = nullptr;
     // -------------------------------
     
     params.sequence_type = NULL;
@@ -1752,6 +1756,14 @@ void parseArg(int argc, char *argv[], Params &params) {
             
             if (strcmp(argv[cnt], "-terrace_sampling") == 0) {
                 params.terrace_sampling = true;
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-terrace_induced") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                throw "Use -terrace_induced <terrace_rep_file>";
+                params.terrace_print_induced_trees = argv[cnt];
                 continue;
             }
             

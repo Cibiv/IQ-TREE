@@ -2547,13 +2547,16 @@ int main(int argc, char *argv[]) {
 	} else if (Params::getInstance().user_file && Params::getInstance().eco_dag_file) { /**ECOpd analysis*/
 		processECOpd(Params::getInstance());
     } else if (Params::getInstance().terrace_sampling){
-        if(Params::getInstance().terrace_sample_size && Params::getInstance().user_file){ /** Sampling from a terrace */
+        if(Params::getInstance().terrace_sample_size && Params::getInstance().user_file && Params::getInstance().aln_file && Params::getInstance().partition_file){ /** Sampling from a terrace */
             runTerraceSampling(Params::getInstance());
         } else {
-            cout <<"When sampling from terrace, make sure to include alignment, tree file, sample size..."<< endl;
+            cout <<"For terrace sampling currently we require the following files/parameters:"<< endl;
+            cout <<"alignment file - partition file - tree file - sample size"<< endl;
         }
     } else if (Params::getInstance().terrace_check) { /** terrace_check, whether trees belong to teh same terrace */
         runTerraceCheck(Params::getInstance());
+    } else if (Params::getInstance().terrace_print_induced_trees && Params::getInstance().aln_file && Params::getInstance().partition_file) { /** print induced trees for a given input tree and aln */
+        runPrintInduced(Params::getInstance());
 	} else if (Params::getInstance().aln_file || Params::getInstance().partition_file) {
 		if ((Params::getInstance().siteLL_file || Params::getInstance().second_align) && !Params::getInstance().gbo_replicates)
 		{

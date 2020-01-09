@@ -21,9 +21,13 @@ void runTerraceCheck(Params &params){
     string out_not_terrace = params.out_prefix;
     out_not_terrace += ".terrace_OUT";
     
-    ofstream out_1,out_2;
+    //string out_induced = params.terrace_rep_file;
+    //out_induced += ".induced_trees";
+    
+    ofstream out_1,out_2,out_3;
     out_1.open(out_terrace.c_str());
     out_2.open(out_not_terrace.c_str());
+    //out_3.open(out_induced.c_str());
 
     Alignment *aln;
     aln = new SuperAlignment(params);
@@ -42,7 +46,7 @@ void runTerraceCheck(Params &params){
     if(tree.rooted){
         cout<<"This feature is only available for unrooted trees.. Converning to unrooted tree.."<<endl;
         exit(0);
-        ((PhyloTree*) &tree)->convertToUnrooted();
+        //((PhyloTree*) &tree)->convertToUnrooted();
     }
     //ASSERT(checkTaxonSetsAlnTree(aln,&tree) && "Not all of the taxa appear in the alignment!");
     cout<<"=============================================="<<endl;
@@ -51,6 +55,12 @@ void runTerraceCheck(Params &params){
     cout<<"=============================================="<<endl;
     out_1<<getTreeTopologyString(&tree)<<endl;
     Terrace_IQ terrace(aln,&tree);
+    //terrace.printInducedTrees(out_3);
+    
+    cout<<"Corresponding induced partition trees:"<<endl;
+    for(vector<MTree*>::iterator it2 = terrace.induced_part_trees.begin(); it2!=terrace.induced_part_trees.end();it2++){
+        (*it2)->printTree(cout,WT_BR_LEN_ROUNDING | WT_NEWLINE);
+    }
     //cout<<"=============================================="<<endl;
     
     /* Get a set of trees to be tested, whether on the same terrace as tree */
@@ -84,6 +94,7 @@ void runTerraceCheck(Params &params){
     
     out_1.close();
     out_2.close();
+    //out_3.close();
     
 }
 
@@ -117,6 +128,7 @@ MTree* getInducedPartitionTree(MTree* tree_complete, Alignment* aln, int part){
         taxon_name=(*it2)->name;
         assert(aln->getSeqID(taxon_name) != -1 && "Not all of the taxa appear in the alignment!");
         check_int[(*it2)->id] = (((SuperAlignment*)aln)->taxa_index[aln->getSeqID(taxon_name)][part] >= 0)? 1 : 0;
+        //cout<<"PART: "<<part<<" | TAXON ID: "<<(*it2)->id<<" | TAXON NAME: " <<taxon_name<<" | TAXON INDEX: "<<((SuperAlignment*)aln)->taxa_index[aln->getSeqID(taxon_name)][part]<<endl;
     }
     
     taxa_set.insert(taxa_set.begin(), check_int.begin(), check_int.end());
@@ -210,4 +222,28 @@ void convertToUnrooted_MTree(MTree* tree,int nseq){
     
     tree->initializeTree();
     //    computeBranchDirection();
+}
+
+void runPrintInduced(Params &params){
+    string out_terrace = params.out_prefix;
+    out_terrace += ".induced_trees";
+
+    ofstream out;
+    out.open(out_terrace.c_str());
+    
+    Alignment *aln;
+    aln = new SuperAlignment(params);
+    
+    MTree tree(params.terrace_print_induced_trees, params.is_rooted);
+    
+    vector<MTree*> induced_trees;
+    
+    getALLInducedPartitionTrees(&tree, aln, induced_trees);
+    
+    vector<MTree*>::iterator it;
+    for(it = induced_trees.begin(); it != induced_trees.end(); it++){
+        (*it)->printTree(out,WT_SORT_TAXA | WT_BR_LEN_ROUNDING | WT_NEWLINE);
+    }
+    
+    out.close();
 }

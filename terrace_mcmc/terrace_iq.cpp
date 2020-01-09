@@ -98,6 +98,13 @@ bool Terrace_IQ::checkTree(MTree* tree){
     return true;
 }
 
+void Terrace_IQ::printInducedTrees(ostream &out){
+    vector <MTree*>::iterator it;
+    for(it = induced_part_trees.begin(); it != induced_part_trees.end(); it++){
+        (*it)->printTree(out,WT_SORT_TAXA | WT_BR_LEN_ROUNDING | WT_NEWLINE);
+    }
+}
+
 Terrace_IQ::~Terrace_IQ(){
     for (vector<MTree*>::reverse_iterator it = induced_part_trees.rbegin(); it != induced_part_trees.rend(); it++) {
         MTree *tree = *it;

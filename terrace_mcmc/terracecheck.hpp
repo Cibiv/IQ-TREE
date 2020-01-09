@@ -51,4 +51,6 @@ bool checkTaxonSetsAlnTree(Alignment* aln, MTree* tree);
  */
 void convertToUnrooted_MTree(MTree* tree,int nseq);
 
+void runPrintInduced(Params &params);
+
 #endif /* terracecheck_hpp */

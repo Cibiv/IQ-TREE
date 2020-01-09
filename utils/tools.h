@@ -851,6 +851,9 @@ public:
     /** perform terrace sampling */
     bool terrace_sampling;
     
+    /** print out induced partition trees for an input tree */
+    char *terrace_print_induced_trees;
+    
     /** terrace sample size */
     int terrace_sample_size;
 
