@@ -35,35 +35,33 @@ void runTerraceSampling(Params &params){
     bool terrace_code_iq = true;
     // Olga's code
     if(terrace_code_iq){
-    terraceSample = tree->getTerraceSample(params.terrace_sample_size,params.terrace_sample_freq,params.terrace_burnin);
+        terraceSample = tree->getTerraceSample(params.terrace_sample_size,params.terrace_sample_freq,params.terrace_burnin);
     
-    ofstream out_file;
-    string file_name = params.out_prefix;
-    file_name += ".terrace_sample";
-    out_file.open(file_name);
+        ofstream out_file;
+        string file_name = params.out_prefix;
+        file_name += ".terrace_sample";
+        out_file.open(file_name);
     
-    for(int i = 0; i < terraceSample.size(); i++){
-        out_file<<terraceSample[i]<<endl;
-    }
-    out_file.close();
-    
-    
+        for(int i = 0; i < terraceSample.size(); i++){
+            out_file<<terraceSample[i]<<endl;
+        }
+        out_file.close();
     }else{
     // Lukasz code
-    // getTreeTerrace terminates, investigate, what's up
-    Terrace* terrace = tree->getTreeTerrace(tree_stream.str());
+        // getTreeTerrace terminates, investigate, what's up
+        Terrace* terrace = tree->getTreeTerrace(tree_stream.str());
         
-    if(terrace->isTrivial()){
-        cout<<"A terrace is a trivial one or has disconnected components"<<endl;
-    } else {
-        cout<<"There are NNI-neighbours on the terrace. Starting the sampling"<<endl;
-        vector<string> sample;
-        sample = terrace->getSample(params.terrace_sample_size);
+        if(terrace->isTrivial()){
+            cout<<"A terrace is a trivial one or has disconnected components"<<endl;
+        } else {
+            cout<<"There are NNI-neighbours on the terrace. Starting the sampling"<<endl;
+            vector<string> sample;
+            sample = terrace->getSample(params.terrace_sample_size);
     
-        vector<string>::iterator it;
-        for(it=sample.begin();it<sample.end();it++){
-            cout<<(*it)<<endl;
+            vector<string>::iterator it;
+            for(it=sample.begin();it<sample.end();it++){
+                cout<<(*it)<<endl;
+            }
         }
-    }
     }
 }
