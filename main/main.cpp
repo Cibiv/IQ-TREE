@@ -63,12 +63,15 @@
 #include "pda/ecopdmtreeset.h"
 #include "pda/gurobiwrapper.h"
 #include "utils/timeutil.h"
+#include "utils/MPIHelper.h"
 //#include <unistd.h>
 #include <stdlib.h>
 #include "vectorclass/instrset.h"
 #include "terrace_mcmc/phyloTerraceSampling.h"
-#include "utils/MPIHelper.h"
 #include "terrace_mcmc/terracecheck.hpp"
+#include "utils/utils_olga.hpp"
+
+
 
 #ifdef _OPENMP
 	#include <omp.h>
@@ -2557,6 +2560,8 @@ int main(int argc, char *argv[]) {
         runTerraceCheck(Params::getInstance());
     } else if (Params::getInstance().terrace_print_induced_trees && Params::getInstance().aln_file && Params::getInstance().partition_file) { /** print induced trees for a given input tree and aln */
         runPrintInduced(Params::getInstance());
+    } else if (Params::getInstance().print_split_len && Params::getInstance().user_file){ //code to print split and its corresponding branch length
+        printSplitLength(Params::getInstance());
 	} else if (Params::getInstance().aln_file || Params::getInstance().partition_file) {
 		if ((Params::getInstance().siteLL_file || Params::getInstance().second_align) && !Params::getInstance().gbo_replicates)
 		{

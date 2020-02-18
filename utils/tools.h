@@ -872,6 +872,9 @@ public:
     /** file with tree set to be tested, whether from the same terrace with the representative tree */
     char *terrace_query_set;
     
+    /** print out split (taxon names from A and B) and its length per line*/
+    bool print_split_len;
+    
     /**
             B, D, or P for Binary, DNA, or Protein sequences
      */

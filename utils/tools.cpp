@@ -804,6 +804,11 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.terrace_print_induced_trees = nullptr;
     // -------------------------------
     
+    // Parameters for auxiliary stuff
+    params.print_split_len = false;
+    // -------------------------------
+    
+    
     params.sequence_type = NULL;
     params.aln_output = NULL;
     params.aln_site_list = NULL;
@@ -1813,6 +1818,11 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.terrace_query_set = argv[cnt];
                 continue;
             }
+            
+            if (strcmp(argv[cnt], "-w_split_len_info") == 0) {
+                params.print_split_len = true;
+            }
+            
             
 			if (strcmp(argv[cnt], "-sf") == 0) {
 				cnt++;

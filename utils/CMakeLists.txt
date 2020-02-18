@@ -8,6 +8,7 @@ pllnni.cpp pllnni.h
 checkpoint.cpp checkpoint.h
 MPIHelper.cpp MPIHelper.h
 timeutil.h
+utils_olga.cpp utils_olga.hpp
 )
 
 if(ZLIB_FOUND)
