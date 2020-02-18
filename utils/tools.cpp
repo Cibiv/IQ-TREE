@@ -1821,6 +1821,7 @@ void parseArg(int argc, char *argv[], Params &params) {
             
             if (strcmp(argv[cnt], "-w_split_len_info") == 0) {
                 params.print_split_len = true;
+                continue;
             }
             
             

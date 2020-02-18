@@ -31,13 +31,31 @@ void printSplitLength(Params &params){
         tree.getTaxaName(taxaBname,branch2[i],branch1[i]);
         
         //splitA.clear();
+        //cout<<"splitAname.size="<<taxaAname.size()<<endl;
+        int c=0;
         for(j=0; j<taxaAname.size(); j++){
-            splitA+=" "+taxaAname[j];
+            if(taxaAname[j]!=""){
+                c++;
+                if(c==1){
+                    splitA=taxaAname[j];
+                }else{
+                    splitA=splitA+" "+taxaAname[j];
+                }
+            }
         }
         
+        c=0;
         //splitB.clear();
+        //cout<<"splitBname.size="<<taxaBname.size()<<endl;
         for(j=0; j<taxaBname.size(); j++){
-            splitB+=" "+taxaBname[j];
+            if(taxaBname[j]!=""){
+                c++;
+                if(c==1){
+                    splitB=taxaBname[j];
+                }else{
+                    splitB=splitB+" "+taxaBname[j];
+                }
+            }
         }
         
         if(taxaAname.size()<=taxaBname.size()){
@@ -50,5 +68,6 @@ void printSplitLength(Params &params){
         
     }
     
+    cout<<endl;
     out.close();
 }
