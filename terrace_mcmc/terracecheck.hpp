@@ -53,4 +53,6 @@ void convertToUnrooted_MTree(MTree* tree,int nseq);
 
 void runPrintInduced(Params &params);
 
+vector<IntVector> getSubMatrix(vector<IntVector> &pr_ab_complete, MTree* tree);
+
 #endif /* terracecheck_hpp */

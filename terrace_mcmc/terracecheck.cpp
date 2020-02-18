@@ -247,3 +247,18 @@ void runPrintInduced(Params &params){
     
     out.close();
 }
+
+vector<IntVector> getSubMatrix(vector<IntVector> pr_ab_complete, vector<string> taxa_names, MTree* tree){
+    int id;
+    NodeVector taxa_nodes;
+    NodeVector::iterator it;
+    string taxon_name;
+    tree->getTaxa(taxa_nodes);
+    for(it=taxa_nodes.begin(); it<taxa_nodes.end(); it++){
+        taxon_name=(*it)->name;
+        //id=getTaxonID_in_pr_ab_m(taxon_name);
+    }
+}
+
+
+

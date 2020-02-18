@@ -1,6 +1,8 @@
 add_library(terrace_mcmc
     phyloTerraceSampling.h
     phyloTerraceSampling.cpp
+    generateAllTreesFromTerrace.cpp
+    generateAllTreesFromTerrace.hpp
     terracecheck.hpp
     terracecheck.cpp
     terrace_iq.hpp

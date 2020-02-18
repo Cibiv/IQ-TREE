@@ -35,6 +35,7 @@ public:
      */
     
     Terrace_IQ(const char* file_presence_absence, MTree* tree);
+    Terrace_IQ(vector<IntVector> matrix, vector<string> names, MTree* tree);
     
     /**
      destructor
@@ -42,12 +43,19 @@ public:
     ~Terrace_IQ();
     
     int n_part;
+    int taxa_num;
     Alignment* aln;
+    MTree* representative_tree;
     vector<MTree*> induced_part_trees;
     
     // TODO: while reading presence-absence matrix also fill out the vector of taxa_names, so the row ids correspond to correct taxa
-    vector<IntVector> presence_absence_matrix;
+    vector<IntVector> pr_ab_matrix;
     vector<string> taxa_names;
+    
+    /*
+     *  If terrace is constructed from an alignment instead of presence-absence matrix, initialize taxa_names and pr_ab_matrix
+     */
+    void initTaxaNamesPresenceAbsenceM();
     
     
     /*
@@ -70,6 +78,16 @@ public:
      */
     void readPresenceAbsenceMatrix(const char *infile);
     void readPresenceAbsenceMatrix(istream &in);
+    
+    /*
+     * Find a taxon ID in pr_ab_matrix
+     */
+    int getTaxonID_in_pr_ab_m(string taxon_name);
+    
+    /*
+     *  Get induced partition trees using pr_ab_matrix
+     */
+    void getALLInducedPartitionTreesM();
     
 };
 #endif /* terrace_iq_hpp */

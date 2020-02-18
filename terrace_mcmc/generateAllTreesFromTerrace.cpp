@@ -6,6 +6,7 @@
 //
 
 #include "generateAllTreesFromTerrace.hpp"
+#include "terrace_iq.hpp"
 #include "terracecheck.hpp"
 
 void generateTerraceTrees(Terrace_IQ* terrace, const char *userOutFile){
@@ -16,14 +17,19 @@ void generateTerraceTrees(Terrace_IQ* terrace, const char *userOutFile){
     
     int count_iter = 0;
     
-    MTree tree;
-    vector<MTree*> induced_trees;
-    
     // identify an induced tree to start from. With the largest number of taxa?
     int i = 0;
+    MTree tree;
     tree.copyTree(terrace->induced_part_trees[i]);
-    // here terrace->aln should be substituted by a sub-aln for taxa present in tree
-    getALLInducedPartitionTrees(&tree,terrace->aln,induced_trees);
+    
+    vector<IntVector> pr_ab_init;
+    vector<string> taxa_names_init;
+    
+    //YOU STOPPED HERE!!!!!!!!!!!!!!!
+    
+    // getting pr_ab_matrix and taxa_names for the initial tree
+    
+    Terrace_IQ terrace_init(pr_ab_init,taxa_names_init,&tree);
     
     // Perform first branch and taxon mappings
     

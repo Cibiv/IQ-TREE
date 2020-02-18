@@ -15,27 +15,51 @@ Terrace_IQ::Terrace_IQ(){
 Terrace_IQ::Terrace_IQ(Alignment* alignment, MTree* tree){
     
     aln = alignment;
+    representative_tree = tree;
     n_part = ((SuperAlignment*)aln)->partitions.size();
     getALLInducedPartitionTrees(tree, aln, induced_part_trees);
+    
+    // set taxa_num, taxa_names, and pr_ab_matrix
+    initTaxaNamesPresenceAbsenceM();
     
 }
 
 Terrace_IQ::Terrace_IQ(Alignment* alignment, vector<MTree*> trees){
     
     aln = alignment;
+    representative_tree = nullptr;
     n_part = ((SuperAlignment*)aln)->partitions.size();
     vector<MTree*>::iterator it;
     
     for(it = trees.begin(); it!=trees.end(); it++)
         induced_part_trees.push_back((*it));
     
+    // set taxa_num, taxa_names, and pr_ab_matrix
+    initTaxaNamesPresenceAbsenceM();
+    
 }
 
 Terrace_IQ::Terrace_IQ(const char* file_presence_absence, MTree* tree){
     
     aln = nullptr;
-    
-    
+    representative_tree = tree;
+    // The function below intinilises n_part, taxa_num, taxa_names, pr_ab_matrix
+    readPresenceAbsenceMatrix(file_presence_absence);
+    getALLInducedPartitionTreesM();
+}
+
+Terrace_IQ::Terrace_IQ(vector<IntVector> matrix, vector<string> names, MTree* tree){
+    // you should be careful with odering of rows and entries in matrix and names!!!
+    // the first row in matrix corresponds to the first taxon in names
+    aln = nullptr;
+    representative_tree = tree;
+    n_part=matrix[0].size();
+    taxa_num=matrix.size();
+    for(int i=0; i<taxa_num; i++){
+        pr_ab_matrix.push_back(matrix[i]);
+        taxa_names.push_back(names[i]);
+    }
+    getALLInducedPartitionTreesM();
 }
 
 void Terrace_IQ::readPresenceAbsenceMatrix(const char *infile){
@@ -56,337 +80,26 @@ void Terrace_IQ::readPresenceAbsenceMatrix(const char *infile){
 
 void Terrace_IQ::readPresenceAbsenceMatrix(istream &in) {
     
-    int taxon_num;
+    string str_rest,name;
     
-    if(!(in>>taxon_num)) throw "The first line should start with a number of taxa followed by the number of partitions!";
-    
-    
-    
-    string name;
-    if(!(in>>name)) throw "Each line should start with a taxon name!";
-    this->taxa_names.push_back(name);
-    
-    
-    
-    
-    
+    if(!(in>>taxa_num)) throw "The first line should start with a number of taxa followed by the number of partitions!";
+    if(!(in>>n_part)) throw "The first line should start with a number of taxa followed by the number of partitions!";
+    //getline(in,str_rest);
     
     int i=0,j=0;
-    if(!(in>>SpeciesNUM)) throw "The first line must contain the number of species in this Food Web!!";
-    string str_rest, speciesName;
-    getline(in, str_rest);
+    for(i=0; i<taxa_num; i++){
+        if(!(in>>name)) throw "Each line should start with a taxon name!";
+        taxa_names.push_back(name);
 
-    
-    vector<double*> MM;
-    for(i=0;i<SpeciesNUM;i++){
-        MM.push_back(new double [SpeciesNUM]);
-    }
-    
-    nvar = (TaxaNUM > SpeciesNUM) ? TaxaNUM : SpeciesNUM;
-    for(i=0;i<nvar;i++){
-        DAG.push_back(new double [nvar]);
-        for(j=0; j<nvar; j++){
-            DAG[i][j] = 0.0;
+        IntVector vec(n_part, -1);
+        for(j=0; j<n_part; j++){
+            if(!(in >> vec[j])) throw "Could not read a matrix entry! For each species make sure there are as many entries as the number of partitions specified in the first line of the file. Moreover, presence-absence matrix should only contain 0, 1!";
+            if(vec[j] < 0) throw "Error: A negative entry! Presence-absence matrix should only contain 0, 1!";
+            if(vec[j] > 1) throw "Error: The entry is greater than 1! Presence-absence matrix should only contain 0, 1!";
         }
+        pr_ab_matrix.push_back(vec);
     }
-    i = 0;
-    j = 0;
-    if(rooted){
-        while(i != SpeciesNUM-1){
-            if(!(in >> speciesName)) throw "Each line should start with a species name!";
-            dagNames.push_back(speciesName);
-            j = 0;
-            while(j != SpeciesNUM-1){
-                if(!(in >> MM[i][j])) throw "Could not read matrix entry! For each species make sure there are as many entries as the number of species specified in the file. Only square matrices are accepted.";
-                if(MM[i][j] < 0) throw "The Food Web matrix should not contain negative values.Use either 0, 1 or a positive number to indicate the portion of diet.";
-                j++;
-            }
-            MM[i][SpeciesNUM-1] = 0;
-            i++;
-        }
-        for(j=0; j<SpeciesNUM; j++)
-            MM[SpeciesNUM-1][j] = 0;
-        dagNames.push_back("_root");
-    } else {
-        while(i != SpeciesNUM){
-            if(!(in >> speciesName)) throw "Each line should start with a species name!";
-            dagNames.push_back(speciesName);
-            j = 0;
-            while(j != SpeciesNUM){
-                if(!(in >> MM[i][j])) throw "Could not read matrix entry! For each species make sure there are as many entries as the number of species specified in the file. Only square matrices are accepted.";
-                if(MM[i][j] < 0) throw "The Food Web matrix should not contain negative values.Use either 0, 1 or a positive number to indicate the portion of diet.";
-                j++;
-            }
-            i++;
-        }
-    }
-    
-    /* ---------------------------------------------------------------------------------------------------------
-     * Input data
-     * ---------------------------------------------------------------------------------------------------------*/
-    if(verbose_mode == VB_MAX){
-        cout<<endl<<"Food web is defined by the following matrix"<<endl;
-        for(i=0;i<SpeciesNUM;i++) {
-            cout<<dagNames[i]<<"\t";
-            for(j=0;j<SpeciesNUM;j++)
-                cout<<MM[i][j]<<"\t";
-            cout<<endl;
-        }
-        // Species in the food web and their ids
-        for(i=0; i<SpeciesNUM;i++)
-            cout<<"["<<i<<"] "<<dagNames[i]<<endl;
-    }
-    /* ---------------------------------------------------------------------------------------------------------
-     * Processing the input data
-     * ---------------------------------------------------------------------------------------------------------*/
-    //Ignoring cannibalism -------------------------------------------------------------------------
-    int cannibals=0;
-    for(i=0;i<SpeciesNUM;i++)
-        if(MM[i][i]!=0){
-            cannibals++;
-            if(weighted){
-                if(cannibals == 1){
-                    cout<<"------------------------------------------"<<endl;
-                    cout<<"    Cannibal species         link weight  "<<endl;
-                    cout<<"------------------------------------------"<<endl;
-                }
-                cout.width(30);
-                cout<<left<<dagNames[i];
-                cout<<" | "<<MM[i][i]<<endl;
-            }else{
-                if(cannibals == 1){
-                    cout<<"-----------------------------"<<endl;
-                    cout<<"       Cannibal species      "<<endl;
-                    cout<<"-----------------------------"<<endl;
-                }
-                cout<<dagNames[i]<<endl;
-            }
-            MM[i][i]=0;
-        }
-    if(cannibals!=0){
-        cout<<endl<<"Deleted "<<cannibals;
-        if(cannibals == 1)
-            cout<<" cannibalistic link."<<endl;
-        else
-            cout<<" cannibalistic links."<<endl;
-    }
-    
-    //Check whether the graph is acyclic or not
-    Graph g(SpeciesNUM);
-    for(i=0; i<SpeciesNUM; i++)
-        for(j=0; j<SpeciesNUM; j++)
-            if(MM[i][j]>0)
-                g.addEdge(i,j);
-    if(g.isCyclic()){
-        if(cannibals != 0)
-            cout<<endl<<"ERROR: Even after deleting cannibalistic links, there are still some cycles present."<<endl;
-        else
-            cout<<endl<<"ERROR: ";
-        cout<<"Cyclic food webs are not supported. Delete the links which cause cycles and run again."<<endl;
-        cout<<"SOLUTION:"<<endl;
-        cout<<"Detect species in the cycle and choose one link to be deleted in order to break the cycle."<<endl;
-        cout<<"One possibility is to delete the link with least weight. This can be done by setting the corresponding value in the matrix to 0."<<endl;
-        exit(0);
-    }
-    
-    // The number of links -------------------------------------------------------------------------
-    linksNUM = 0;
-    for(i = 0; i<SpeciesNUM; i++)
-        for(j = 0; j<SpeciesNUM; j++)
-            if(MM[i][j]>0)
-                linksNUM++;
-    
-    //Rescaling the diet if necessary --------------------------------------------------------------
-    if(weighted){
-        int dietReScaled = 0;
-        vector<double> colsum;
-        //cout<<"Food web is weighted."<<endl;
-        for(j=0;j<SpeciesNUM;j++){
-            
-            colsum.push_back(0);
-            for(i=0;i<SpeciesNUM;i++)
-                colsum[j]=colsum[j]+MM[i][j];
-            if(colsum[j]!=1 && colsum[j]!=0){
-                dietReScaled++;
-                //cout<<"    WARNING: rescaled diet composition of species "<<j<<". Column sum = "<<colsum[j]<<endl;
-                for(i=0;i<SpeciesNUM;i++)
-                    MM[i][j]=MM[i][j]/colsum[j];
-            }
-            colsum[j]=0;
-            //for(i=0;i<SpeciesNUM;i++)
-            //    colsum[j]=colsum[j]+MM[i][j];
-            //cout<<j<<"  Column sum = "<<colsum[j]<<endl;
-        }
-        cout<<"Rescaled diet composition of "<<dietReScaled<<" species."<<endl;
-    }else{
-        for(i=0; i<SpeciesNUM; i++)
-            for(j=0; j<SpeciesNUM; j++)
-                if( MM[i][j] > 0)
-                    MM[i][j] = 1;
-        //cout<<"Since the -eco option was chosen, the entries of Food Web matrix will be converted to 0/1 [not prey / prey]. You can use -ecoW option to account for the Diet Composition."<<endl;
-    }
-    
-    // Technical: in case of rooted trees, we check which species are basal ones, i.e. for which check = 0, and set them to "feed on" root M[i,j] = 1
-    if(rooted){
-        vector<double> check;
-        for(j=0;j<SpeciesNUM-1;j++){
-            check.push_back(0);
-            for(i=0;i<SpeciesNUM-1;i++)
-                check[j]=check[j]+MM[i][j];
-            if(check[j]==0)
-                MM[SpeciesNUM-1][j]=1;
-        }
-    }
-    
-    //Detecting which species are not present in either FoodWeb or Tree/SplitNetwork-----------------
-    detectMissingSpecies();
-    
-    //Check whether all the species from initialTaxa set are actually present on Tree/SplitSys or in Food Web
-    checkInitialTaxa();
-    
-    // Synchronization of species in Tree/SplitSys and species in FoodWeb ---------------------------
-    synchronizeSpecies();
-    
-    for(i=0; i<SpeciesNUM; i++){
-        for(j=0; j<SpeciesNUM; j++){
-            DAG[phylo_order[i]][phylo_order[j]]=MM[i][j];
-        }
-    }
-    
-    for(i=SpeciesNUM-1;i>=0;i--)
-        delete[] MM[i];
-    
-    if(verbose_mode == VB_MAX){
-        // Print info about synchronization
-        cout<<endl<<"Synchronization:"<<endl;
-        cout<<"PhyloInfo id | FoodWeb id, name"<<endl;
-        for(i=0; i<SpeciesNUM; i++){
-            cout<<"["<<phylo_order[i]<<"] | ["<<i<<"] "<<dagNames[i]<<endl;
-        }
-        cout<<"PhyloInfo id | name"<<endl;
-        for(i=0; i<TaxaNUM;i++){
-            cout<<"["<<i<<"] "<<findNodeID(i)->name<<endl;
-        }
-        
-        // Input data after processing: cannibalism, rescaling, reordering
-        cout<<endl<<"Food web is defined by the following matrix"<<endl;
-        for(i=0;i<nvar;i++) {
-            if(findFoodWebID(i) != -1)
-                cout<<dagNames[findFoodWebID(i)]<<"\t";
-            else
-                cout<<"\t\t";
-            for(j=0;j<nvar;j++)
-                cout<<DAG[i][j]<<"\t";
-            cout<<endl;
-        }
-    }
-    /* ---------------------------------------------------------------------------------------------------------
-     * Filling out taxaDAG vector: node corresponds to taxa, neighbors to preys, length (node-neighbor) to weight
-     * ---------------------------------------------------------------------------------------------------------*/
-    vector<int> vec2;//the value of vec[j] is the height of the species in the DAG
-    taxaDAG.resize(nvar,NULL);
-    for(j=0;j<nvar;j++){
-        taxaDAG[j] = newNode(j,j);
-        //cout<<"taxonDAG[j="<<j+1<<"]->id="<<taxaDAG[j]->id<<endl;
-    }
-    
-    for(j=0;j<nvar;j++){
-        for(i=0;i<nvar;i++)
-            if(DAG[i][j]>0){
-                //cout<<"cheking matrix"<<i<<j<<endl;
-                taxaDAG[j]->addNeighbor(taxaDAG[i], DAG[i][j], taxaDAG[i]->id);
-                //cout<<"neighbors[i="<<taxaDAG[j]->degree()-1<<"]->id="<<taxaDAG[j]->neighbors[taxaDAG[j]->degree()-1]->node->id<<endl;
-            }
-        //cout<<endl;
-    }
-    
-    /* ---------------------------------------------------------------------------------------------------------
-     * Defining levels in the Food Web based on the longest food chain of predators
-     * ---------------------------------------------------------------------------------------------------------*/
-    for(j=0;j<nvar;j++){
-        levelDAG.push_back(0);
-        if(taxaDAG[j]->degree()>0)
-            vec2.push_back(1);
-        else
-            vec2.push_back(0);
-        //          if(taxaDAG[j]->degree()>0){
-        //              cout<<"Children of taxonDAG[j="<<j<<"]->id="<<taxaDAG[j]->id<<":"<<endl;
-        //             for(i=0;i<taxaDAG[j]->degree();i++)
-        //                 cout<<"taxaDAG["<<j<<"]->neighbors["<<i<<"]->node->id "<<taxaDAG[j]->neighbors[i]->node->id<<endl;
-        //                 //cout<<"id of the child "<<i<<" node id "<<taxaDAG[j]->neighbors[i]->node->id+1<<" "<<endl;
-        //                 //cout<<"           neighbors[i="<<i<<"]->id="<<taxaDAG[j]->neighbors[i]->node->id<<endl;
-        //             cout<<endl;
-        //
-        //          }
-    }
-    //    for(j=0;j<nvar;j++)
-    //        cout<<j<<" "<<levelDAG[j]<<" "<<vec2[j]<<endl;
-    
-    int eq=0,step=0;
-    //cout<<"Starting while..."<<endl;
-    while(eq!=1){
-        eq=1;
-        step++;
-        //         if(step==1 or step==2 or step==3)
-        //        cout<<"-------STEP "<<step<<"-------"<<endl<<"j v1 v2"<<endl;
-        for(j=0;j<nvar;j++){
-            if(levelDAG[j]!=vec2[j])
-                eq=0;
-            //             if(step==1 or step==2 or step==3)
-            //            cout<<j<<" "<<levelDAG[j]<<" "<<vec2[j]<<endl;
-            levelDAG[j]=vec2[j];
-        }
-        for(j=0;j<nvar;j++){
-            if(taxaDAG[j]->degree()>0){
-                //cout<<"taxaDAG["<<j<<"]->neighbors[0]->node->id "<<taxaDAG[j]->neighbors[0]->node->id<<endl;
-                vec2[j]=vec2[taxaDAG[j]->neighbors[0]->node->id]+1;
-                for(i=1;i<taxaDAG[j]->degree();i++)
-                    if(vec2[taxaDAG[j]->neighbors[i]->node->id]>=vec2[j])
-                        vec2[j]=vec2[taxaDAG[j]->neighbors[i]->node->id]+1;
-            }
-        }
-    }
-    
-    // For each predator the level corresponds to its longest food chain----------------------------
-    if(verbose_mode == VB_MAX){
-        cout<<"For each species its longest chain according to a food web"<<endl;
-        for(j=0;j<nvar;j++)
-            //if(findFoodWebID(j) != -1)
-            //    cout<<dagNames[findFoodWebID(j)]<<"\t| "<<levelDAG[j]<<endl;
-            //else
-            cout<<*names[j]<<"\t| "<<levelDAG[j]<<endl;
-    }
-    //cout<<"Species - level"<<endl;
-    //ofstream levelF;
-    //levelF.open("Level",ios::app);
-    //for(j=0;j<SpeciesNUM;j++)
-    //    levelF<<j+1<<" "<<levelDAG[j]<<endl;
-    //     for(i=0;i<tree.leafNum;i++)
-    //     myfile<<"taxon id: "<<taxaTree[i]->id<<" | taxon name: "<<taxaTree[i]->name<<endl;
-    //     myfile<<"root  id: "<<root->id<<" | root  name: "<<root->name<<endl;
-    // // myfile.close();
-    
-    // The maximum level is the longest food chain of the food web ---------------------------------
-    //     int maxlevel;
-    //     maxlevel=0;
-    //     for(i=0;i<SpeciesNUM;i++)
-    //        if(maxlevel<levelDAG[i])
-    //            maxlevel=levelDAG[i];
-    
-    // Decrease SpeciesNUM since you do not need to include the root to the Species anymore---------
-    if(rooted)
-        SpeciesNUM--;
 }
-
-
-
-
-
-
-
-
-
-
 
 
 void Terrace_IQ::setInducedPartitionTrees(vector<MTree*> trees){
@@ -396,6 +109,21 @@ void Terrace_IQ::setInducedPartitionTrees(vector<MTree*> trees){
     vector<MTree*>::iterator it;
     for(it = trees.begin(); it!=trees.end(); it++)
         induced_part_trees.push_back((*it));
+}
+
+void Terrace_IQ::initTaxaNamesPresenceAbsenceM(){
+    
+    taxa_num = ((SuperAlignment*)aln)->getNSeq();
+    for(int id=0; id<taxa_num; id++){
+        IntVector vec(n_part, 0);
+        for(int part=0; part<n_part; part++){
+            if(((SuperAlignment*)aln)->taxa_index[id][part]>=0){
+                vec[part]=1;
+            }
+        }
+        pr_ab_matrix.push_back(vec);
+        taxa_names.push_back(aln->getSeqName(id));
+    }
 }
 
 bool Terrace_IQ::checkTree(MTree* tree){
@@ -469,4 +197,50 @@ Terrace_IQ::~Terrace_IQ(){
         delete tree;
     }
     // why don't you delete an aln pointer?
+}
+
+int Terrace_IQ::getTaxonID_in_pr_ab_m(string taxon_name){
+    
+    for(int i=0; i<taxa_num; i++){
+        if(taxa_names[i]==taxon_name){
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+void Terrace_IQ::getALLInducedPartitionTreesM(){
+    
+    //cout<<"GETTING ALL INDUCED PARTITION TREES for tree: "<<endl;
+    //cout<<getTreeTopologyString(tree)<<endl;
+    //cout<<"induced trees:"<<endl;
+    
+    int id;
+    string taxa_set = "";
+    string taxon_name;
+    NodeVector taxa_nodes;
+    NodeVector::iterator it2;
+    vector<uint32_t> check_int;
+    check_int.resize(taxa_num);
+    
+    
+    assert(representative_tree != nullptr && "Sorry, a terrace does not have a representative tree, I cannot get induced partition trees using pr_ab_matrix!");
+    representative_tree->getTaxa(taxa_nodes);
+    
+    for(int part=0; part<n_part; part++){
+        MTree* induced_tree = new MTree();
+        for(it2=taxa_nodes.begin();it2!=taxa_nodes.end();it2++){
+            taxon_name=(*it2)->name;
+            //id=this->getTaxonID_in_pr_ab_m(taxon_name);
+            // you need to check the consistency between taxa nodes on a terrace and in pr_ab_matrix, do this when you read pr_ab_matrix from a file!
+            assert(id != -1 && "Not all of the taxa appear in the pr_ab_matrix!");
+            check_int[(*it2)->id] = pr_ab_matrix[id][part];
+        }
+        
+        taxa_set.insert(taxa_set.begin(), check_int.begin(), check_int.end());
+        induced_tree->copyTree(representative_tree,taxa_set);
+        induced_part_trees.push_back(induced_tree);
+        //induced_part_trees[part]->printTree(cout,WT_BR_LEN_ROUNDING | WT_NEWLINE);
+    }
 }
