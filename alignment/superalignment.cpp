@@ -94,30 +94,32 @@ void SuperAlignment::readFromParams(Params &params) {
         part_names.insert((*pit)->name);
     }
     
-    if (params.subsampling > 0) {
+    if (params.subsampling != 0) {
         // sumsample a number of partitions
         int subsample = params.subsampling;
-        if (subsample >= partitions.size())
-            outError("--subsample must be smaller than #partitions");
-        cout << "Random subsampling " << subsample << " partitions (seed: " << params.subsampling_seed <<  ")..." << endl;
-        double prop = double(subsample) / partitions.size();
+        if (abs(subsample) >= partitions.size())
+            outError("--subsample must be between -" + convertIntToString(partitions.size()-1) + " and " + convertIntToString(partitions.size()-1));
+        cout << "Random subsampling " << ((subsample > 0) ? subsample : partitions.size() + subsample)
+             << " partitions (seed: " << params.subsampling_seed <<  ")..." << endl;
         int *rstream;
         init_random(params.subsampling_seed, false, &rstream);
         // make sure to sub-sample exact number
         vector<bool> sample;
         int i;
         sample.resize(partitions.size(), false);
-        for (int num = 0; num < subsample; ) {
-            for (i = 0; i < sample.size(); i++) if (!sample[i]) {
-                if (random_double(rstream) < prop) {
-                    sample[i] = true;
-                    num++;
-                    if (num >= subsample)
-                        break;
-                }
+        for (int num = 0; num < abs(subsample); ) {
+            i = random_int(sample.size(), rstream);
+            if (!sample[i]) {
+                sample[i] = true;
+                num++;
             }
         }
         finish_random(rstream);
+        if (subsample < 0) {
+            // reverse sampling
+            for (i = 0; i < sample.size(); i++)
+                sample[i] = !sample[i];
+        }
         vector<Alignment*> keep_partitions;
         for (i = 0; i < sample.size(); i++)
             if (sample[i])
@@ -392,14 +394,34 @@ void SuperAlignment::readPartitionRaxml(Params &params) {
 void SuperAlignment::readPartitionNexus(Params &params) {
 //    Params origin_params = params;
     MSetsBlock *sets_block = new MSetsBlock();
+    NxsTaxaBlock *taxa_block = NULL;
+    NxsAssumptionsBlock *assumptions_block = NULL;
+    NxsDataBlock *data_block = NULL;
     MyReader nexus(params.partition_file);
     nexus.Add(sets_block);
+
+    if (!params.aln_file) {
+        taxa_block = new NxsTaxaBlock();
+        assumptions_block = new NxsAssumptionsBlock(taxa_block);
+        data_block = new NxsDataBlock(taxa_block, assumptions_block);
+        nexus.Add(taxa_block);
+        nexus.Add(assumptions_block);
+        nexus.Add(data_block);
+    }
+
     MyToken token(nexus.inf);
     nexus.Execute(token);
     
     Alignment *input_aln = NULL;
     if (params.aln_file) {
         input_aln = createAlignment(params.aln_file, params.sequence_type, params.intype, params.model_name);
+    } else {
+        if (data_block->GetNTax() > 0) {
+            input_aln = new Alignment(data_block, params.sequence_type, params.model_name);
+        }
+        delete data_block;
+        delete assumptions_block;
+        delete taxa_block;
     }
     
     bool empty_partition = true;
@@ -419,7 +441,7 @@ void SuperAlignment::readPartitionNexus(Params &params) {
         if (empty_partition || (*it)->char_partition != "") {
             if ((*it)->model_name == "")
                 (*it)->model_name = params.model_name;
-            if ((*it)->aln_file == "" && !params.aln_file) {
+            if ((*it)->aln_file == "" && !input_aln) {
                 if (!(*it)->position_spec.empty()) {
                     (*it)->aln_file = (*it)->position_spec;
                     (*it)->position_spec = "";
