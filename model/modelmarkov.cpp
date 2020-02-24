@@ -389,6 +389,11 @@ void ModelMarkov::writeInfo(ostream &out) {
     report_rates(out, "Substitution rates", rates);
     report_state_freqs(out, state_freq);
   }
+  // XXX: For AA models, verbosity is strongly reduced. This is because for
+  // mixture models, we get endless output of exchangeabilities. Ideally, we
+  // report those for non-mixture models, and report them in a separate file for
+  // larger mixture models.
+  //
   // else if (is_reversible && num_states == 20 && linked_exchangeabilities_target_model == NULL) {
   //            report_rates(out, "Exchangeabilities in order A, R, N, D, C, Q, E, G, H, I, L, K, M, F, P, S, T, W, Y, V", rates);
   //            report_state_freqs(out, state_freq);
