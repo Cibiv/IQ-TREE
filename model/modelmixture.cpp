@@ -1242,13 +1242,13 @@ void ModelMixture::initMixture(string orig_model_name, string model_name, string
 //				name += model->name;
 				full_name += model->name;
         // Link exchangeabilities.
-        if (f > 0 && tree->params->link_exchangeabilities == true) {
+        if (f > 0 && tree->params->link_exchangeabilities) {
           // cout << "Link exchangeabilities of frequency mixture model components." << endl;
           model->linkExchangeabilities(this->at(0));
         }
 			}
 		} else {
-      if (tree->params->link_exchangeabilities == true) {
+      if (tree->params->link_exchangeabilities) {
         cerr << "Exchangeabilities can only be linked with frequency mixture models." << endl;
         outError("Please deactivate '-link-exchangeabilities'.");
       }
