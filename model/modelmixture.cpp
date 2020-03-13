@@ -1809,12 +1809,22 @@ double ModelMixture::optimizeParameters(double gradient_epsilon) {
     if (!phylo_tree->getModelFactory()->unobserved_ptns.empty())
         outError("Mixture model +ASC is not supported yet. Contact author if needed.");
 
-    if (dim > 0)
-        score = optimizeWithEM(gradient_epsilon);
-    else if (!fix_prop)
-        score = optimizeWeights();
-
-//	double score = ModelGTR::optimizeParameters(gradient_epsilon);
+    if (!linked_exchangeabilities_target_model) {
+        // Note: EM algorithm does not work with linked models because it assumes independence between mixutre components
+        if (dim > 0)
+            score = optimizeWithEM(gradient_epsilon);
+        else if (!fix_prop)
+            score = optimizeWeights();
+    } else {
+        // TODO: Optimize linked parameters across mixtures using BFGS algorithm
+        // Be sure check the function setVariables() and getVariables()
+        score = ModelMarkov::optimizeParameters(gradient_epsilon);
+        if (!fix_prop) {
+            double new_score = optimizeWeights();
+            ASSERT(new_score > score - gradient_epsilon);
+            score = new_score;
+        }
+    }
 	optimizing_submodels = false;
 	if (getNDim() == 0) return score;
 	// now rescale Q matrices to have proper interpretation of branch lengths
