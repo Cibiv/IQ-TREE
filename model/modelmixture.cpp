@@ -1365,8 +1365,11 @@ void ModelMixture::initMem() {
 
   cout << "Total number of states: " << num_states_total << endl;
 
-  size_t n_eigenvalues = static_cast<size_t>(num_states_total) * static_cast<size_t>(nmixtures);
+  // size_t n_eigenvalues = static_cast<size_t>(num_states_total) * static_cast<size_t>(nmixtures);
+  size_t n_eigenvalues = static_cast<size_t>(num_states_total);
   cout << "Total number of eigenvalues: " << n_eigenvalues << endl;
+
+  cout << "Num states: " << num_states << endl;
 
   size_t n_squared = static_cast<size_t>(num_states_total) * static_cast<size_t>(num_states_total);
   cout << "n_squared: " << n_squared << endl;
