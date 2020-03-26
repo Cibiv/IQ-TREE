@@ -1374,6 +1374,8 @@ void ModelMixture::initMem() {
   size_t n_elems_vectors = n_squared * static_cast<size_t>(nmixtures);
   cout << "Number of elements in (inversed) eigenvectors: " << n_elems_vectors << endl;
 
+  cout << "The size of one double is:" << sizeof(double) << endl;;
+
   eigenvalues = aligned_alloc<double>(n_eigenvalues);
   // eigenvectors =
   // aligned_alloc<double>(num_states_total*num_states_total*nmixtures);
