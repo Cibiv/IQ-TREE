@@ -187,22 +187,22 @@ void ModelMarkov::restoreCheckpoint() {
     endCheckpoint();
 }
 
-bool ModelMarkov::linkModel(ModelSubst *target) {
-    if (!ModelSubst::linkModel(target))
-        return false;
-    freeMem();
-    ModelMarkov *model = (ModelMarkov*)target;
-    inv_eigenvectors = model->inv_eigenvectors;
-    eigenvectors = model->eigenvectors;
-    eigenvalues = model->eigenvalues;
-    rates = model->rates;
-    cinv_evec = model->cinv_evec;
-    cevec = model->cevec;
-    ceval = model->ceval;
-    eigenvalues_imag = model->eigenvalues_imag;
-    rate_matrix = model->rate_matrix;
-    return true;
-}
+// bool ModelMarkov::linkModel(ModelSubst *target) {
+//     if (!ModelSubst::linkModel(target))
+//         return false;
+//     freeMem();
+//     ModelMarkov *model = (ModelMarkov*)target;
+//     inv_eigenvectors = model->inv_eigenvectors;
+//     eigenvectors = model->eigenvectors;
+//     eigenvalues = model->eigenvalues;
+//     rates = model->rates;
+//     cinv_evec = model->cinv_evec;
+//     cevec = model->cevec;
+//     ceval = model->ceval;
+//     eigenvalues_imag = model->eigenvalues_imag;
+//     rate_matrix = model->rate_matrix;
+//     return true;
+// }
 
 bool ModelMarkov::linkExchangeabilities(ModelSubst *target) {
   cout << "Link exchangeabilities from "<< this->name << " to " << target->name << "." << endl;
