@@ -1362,14 +1362,25 @@ void ModelMixture::initMem() {
   //
   // overflows? WHY? It should be 6710886400.
   // XXX: Workaround.
-  size_t n_squared = num_states_total;
-  n_squared *= num_states_total;
-  n_squared *= nmixtures;
-	eigenvalues = aligned_alloc<double>(num_states_total*nmixtures);
-	// eigenvectors = aligned_alloc<double>(num_states_total*num_states_total*nmixtures);
-	eigenvectors = aligned_alloc<double>(n_squared);
-	// inv_eigenvectors = aligned_alloc<double>(num_states_total*num_states_total*nmixtures);
-	inv_eigenvectors = aligned_alloc<double>(n_squared);
+
+  cout << "Total number of states: " << num_states_total << endl;
+
+  size_t n_eigenvalues = static_cast<size_t>(num_states_total) * static_cast<size_t>(nmixtures);
+  cout << "Total number of eigenvalues: " << n_eigenvalues << endl;
+
+  size_t n_squared = static_cast<size_t>(num_states_total) * static_cast<size_t>(num_states_total);
+  cout << "n_squared: " << n_squared << endl;
+
+  size_t n_elems_vectors = n_squared * static_cast<size_t>(nmixtures);
+  cout << "Number of elements in (inversed) eigenvectors: " << n_elems_vectors << endl;
+
+  eigenvalues = aligned_alloc<double>(n_eigenvalues);
+  // eigenvectors =
+  // aligned_alloc<double>(num_states_total*num_states_total*nmixtures);
+  eigenvectors = aligned_alloc<double>(n_elems_vectors);
+  // inv_eigenvectors =
+  // aligned_alloc<double>(num_states_total*num_states_total*nmixtures);
+  inv_eigenvectors = aligned_alloc<double>(n_elems_vectors);
   // int ncoeff = num_states_total*num_states_total*num_states_total;
   // eigen_coeff = aligned_alloc<double>(ncoeff*nmixtures);
 
