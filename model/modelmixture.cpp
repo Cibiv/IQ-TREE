@@ -16,6 +16,7 @@
 #include "modelpomo.h"
 //#include "phylokernelmixture.h"
 #include "modelpomomixture.h"
+#include "utils/tools.h"
 
 using namespace std;
 
@@ -1363,19 +1364,28 @@ void ModelMixture::initMem() {
   // overflows? WHY? It should be 6710886400.
   // XXX: Workaround.
 
-  cout << "Total number of states: " << num_states_total << endl;
+  if (verbose_mode >= VB_MAX) {
+    cout << "Total number of states: " << num_states_total << endl;
+  }
 
   // size_t n_eigenvalues = static_cast<size_t>(num_states_total) * static_cast<size_t>(nmixtures);
   size_t n_eigenvalues = static_cast<size_t>(num_states_total);
-  cout << "Total number of eigenvalues: " << n_eigenvalues << endl;
+
+  if (verbose_mode >= VB_MAX) {
+    cout << "Total number of eigenvalues: " << n_eigenvalues << endl;
+  }
 
   size_t n_squared = static_cast<size_t>(num_states) * static_cast<size_t>(num_states);
-  cout << "n_squared: " << n_squared << endl;
+  if (verbose_mode >= VB_MAX) {
+    cout << "n_squared: " << n_squared << endl;
+  }
 
   size_t n_elems_vectors = n_squared * static_cast<size_t>(nmixtures);
-  cout << "Number of elements in (inversed) eigenvectors: " << n_elems_vectors << endl;
-
-  cout << "The size of one double is:" << sizeof(double) << endl;;
+  if (verbose_mode >= VB_MAX) {
+    cout << "Number of elements in (inversed) eigenvectors: " << n_elems_vectors << endl;
+    cout << "The size of one double is:" << sizeof(double) << endl;
+    ;
+  }
 
   eigenvalues = aligned_alloc<double>(n_eigenvalues);
   // eigenvectors =
