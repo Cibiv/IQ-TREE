@@ -394,10 +394,11 @@ void ModelMarkov::writeInfo(ostream &out) {
   // report those for non-mixture models, and report them in a separate file for
   // larger mixture models.
   //
-  // else if (is_reversible && num_states == 20 && linked_exchangeabilities_target_model == NULL) {
-  //            report_rates(out, "Exchangeabilities in order A, R, N, D, C, Q, E, G, H, I, L, K, M, F, P, S, T, W, Y, V", rates);
-  //            report_state_freqs(out, state_freq);
-  //          }
+  // XXX: Increase verbosity for testing.
+  else if (is_reversible && num_states == 20 && linked_exchangeabilities_target_model == NULL) {
+             report_rates(out, "Exchangeabilities in order A, R, N, D, C, Q, E, G, H, I, L, K, M, F, P, S, T, W, Y, V", rates);
+             report_state_freqs(out, state_freq);
+           }
 }
 
 void ModelMarkov::report_rates(ostream& out, string title, double *r) {
