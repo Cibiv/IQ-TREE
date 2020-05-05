@@ -58,14 +58,14 @@ void ModelSubst::restoreCheckpoint() {
     decomposeRateMatrix();
 }
 
-bool ModelSubst::linkModel(ModelSubst *target) {
-    if (num_states != target->num_states || name != target->name || freq_type != target->freq_type)
-        return false;
-    if (state_freq) delete [] state_freq;
-    state_freq = target->state_freq;
-    linked_model = target;
-    return true;
-}
+// bool ModelSubst::linkModel(ModelSubst *target) {
+//     if (num_states != target->num_states || name != target->name || freq_type != target->freq_type)
+//         return false;
+//     if (state_freq) delete [] state_freq;
+//     state_freq = target->state_freq;
+//     linked_model = target;
+//     return true;
+// }
 
 bool ModelSubst::linkExchangeabilities(ModelSubst *target) {
   if (num_states != target->num_states) {

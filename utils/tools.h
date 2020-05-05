@@ -2182,6 +2182,26 @@ public:
   // exchangeabilities (similar to the CAT model).
   bool link_exchangeabilities;
 
+    /** method for phylogenetic dating, currently only LSD is supported */
+    string dating_method;
+
+    /** extra commands passed to the dating method */
+    string dating_options;
+
+    /** date file that has several lines, each line with a taxon name and date in YYYY-MM-DD */
+    string date_file;
+    
+    /** tip date, a real number or YYYY-MM-DD */
+    string date_tip;
+    
+    /** root date, a real number or YYYY-MM-DD */
+    string date_root;
+    
+    /** false to remove outgroup from the dated tree, default: true */
+    bool date_with_outgroup;
+    
+    /** true to print internal date files for debugging purpose */
+    bool date_debug;
 };
 
 /**
@@ -2412,6 +2432,13 @@ int getFilesInDir(const char *path, StrVector &filenames);
 int convert_int(const char *str);
 
 /**
+    convert string to int64, with error checking
+    @param str original string
+    @return the number
+ */
+int64_t convert_int64(const char *str);
+
+/**
         convert string to int, with error checking
         @param str original string
         @param end_pos end position
@@ -2490,7 +2517,7 @@ void convert_range(const char *str, int &lower, int &upper, int &step_size);
  */
 void convert_range(const char *str, double &lower, double &upper, double &step_size);
 
-void convert_string_vec(const char *str, StrVector &str_vec);
+void convert_string_vec(const char *str, StrVector &str_vec, char separator = ',');
 
 /**
     change unusual character in names into underscore (_)

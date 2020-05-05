@@ -187,22 +187,22 @@ void ModelMarkov::restoreCheckpoint() {
     endCheckpoint();
 }
 
-bool ModelMarkov::linkModel(ModelSubst *target) {
-    if (!ModelSubst::linkModel(target))
-        return false;
-    freeMem();
-    ModelMarkov *model = (ModelMarkov*)target;
-    inv_eigenvectors = model->inv_eigenvectors;
-    eigenvectors = model->eigenvectors;
-    eigenvalues = model->eigenvalues;
-    rates = model->rates;
-    cinv_evec = model->cinv_evec;
-    cevec = model->cevec;
-    ceval = model->ceval;
-    eigenvalues_imag = model->eigenvalues_imag;
-    rate_matrix = model->rate_matrix;
-    return true;
-}
+// bool ModelMarkov::linkModel(ModelSubst *target) {
+//     if (!ModelSubst::linkModel(target))
+//         return false;
+//     freeMem();
+//     ModelMarkov *model = (ModelMarkov*)target;
+//     inv_eigenvectors = model->inv_eigenvectors;
+//     eigenvectors = model->eigenvectors;
+//     eigenvalues = model->eigenvalues;
+//     rates = model->rates;
+//     cinv_evec = model->cinv_evec;
+//     cevec = model->cevec;
+//     ceval = model->ceval;
+//     eigenvalues_imag = model->eigenvalues_imag;
+//     rate_matrix = model->rate_matrix;
+//     return true;
+// }
 
 bool ModelMarkov::linkExchangeabilities(ModelSubst *target) {
   cout << "Link exchangeabilities from "<< this->name << " to " << target->name << "." << endl;
@@ -394,10 +394,11 @@ void ModelMarkov::writeInfo(ostream &out) {
   // report those for non-mixture models, and report them in a separate file for
   // larger mixture models.
   //
-  // else if (is_reversible && num_states == 20 && linked_exchangeabilities_target_model == NULL) {
-  //            report_rates(out, "Exchangeabilities in order A, R, N, D, C, Q, E, G, H, I, L, K, M, F, P, S, T, W, Y, V", rates);
-  //            report_state_freqs(out, state_freq);
-  //          }
+  // XXX: Increase verbosity for testing.
+  else if (is_reversible && num_states == 20 && linked_exchangeabilities_target_model == NULL) {
+             report_rates(out, "Exchangeabilities in order A, R, N, D, C, Q, E, G, H, I, L, K, M, F, P, S, T, W, Y, V", rates);
+             report_state_freqs(out, state_freq);
+           }
 }
 
 void ModelMarkov::report_rates(ostream& out, string title, double *r) {
@@ -1588,7 +1589,7 @@ void ModelMarkov::readStateFreq(string str) throw(const char*) {
         state_freq[i] *= sum;
 }
 
-void ModelMarkov::readParameters(const char *file_name) {
+void ModelMarkov::readParameters(const char *file_name, bool adapt_tree) {
     if (!fileExists(file_name))
         outError("File not found ", file_name);
 
@@ -1600,9 +1601,9 @@ void ModelMarkov::readParameters(const char *file_name) {
         double d;
         in >> d;
         if (d < 0) {
-            setReversible(false);
+            setReversible(false, adapt_tree);
         } else
-            setReversible(true);
+            setReversible(true, adapt_tree);
         in.close();
     }
 	catch (...) {
@@ -1637,16 +1638,16 @@ void ModelMarkov::readParameters(const char *file_name) {
     }
 }
 
-void ModelMarkov::readParametersString(string &model_str) {
+void ModelMarkov::readParametersString(string &model_str, bool adapt_tree) {
 
     // if detect if reading full matrix or half matrix by the first entry
     int end_pos;
     double d = 0.0;
     d = convert_double(model_str.c_str(), end_pos);
     if (d < 0) {
-        setReversible(false);
+        setReversible(false, adapt_tree);
     } else
-        setReversible(true);
+        setReversible(true, adapt_tree);
 
 	try {
 		stringstream in(model_str);
