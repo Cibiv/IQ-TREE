@@ -1118,8 +1118,12 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.ufboot2corr = false;
     params.u2c_nni5 = false;
     params.link_exchangeabilities = false;
-    params.date_with_outgroup = false;
+    params.date_with_outgroup = true;
     params.date_debug = false;
+    params.date_replicates = 0;
+    params.clock_stddev = -1.0;
+    params.date_outlier = -1.0;
+    
     params.matrix_exp_technique = MET_EIGEN3LIB_DECOMPOSITION;
 
 	if (params.nni5) {
@@ -2352,7 +2356,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.state_freq_set = argv[cnt];
 				continue;
 			}
-			if (strcmp(argv[cnt], "-mrate") == 0 || strcmp(argv[cnt], "--rates") == 0) {
+			if (strcmp(argv[cnt], "-mrate") == 0 || strcmp(argv[cnt], "--mrate") == 0 || strcmp(argv[cnt], "--rates") == 0) {
 				cnt++;
 				if (cnt >= argc)
 					throw "Use -mrate <rate_set>";
@@ -2778,6 +2782,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 				if (cnt >= argc)
 					throw "Use -bsam <bootstrap_specification>";
 				params.bootstrap_spec = argv[cnt];
+                params.remove_empty_seq = false;
 				continue;
 			}
             
@@ -4100,7 +4105,37 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.date_with_outgroup = true;
                 continue;
             }
-            
+
+            if (strcmp(argv[cnt], "--date-ci") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --date-ci <number_of_replicates>";
+                params.date_replicates = convert_int(argv[cnt]);
+                if (params.date_replicates < 1)
+                    throw "--date-ci must be positive";
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--clock-sd") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --clock-sd <standard_dev_of_lognormal_relaxed_lock>";
+                params.clock_stddev = convert_double(argv[cnt]);
+                if (params.clock_stddev < 0)
+                    throw "--clock-sd must be non-negative";
+                continue;
+            }
+
+            if (strcmp(argv[cnt], "--date-outlier") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use --date-outlier <z_score_for_removing_outlier_nodes>";
+                params.date_outlier = convert_double(argv[cnt]);
+                if (params.date_outlier < 0)
+                    throw "--date-outlier must be non-negative";
+                continue;
+            }
+
             if (strcmp(argv[cnt], "--date-debug") == 0) {
                 params.date_debug = true;
                 continue;
@@ -4458,8 +4493,8 @@ void usage_iqtree(char* argv[], bool full_command) {
     << "                       specification (e.g., 010010 = HKY)" << endl
     << "             Protein:  LG (default), Poisson, cpREV, mtREV, Dayhoff, mtMAM," << endl
     << "                       JTT, WAG, mtART, mtZOA, VT, rtREV, DCMut, PMB, HIVb," << endl
-    << "                       HIVw, JTTDCMut, FLU, Blosum62, GTR20, mtMet, mtVer, mtInv, Q.LG" << endl
-    << "			Q.pfam, Q.pfam_gb, Q.bird, Q.mammal, Q.insect, Q.plant, Q.yeast" << endl
+    << "                       HIVw, JTTDCMut, FLU, Blosum62, GTR20, mtMet, mtVer, mtInv, FLAVI," << endl
+    << "			Q.LG, Q.pfam, Q.pfam_gb, Q.bird, Q.mammal, Q.insect, Q.plant, Q.yeast" << endl
     << "     Protein mixture:  C10,...,C60, EX2, EX3, EHO, UL2, UL3, EX_EHO, LG4M, LG4X" << endl
     << "              Binary:  JC2 (default), GTR2" << endl
     << "     Empirical codon:  KOSI07, SCHN05" << endl
@@ -4558,10 +4593,15 @@ void usage_iqtree(char* argv[], bool full_command) {
 
 #ifdef USE_LSD2
     << endl << "TIME TREE RECONSTRUCTION:" << endl
-    << "  --date FILE          Dates of tips or ancestral nodes" << endl
+    << "  --date FILE          File containing dates of tips or ancestral nodes" << endl
     << "  --date TAXNAME       Extract dates from taxon names after last '|'" << endl
     << "  --date-tip STRING    Tip dates as a real number or YYYY-MM-DD" << endl
     << "  --date-root STRING   Root date as a real number or YYYY-MM-DD" << endl
+    << "  --date-ci NUM        Number of replicates to compute confidence interval" << endl
+    << "  --clock-sd NUM       Std-dev for lognormal relaxed clock (default: 0.2)" << endl
+    << "  --date-no-outgroup   Exclude outgroup from time tree" << endl
+    << "  --date-outlier NUM   Z-score cutoff to remove outlier tips/nodes (e.g. 3)" << endl
+    << "  --date-options \"..\"  Extra options passing directly to LSD2" << endl
     << "  --dating STRING      Dating method: LSD for least square dating (default)" << endl
 #endif
     << endl;
@@ -4633,31 +4673,31 @@ void usage_iqtree(char* argv[], bool full_command) {
 
 void quickStartGuide() {
     printCopyright(cout);
-    cout << "Command-line examples (replace 'iqtree ...' by actual path to executable):" << endl << endl
+    cout << "Command-line examples (replace 'iqtree2 ...' by actual path to executable):" << endl << endl
          << "1. Infer maximum-likelihood tree from a sequence alignment (example.phy)" << endl
          << "   with the best-fit model automatically selected by ModelFinder:" << endl
-         << "     iqtree -s example.phy" << endl << endl
+         << "     iqtree2 -s example.phy" << endl << endl
          << "2. Perform ModelFinder without subsequent tree inference:" << endl
-         << "     iqtree -s example.phy -m MF" << endl
+         << "     iqtree2 -s example.phy -m MF" << endl
          << "   (use '-m TEST' to resemble jModelTest/ProtTest)" << endl << endl
          << "3. Combine ModelFinder, tree search, ultrafast bootstrap and SH-aLRT test:" << endl
-         << "     iqtree -s example.phy --alrt 1000 -B 1000" << endl << endl
+         << "     iqtree2 -s example.phy --alrt 1000 -B 1000" << endl << endl
          << "4. Perform edge-linked proportional partition model (example.nex):" << endl
-         << "     iqtree -s example.phy -p example.nex" << endl
+         << "     iqtree2 -s example.phy -p example.nex" << endl
          << "   (replace '-p' by '-Q' for edge-unlinked model)" << endl << endl
          << "5. Find best partition scheme by possibly merging partitions:" << endl
-         << "     iqtree -s example.phy -p example.nex -m MF+MERGE" << endl
+         << "     iqtree2 -s example.phy -p example.nex -m MF+MERGE" << endl
          << "   (use '-m TESTMERGEONLY' to resemble PartitionFinder)" << endl << endl
          << "6. Find best partition scheme followed by tree inference and bootstrap:" << endl
-         << "     iqtree -s example.phy -p example.nex -m MFP+MERGE -B 1000" << endl << endl
+         << "     iqtree2 -s example.phy -p example.nex -m MFP+MERGE -B 1000" << endl << endl
 #ifdef _OPENMP
          << "7. Use 4 CPU cores to speed up computation: add '-T 4' option" << endl << endl
 #endif
          << "8. Polymorphism-aware model with HKY nucleotide model and Gamma rate:" << endl
-         << "     iqtree -s counts_file.cf -m HKY+P+G" << endl << endl
+         << "     iqtree2 -s counts_file.cf -m HKY+P+G" << endl << endl
          << "9. PoMo mixture with virtual popsize 5 and weighted binomial sampling:" << endl
-         << "     iqtree -s counts_file.cf -m \"MIX{HKY+P{EMP},JC+P}+N5+WB\"" << endl << endl
-         << "To show all available options: run 'iqtree -h'" << endl << endl
+         << "     iqtree2 -s counts_file.cf -m \"MIX{HKY+P{EMP},JC+P}+N5+WB\"" << endl << endl
+         << "To show all available options: run 'iqtree2 -h'" << endl << endl
          << "Have a look at the tutorial and manual for more information:" << endl
          << "     http://www.iqtree.org" << endl << endl;
     exit(0);

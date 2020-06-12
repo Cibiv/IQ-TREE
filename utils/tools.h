@@ -2202,6 +2202,15 @@ public:
     
     /** true to print internal date files for debugging purpose */
     bool date_debug;
+    
+    /** number of replicates to compute date confidence interval */
+    int date_replicates;
+    
+    /** standard deviation of lognormal relaxed clock model for confidence interval estimate */
+    double clock_stddev;
+
+    /** z-score for detecting outlier nodes */
+    double date_outlier;
 };
 
 /**

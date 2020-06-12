@@ -385,6 +385,8 @@ void ModelMarkov::writeInfo(ostream &out) {
     report_rates(out, "Rate parameters (exchangeabilities)", rates);
     report_state_freqs(out);
 	}
+  } else if (is_reversible && num_states == 2) {
+      report_state_freqs(out);
   else if (!is_reversible && num_states == 4) {
     report_rates(out, "Substitution rates", rates);
     report_state_freqs(out, state_freq);
@@ -436,8 +438,6 @@ void ModelMarkov::report_rates(ostream& out, string title, double *r) {
     out << endl;
   }
 }
-
-void ModelMarkov::report_state_freqs(ostream& out, double *custom_state_freq) {
   double *f;
   if (custom_state_freq) f = custom_state_freq;
   else f = state_freq;
@@ -448,6 +448,12 @@ void ModelMarkov::report_state_freqs(ostream& out, double *custom_state_freq) {
     out << "  C: " << f[1];
     out << "  G: " << f[2];
     out << "  T: " << f[3];
+  } else if (num_states == 2) {
+      out << setprecision(3);
+      out << "State frequencies:";
+      out << "  0: " << f[0];
+      out << "  1: " << f[1];
+      out << endl;
   }
   if (num_states == 20) {
     out << "Amino acid frequencies:";
@@ -471,6 +477,8 @@ void ModelMarkov::report_state_freqs(ostream& out, double *custom_state_freq) {
     out << "  W: " << f[17];
     out << "  Y: " << f[18];
     out << "  V: " << f[19];
+  }
+  out << endl;
   }
   out << endl;
 }
