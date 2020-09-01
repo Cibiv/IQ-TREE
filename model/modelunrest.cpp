@@ -17,8 +17,6 @@ ModelUnrest::ModelUnrest(PhyloTree *tree, string model_params)
 	for (int i=0; i< num_params; i++) model_parameters[i] = 1;
 	setRates();
 	if (model_params != "") {
-		//cout << "WARNING: Supplying model params to constructor not yet properly implemented -- ignored" << endl;
-		// TODO: parse model_params into model_parameters, then call setRates().
 		int end_pos = 0;
 		cout << __func__ << " " << model_params << endl;
 		for (int i = 0; i < 12; i++) {
@@ -72,51 +70,6 @@ void ModelUnrest::setRates() {
 	rates[num_params]=1;
 }
 
-// void ModelGTR::readParameters(const char *file_name) { 
-// 	try {
-// 		ifstream in(file_name);
-// 		if (in.fail()) {
-// 			outError("Invalid model name ", file_name);
-//         }
-// 		cout << "Reading model parameters from file " << file_name << endl;
-// 		readRates(in);
-// 		readStateFreq(in);
-// 		in.close();
-// 	}
-// 	catch (const char *str) {
-// 		outError(str);
-// 	} 
-// 	num_params = 0;
-// 	writeInfo(cout);
-// }
-// 
-// void ModelGTR::readRates(string str) throw(const char*) {
-// 	int nrates = getNumRateEntries();
-// 	int end_pos = 0;
-// 	cout << __func__ << " " << str << endl;
-// 	if (str.find("equalrate") != string::npos) {
-// 		for (int i = 0; i < nrates; i++)
-// 			rates[i] = 1.0;
-// 	} else for (int i = 0; i < nrates; i++) {
-// 		int new_end_pos;
-// 		try {
-// 			rates[i] = convert_double(str.substr(end_pos).c_str(), new_end_pos);
-// 		} catch (string &str) {
-// 			outError(str);
-// 		}
-// 		end_pos += new_end_pos;
-// 		if (rates[i] <= 0.0)
-// 			outError("Non-positive rates found");
-// 		if (i == nrates-1 && end_pos < str.length())
-// 			outError("String too long ", str);
-// 		if (i < nrates-1 && end_pos >= str.length())
-// 			outError("Unexpected end of string ", str);
-// 		if (end_pos < str.length() && str[end_pos] != ',')
-// 			outError("Comma to separate rates not found in ", str);
-// 		end_pos++;
-// 	}
-// 	num_params = 0;
-// }
 
 void ModelUnrest::writeInfo(ostream &out) {
 	if (num_states == 4) {
