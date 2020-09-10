@@ -847,7 +847,7 @@ public:
 
     /** use terrace aware data structure for partition models, default: TRUE */
     bool terrace_aware;
-
+    
     /**
             B, D, or P for Binary, DNA, or Protein sequences
      */
@@ -1744,7 +1744,12 @@ public:
 	 * if UBincreased < L, ignore corresponding NNI Add a comment to this line
 	 */
 	double upper_bound_frac;
+    
+    /**********************************************/
+    /****** variables for terrace analysis ********/
 
+    bool terrace_analysis;
+    const char *pr_ab_matrix;
 
     /**********************************************/
     /**** variables for ultra-fast bootstrap ******/

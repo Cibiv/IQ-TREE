@@ -1015,6 +1015,9 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.ufboot2corr = false;
     params.u2c_nni5 = false;
     
+    params.terrace_analysis = false;
+    params.pr_ab_matrix = nullptr;
+    
 #ifdef USE_EIGEN3
     params.matrix_exp_technique = MET_EIGEN3LIB_DECOMPOSITION;
 #else
@@ -1735,6 +1738,20 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.terrace_aware = false;
 				continue;
 			}
+            
+            if (strcmp(argv[cnt], "-terrace_analysis") == 0) {
+                params.terrace_analysis = true;
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-pr_ab_matrix") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -pr_ab_matrix <pr_ab_matrix_file>";
+                params.pr_ab_matrix = argv[cnt];
+                continue;
+            }
+            
 			if (strcmp(argv[cnt], "-sf") == 0) {
 				cnt++;
 				if (cnt >= argc)

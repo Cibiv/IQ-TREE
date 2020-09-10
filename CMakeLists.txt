@@ -76,6 +76,9 @@ endif()
 
 include_directories("${PROJECT_SOURCE_DIR}")
 
+# OLGA: the below include is necessary to resolve the issue with OpenMP on Mac OS
+include_directories(after system "/usr/local/include")
+
 ##################################################################
 # Detect target platforms
 ##################################################################
@@ -500,6 +503,7 @@ add_subdirectory(model)
 add_subdirectory(gsl)
 add_subdirectory(alignment)
 add_subdirectory(tree)
+add_subdirectory(terrace)
 
 ##################################################################
 # the main executable

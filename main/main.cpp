@@ -52,6 +52,7 @@
 #include "nclextra/msetsblock.h"
 #include "nclextra/myreader.h"
 #include "phyloanalysis.h"
+#include "terraceanalysis.hpp"
 #include "tree/matree.h"
 //#include "ngs.h"
 #include "obsolete/parsmultistate.h"
@@ -2545,6 +2546,8 @@ int main(int argc, char *argv[]) {
 		processNCBITree(Params::getInstance());
 	} else if (Params::getInstance().user_file && Params::getInstance().eco_dag_file) { /**ECOpd analysis*/
 		processECOpd(Params::getInstance());
+    } else if (Params::getInstance().terrace_analysis) { /**Terrace analysis*/
+        runterraceanalysis(Params::getInstance());
 	} else if (Params::getInstance().aln_file || Params::getInstance().partition_file) {
 		if ((Params::getInstance().siteLL_file || Params::getInstance().second_align) && !Params::getInstance().gbo_replicates)
 		{
