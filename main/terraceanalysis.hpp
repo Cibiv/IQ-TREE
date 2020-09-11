@@ -14,11 +14,6 @@
 /*
  *  Main function for terrace analysis
  */
-void runterraceanalysis(Params p);
-
-/*
- *  Reading a presence-absence matrix for supermatrix
- */
-IntVector read_pr_ab_matrix(const char *file);
+void runterraceanalysis(Params &params);
 
 #endif /* terraceanalysis_hpp */

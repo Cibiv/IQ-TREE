@@ -41,10 +41,6 @@ tinatree.cpp
 tinatree.h
 parstree.cpp
 parstree.h
-terracenode.cpp
-terracenode.hpp
-terracetree.cpp
-terracetree.hpp
 )
 
 target_link_libraries(tree pll model alignment)

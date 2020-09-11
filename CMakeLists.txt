@@ -535,6 +535,8 @@ main/phyloanalysis.cpp
 main/phyloanalysis.h
 main/phylotesting.cpp
 main/phylotesting.h
+main/terraceanalysis.cpp
+main/terraceanalysis.hpp
 obsolete/parsmultistate.cpp
 )
 

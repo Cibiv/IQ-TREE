@@ -9,13 +9,7 @@
 #define terracetree_hpp
 
 #include <stdio.h>
-#include "mtree.h"
-
-struct presence_absence_matrix{
-    vector<string> taxa_names;
-    vector<IntVector> pr_ab_matrix;
-};
-
+#include "tree/mtree.h"
 
 class TerraceTree: public MTree, public vector<MTree*> {
 
@@ -35,7 +29,8 @@ public:
      */
     ~TerraceTree();
 
-    
+    MTree *master_tree;
+    vector<MTree*> common_subtrees;
 };
 
 

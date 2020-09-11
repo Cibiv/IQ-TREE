@@ -9,7 +9,7 @@
 #define terracenode_hpp
 
 #include <stdio.h>
-#include "node.h"
+#include "tree/node.h"
 
 /**
  A neighbor in a tree, which belongs to some terrace

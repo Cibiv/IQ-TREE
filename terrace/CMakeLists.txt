@@ -1,50 +1,10 @@
-add_library(tree
-constrainttree.cpp
-constrainttree.h
-candidateset.cpp candidateset.h
-iqtree.cpp
-iqtree.h
-matree.cpp
-matree.h
-memslot.cpp memslot.h
-mexttree.cpp
-mexttree.h
-mtree.cpp
-mtree.h
-mtreeset.cpp
-mtreeset.h
-ncbitree.cpp
-ncbitree.h
-node.cpp
-node.h
-phylokernel.h
-phylokernelnew.h
-phylokernelnonrev.h
-phylonode.cpp
-phylonode.h
-phylonodemixlen.cpp
-phylonodemixlen.h
-phylosupertree.cpp
-phylosupertree.h
-phylosupertreeplen.cpp
-phylosupertreeplen.h
-phylotree.cpp
-phylotree.h
-phylotreemixlen.cpp
-phylotreemixlen.h
-phylotreepars.cpp
-phylotreesse.cpp
-quartet.cpp
-supernode.cpp
-supernode.h
-tinatree.cpp
-tinatree.h
-parstree.cpp
-parstree.h
+add_library(terrace
 terracenode.cpp
 terracenode.hpp
 terracetree.cpp
 terracetree.hpp
+presenceabsencematrix.cpp
+presenceabsencematrix.hpp
 )
 
-target_link_libraries(tree pll model alignment)
+target_link_libraries(terrace tree)
