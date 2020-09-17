@@ -453,7 +453,7 @@ protected:
     /*      NON-REVERSIBLE STUFFS                       */
     /****************************************************/
 
-	/**
+	/** Cassius: I edited this function, so that it uses complex<double> values if necessary
 		compute the transition probability matrix using (complex) eigenvalues
 		@param time time between two events
 		@param trans_matrix (OUT) the transition matrix between all pairs of states.
@@ -483,6 +483,17 @@ protected:
         to the previous double *eigenvalues and double *eigenvectors
     */
     std::complex<double> *ceval, *cevec, *cinv_evec;
+
+    /**
+       Cassius: equals true if all eigenvalues are real
+   */
+    bool all_eigenvalues_real;
+
+    /**
+       Cassius: minimum difference between two eigenvalues
+*/
+    double minimum_difference_eval;
+
 
 };
 
