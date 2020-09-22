@@ -1741,6 +1741,7 @@ void parseArg(int argc, char *argv[], Params &params) {
             
             if (strcmp(argv[cnt], "-terrace_analysis") == 0) {
                 params.terrace_analysis = true;
+                cout<<"Terrace anaylsis: TRUE"<<endl;
                 continue;
             }
             

@@ -42,10 +42,20 @@ public:
     // TODECIDE: for simplicity you might want to have just vector of nodes, oder?
     
     /**
-     vector of size m (m = #partitions) for representative tree and 1 for a back map from induced partition tree to the representative (correct?)
+        vector of size m (m = #partitions) for representative tree and x for a back map from induced partition tree to the representative (for different partitions x is a different number)
      */
-    //NeighborVec link_neighbors;
-    //NeighborVec link_neighbors_taxa;
+    NeighborVec link_neighbors;
+    
+    /**
+        vector of taxa, which were collapsed onto branch. This vector will be used for partition trees.
+     */
+    vector<Node*> taxa_to_insert;
+    
+    
+    /**
+     * print information about link_neighbours and about taxa_to_insert
+     */
+    void printInfo(Node *dad);
     
 };
 
@@ -73,7 +83,7 @@ public:
     /**
      constructor
      @param aid id of this node
-     @param aname name of this node
+     @param aname name of this nodexw
      */
     TerraceNode(int aid, int aname);
     
@@ -98,6 +108,27 @@ public:
     virtual void addNeighbor(Node *node, double length, int id = -1);
     
     ~TerraceNode();
+    
+    /*
+     * For each node, save
+     *  - branches below the node, that have empty images;
+     *  - taxa below the node, that are absent on partition tree.
+     */
+    
+    
+    /* WARNING: there is no appropriate way to get the correct neighbors from the branch id or just the nodes. You need to pay attention to the direction!
+     * Solution: get a pair of nodes, where first is always a dad and the other one is node
+     */
+    vector<int> empty_branches;
+    
+    NeighborVec empty_br_node_nei;
+    NeighborVec empty_br_dad_nei;
+    
+    /*
+     * The taxa nodes are the taxa to be yet inserted. The nodes belong to the tree being mapped to induced partition trees (either a parent tree or top level induced tree)
+     */
+    NodeVector empty_taxa;
+    
     
 };
 

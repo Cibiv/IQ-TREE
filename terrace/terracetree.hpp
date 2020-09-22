@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include "tree/mtree.h"
 
-class TerraceTree: public MTree, public vector<MTree*> {
+class TerraceTree: public MTree {
 
 public:
     /**
@@ -28,9 +28,37 @@ public:
      destructor
      */
     ~TerraceTree();
-
-    MTree *master_tree;
-    vector<MTree*> common_subtrees;
+    
+    /**
+     read the tree from the input file in newick format
+     @param infile the input file file.
+     @param is_rooted (IN/OUT) true if tree is rooted
+     */
+    virtual void readTree(const char *infile, bool &is_rooted);
+    
+    /**
+     read the tree from the ifstream in newick format
+     @param in the input stream.
+     @param is_rooted (IN/OUT) true if tree is rooted
+     */
+    virtual void readTree(istream &in, bool &is_rooted);
+    
+    /**
+     allocate a new node. Override this if you have an inherited Node class.
+     @param node_id node ID
+     @param node_name node name
+     @return a new node
+     */
+    virtual Node* newNode(int node_id = -1, const char* node_name = NULL);
+    
+    /**
+     allocate a new node. Override this if you have an inherited Node class.
+     @param node_id node ID
+     @param node_name node name issued by an interger
+     @return a new node
+     */
+    virtual Node* newNode(int node_id, int node_name);
+    
 };
 
 
