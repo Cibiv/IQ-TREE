@@ -15,11 +15,43 @@ void runterraceanalysis(Params &params){
     
     if(params.user_file && params.pr_ab_matrix){
         
+        /*  INFO:
+         *  This is an actual terrace:
+         *  - main tree - is terrace representative tree
+         *  - induced partition trees define the terrace
+         *
+         *  Create an auxiliary terrace:
+         *  - main tree - is the initial tree to be expanded by adding taxa to obtain a tree from the considered terrace (or to get into dead end)
+         *  - induced trees - the common subtrees of the main tree and higher level induced partition tree, respectivelly per partition
+         *
+         *  There will be also a vector of terraces with just one partition. Per partition each terrace is a pair of high and lower induced partition trees
+         *  - main tree - high level partition tree
+         *  - induced tree - a common subtree between "initial to be expanded main tree" and high level induced tree
+         */
         Terrace *terrace = new Terrace(params.user_file,params.is_rooted,params.pr_ab_matrix);
         
-        terrace->linkTrees();
+        //terrace->linkTrees();
+        //terrace->printMapInfo();
+        //terrace-> printBackMapInfo();
         
-        terrace->printMapInfo();
+        /*  TODO:
+         *  1. get submatrix (for testing purposes, any submatrix of original presence-absence matrix)
+         *  2. get initial tree (for testing purposes, any subtree of the representative tree?)
+         *  3. get low-level induced partition trees (i.e. create a sub-terrace)
+         *  4. get a vector of terraces for high- and low-level induced partition trees
+         */
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        // BELOW stuff was only used for testing. I think, you can delete it.
         
         /**
         PresenceAbsenceMatrix matrix;

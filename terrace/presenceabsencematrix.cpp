@@ -67,6 +67,7 @@ int PresenceAbsenceMatrix::findTaxonID(string taxon_name){
     int id;
     for(id=0; id<taxa_names.size(); id++){
         if(taxa_names[id]==taxon_name){
+            //cout<<"GET_TAXON_ID: taxa_name = "<<taxon_name<<" | taxa_id = "<<id<<endl;
             return id;
         }
     }
@@ -92,6 +93,7 @@ void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree,
     for(NodeVector::iterator it=taxa_nodes.begin(); it<taxa_nodes.end(); it++){
         if(pr_ab_matrix[(*it)->id][part] == 1){
             node = part_tree->findLeafName((*it)->name);
+            //cout<<"PREPARING PART_TAXA: part = "<<part<<"|leaf_id = "<<(*it)->id<<"|leaf_name = "<<(*it)->name<<endl;
             assert(node && "ERROR: The leaf is not found on partition tree!");
             part_taxa[(*it)->id]=node;
         }
@@ -141,6 +143,9 @@ void PresenceAbsenceMatrix::reorderAccordingToTree(NodeVector taxa_nodes){
         pr_ab_matrix.push_back(aux_matrix[i]);
         taxa_names.push_back(aux_names[i]);
     }
+    
+    //cout<<"AFTER reordering according to the tree:"<<endl;
+    //print_pr_ab_matrix();
 }
 
 vector<IntVector> getSubMatrix(vector<IntVector> pr_ab_complete, vector<string> taxa_names, MTree* tree){

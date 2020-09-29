@@ -86,6 +86,17 @@ public:
      */
     void printMapInfo();
     
+    /*
+     *  Print Info about inverse branch and taxon images from induced partition trees to master and upper level induced trees, respectivelly
+     */
+    void printBackMapInfo();
+    
+    /*
+     *  For all nodes of the tree clear information about empty branches and empty nodes, which might have remained after the previous partition
+     */
+    
+    void clearEmptyBranchAndTaxaINFO(TerraceNode *node = nullptr, TerraceNode *dad = nullptr);
+    
 };
 
 #endif /* terrace_hpp */
