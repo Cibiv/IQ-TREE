@@ -24,7 +24,12 @@ public:
     /*
      * constructor
      */
-    Terrace(TerraceTree tree, PresenceAbsenceMatrix matrix);
+    Terrace(TerraceTree tree, PresenceAbsenceMatrix *m);
+    
+    /*
+     * constructor
+     */
+    Terrace(TerraceTree tree, PresenceAbsenceMatrix *m, vector<TerraceTree*> input_induced_trees);
     
     /*
      *  constructor
@@ -58,6 +63,11 @@ public:
      *  get induced partition trees
      */
     void get_part_trees();
+    
+    /*
+     *  set induced partition trees, if they already exist
+     */
+    void set_part_trees(vector<TerraceTree*> input_induced_trees);
     
     /*
      * link parent tree and induced partition trees

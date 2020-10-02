@@ -56,6 +56,13 @@ public:
      *   A variable to keep track if the reordering of taxa according to the tree was already performed
      */
     bool flag_reorderAccordingToTree;
+    
+    /*
+     *  Get a submatrix of presence-absence matrix corresponding to taxa passed through taxa_names.
+     */
+    
+    void getSubPrAbMatrix(vector<string> taxa_names_subset, PresenceAbsenceMatrix *submatrix, IntVector *parts = nullptr);
+    void getSubPrAbMatrix(NodeVector taxon_nodes, PresenceAbsenceMatrix *submatrix, IntVector *parts = nullptr);
 };
 
 vector<IntVector> getSubMatrix(vector<IntVector> pr_ab_complete, vector<string> taxa_names, MTree* tree);

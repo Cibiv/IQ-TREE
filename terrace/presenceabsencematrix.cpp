@@ -91,6 +91,7 @@ void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree,
     
     Node *node;
     for(NodeVector::iterator it=taxa_nodes.begin(); it<taxa_nodes.end(); it++){
+        //cout<<(*it)->name<<" id = "<<(*it)->id<<endl;
         if(pr_ab_matrix[(*it)->id][part] == 1){
             node = part_tree->findLeafName((*it)->name);
             //cout<<"PREPARING PART_TAXA: part = "<<part<<"|leaf_id = "<<(*it)->id<<"|leaf_name = "<<(*it)->name<<endl;
@@ -101,7 +102,7 @@ void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree,
     
     bool check = false;
     if(check){
-        cout<<"GET_taxa_nodes_info...."<<endl;
+        //cout<<"GET_taxa_nodes_info...."<<endl;
         cout<<"Presence-absence info:"<<endl;
         for(int i=0; i<taxa_num; i++){
             cout<<pr_ab_matrix[i][part]<<" ";
@@ -121,6 +122,9 @@ void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree,
 
 void PresenceAbsenceMatrix::reorderAccordingToTree(NodeVector taxa_nodes){
 
+    //cout<<"BEFORE reordering according to the tree:"<<endl;
+    //print_pr_ab_matrix();
+    
     int i=0;
     int id=-1;
     
@@ -132,8 +136,9 @@ void PresenceAbsenceMatrix::reorderAccordingToTree(NodeVector taxa_nodes){
     
     for(i=0; i<taxa_nodes.size();i++){
         id=findTaxonID(taxa_nodes[i]->name);
-        aux_matrix[i]=pr_ab_matrix[id];
-        aux_names[i]=taxa_names[id];
+        //cout<<taxa_nodes[i]->name<<" id = "<<id<<endl;
+        aux_matrix[taxa_nodes[i]->id]=pr_ab_matrix[id];
+        aux_names[taxa_nodes[i]->id]=taxa_names[id];
     }
     
     pr_ab_matrix.clear();
@@ -163,3 +168,57 @@ vector<IntVector> getSubMatrix(vector<IntVector> pr_ab_complete, vector<string> 
     
     return sub_matrix;
 };
+
+void PresenceAbsenceMatrix::getSubPrAbMatrix(vector<string> taxa_names_subset, PresenceAbsenceMatrix *submatrix, IntVector *parts){
+ 
+    vector<string> not_found_taxon_names;
+    bool found = false;
+    
+    int i,j,h;
+    for(i=0; i<taxa_names_subset.size(); i++){
+        //cout<<i<<": subset_taxon = "<<taxa_names_subset[i]<<endl;
+        found = false;
+        for(j=0; j<taxa_names.size(); j++){
+            //cout<<j<<": taxon_name = "<<taxa_names[j]<<endl;
+            if(taxa_names_subset[i]==taxa_names[j]){
+                //cout<<"MATCH"<<endl;
+                if(parts){
+                    IntVector taxon_coverage;
+                    for(IntVector::iterator k=parts->begin(); k<parts->end(); k++){
+                        h = (*k);
+                        taxon_coverage.push_back(pr_ab_matrix[j][h]);
+                    }
+                    submatrix->pr_ab_matrix.push_back(taxon_coverage);
+                }else{
+                    submatrix->pr_ab_matrix.push_back(pr_ab_matrix[j]);
+                }
+                submatrix->taxa_names.push_back(taxa_names[j]);
+                found = true;
+                break;
+            }
+        }
+        if(!found){
+            cout<<"Taxon "<<taxa_names_subset[i]<<" is not found in the presence-absence matrix..."<<endl;
+            not_found_taxon_names.push_back(taxa_names_subset[i]);
+        }
+    }
+    
+    if(not_found_taxon_names.size()<taxa_names_subset.size()){
+        submatrix->taxa_num = submatrix->taxa_names.size();
+        submatrix->part_num = submatrix->pr_ab_matrix[0].size();
+        cout<<"INFO: original matrix."<<endl;
+        print_pr_ab_matrix();
+        cout<<endl<<"INFO: a submatrix for "<<submatrix->taxa_num<<" taxa was extracted."<<endl;
+        submatrix->print_pr_ab_matrix();
+    }
+}
+
+void PresenceAbsenceMatrix::getSubPrAbMatrix(NodeVector taxon_nodes, PresenceAbsenceMatrix *submatrix, IntVector *parts){
+
+    vector<string> taxon_names;
+    for(NodeVector::iterator it = taxon_nodes.begin(); it<taxon_nodes.end(); it++){
+        taxon_names.push_back((*it)->name);
+    }
+    
+    getSubPrAbMatrix(taxon_names,submatrix,parts);
+}

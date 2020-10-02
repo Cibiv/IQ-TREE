@@ -38,22 +38,47 @@ Terrace::Terrace(const char *infile_tree, bool is_rooted,const char *infile_matr
     printInfo();
 };
 
-Terrace::Terrace(TerraceTree tree, PresenceAbsenceMatrix m){
+Terrace::Terrace(TerraceTree tree, PresenceAbsenceMatrix *m){
     
     init();
 
     copyTree(&tree);
-    matrix = &m;
+    matrix = m;
     
     taxa_num = matrix->pr_ab_matrix.size();
     part_num = matrix->pr_ab_matrix[0].size();
     
     NodeVector taxa_nodes;
     getTaxa(taxa_nodes);
+    //printTree(cout);
+    
     matrix->reorderAccordingToTree(taxa_nodes);
+    //matrix->print_pr_ab_matrix();
     
     get_part_trees();
     printInfo();
+}
+
+Terrace::Terrace(TerraceTree tree, PresenceAbsenceMatrix *m, vector<TerraceTree*> input_induced_trees){
+ 
+    init();
+    
+    copyTree(&tree);
+    matrix = m;
+    
+    taxa_num = matrix->pr_ab_matrix.size();
+    part_num = matrix->pr_ab_matrix[0].size();
+    
+    NodeVector taxa_nodes;
+    getTaxa(taxa_nodes);
+    //printTree(cout);
+    
+    matrix->reorderAccordingToTree(taxa_nodes);
+    //matrix->print_pr_ab_matrix();
+    
+    set_part_trees(input_induced_trees);
+    printInfo();
+    
 }
 
 void Terrace::get_part_trees(){
@@ -86,6 +111,15 @@ void Terrace::get_part_trees(){
         induced_trees.push_back(induced_tree);
         //induced_trees[part]->printTree(cout,WT_BR_LEN_ROUNDING | WT_NEWLINE);
     }
+}
+
+void Terrace::set_part_trees(vector<TerraceTree*> input_induced_trees){
+    
+    for(int i=0; i<input_induced_trees.size(); i++){
+        induced_trees.push_back(input_induced_trees[i]);
+    }
+    
+    // TODO: you need a check, that your input_induced_trees indeed correspond to presence-absence pattern of pr_ab_matrix
 }
 
 void Terrace::printInfo(){
@@ -122,9 +156,10 @@ void Terrace::linkTrees(){
         part_taxa.clear();
         matrix->getPartTaxa(part, this, induced_trees[part], part_taxa);
         
-        // TODO:
+        // TODO!!!!!!!!!!:
         // - you need to make sure that you only map to induced partition trees if they have more than two leaves in common with parent tree
         // - if the number of leaves is equal or less than two, than the tree does not provide any constraint for the extention of the tree by new taxa
+        //   -> instead of calling linkTree(part, part_taxa) have a separate function for "no or less than two taxa" trees
         
         //cout<<"YUPEE-YUPEE-YEAH! PARTITION "<<part<<endl<<endl;
         //clearEmptyBranchAndTaxaINFO();
@@ -393,7 +428,10 @@ void Terrace::printMapInfo(){
     drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
     for (vector<TerraceTree*>::iterator it = induced_trees.begin(); it != induced_trees.end(); it++, part++) {
         cout << endl << "Subtree for partition " << part << endl;
-        (*it)->drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE );
+        // INFO: drawing of two-taxon tree fails.
+        if((*it)->leafNum>2){
+            (*it)->drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE );
+        }
         for (int i = 0; i < nodes1.size(); i++) {
             Neighbor *nei1 = ((TerraceNeighbor*)nodes1[i]->findNeighbor(nodes2[i]))->link_neighbors[part];
             Neighbor *nei2 = ((TerraceNeighbor*)nodes2[i]->findNeighbor(nodes1[i]))->link_neighbors[part];

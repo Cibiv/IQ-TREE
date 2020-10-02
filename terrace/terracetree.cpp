@@ -27,3 +27,42 @@ Node* TerraceTree::newNode(int node_id, const char* node_name) {
 Node* TerraceTree::newNode(int node_id, int node_name) {
     return (Node*) (new TerraceNode(node_id, node_name));
 }
+
+
+void TerraceTree::copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names){
+    
+    cout<<"Copying a tree using a vector of taxon names..."<<endl;
+    
+    int i,j, sum = 0;
+    int taxa_num = taxon_names.size();
+    bool check;
+    
+    string taxa_set = "";
+    NodeVector taxa_nodes;
+    
+    NodeVector::iterator it2;
+    vector<uint32_t> check_int;
+    check_int.resize(tree->leafNum);
+    std::fill(check_int.begin(), check_int.end(), 0);
+    
+    tree->getTaxa(taxa_nodes);
+    
+    for(j=0; j<taxa_nodes.size(); j++){
+        check = false;
+        for(i=0; i<taxa_num; i++){
+            if(taxa_nodes[j]->name == taxon_names[i]){
+                check_int[j]=1;
+                sum+=1;
+                check = true;
+                break;
+            }
+        }
+        //cout<<"Taxon["<<j<<"] = "<<check_int[j]<<"| main_tree:"<<taxa_nodes[j]->name<<"-> subtree: "<<((check) ? taxon_names[i] : "")<<endl;
+    }
+    assert(sum == taxa_num && "Not all of the taxa appear in the complete tree!");
+    taxa_set.clear();
+    taxa_set.insert(taxa_set.begin(), check_int.begin(), check_int.end());
+    copyTree(tree,taxa_set);
+
+    printTree(cout,WT_BR_LEN_ROUNDING | WT_NEWLINE);
+}

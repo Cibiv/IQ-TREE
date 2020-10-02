@@ -59,6 +59,11 @@ public:
      */
     virtual Node* newNode(int node_id, int node_name);
     
+    /**
+     copy the tree given a list of taxon names that should remain on the tree (not yet a 0-1 vector)
+     */
+    void copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names);
+    
 };
 
 
