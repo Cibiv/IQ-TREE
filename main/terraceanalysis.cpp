@@ -29,7 +29,7 @@ void runterraceanalysis(Params &params){
          *  - induced tree - a common subtree between "initial to be expanded main tree" and high level induced tree
          */
         Terrace *terrace = new Terrace(params.user_file,params.is_rooted,params.pr_ab_matrix);
-        //terrace->linkTrees();
+        //terrace->linkTrees(true,true);
         //terrace->printMapInfo();
         //terrace-> printBackMapInfo();
         
@@ -53,15 +53,19 @@ void runterraceanalysis(Params &params){
         //cout<<"pr_ab_matrix[i].size() = "<<init_terrace->matrix->pr_ab_matrix[0].size()<<endl;
         //init_terrace->matrix->print_pr_ab_matrix();
         
-        //init_terrace->linkTrees();
+        init_terrace->linkTrees(true, false); // branch_back_map, taxon_back_map; in this case you only want to map branches
         //init_terrace->printMapInfo();
         //init_terrace-> printBackMapInfo();
         
         vector<Terrace*> part_tree_pairs;
+        
         int i=0, j=0;
+        
+        /*
         NodeVector aux_taxon_nodes;
         vector<TerraceTree*> aux_induced_part_trees;
         IntVector parts;
+        bool back_branch_map = false, back_taxon_map = true;
         
         for(i=0; i<terrace->part_num; i++){
             parts.clear();
@@ -87,44 +91,118 @@ void runterraceanalysis(Params &params){
                     aux_submatrix->taxa_num +=1;
                 }
             }
-            aux_submatrix->print_pr_ab_matrix();
             
-            terrace->induced_trees[i]->printTree(cout,WT_BR_LEN_ROUNDING + WT_NEWLINE);
-            cout<<endl;
+            //aux_submatrix->print_pr_ab_matrix();
+            //terrace->induced_trees[i]->printTree(cout,WT_BR_LEN_ROUNDING + WT_NEWLINE);
+            //cout<<endl;
             
             aux_induced_part_trees.clear();
             aux_induced_part_trees.push_back(init_terrace->induced_trees[i]);
             Terrace *aux_terrace = new Terrace(*(terrace->induced_trees[i]), aux_submatrix, aux_induced_part_trees);
-            aux_terrace->linkTrees();
-            aux_terrace->printMapInfo();
-            aux_terrace->printBackMapInfo();
+            aux_terrace->linkTrees(back_branch_map, back_taxon_map);
+            //aux_terrace->printMapInfo();
+            //aux_terrace->printBackMapInfo();
             
             part_tree_pairs.push_back(aux_terrace);
             
         }
+         */
+        
+        init_terrace->create_Top_Low_Part_Tree_Pairs(part_tree_pairs, terrace);
+        /*for(i=0; i<part_tree_pairs.size(); i++){
+            part_tree_pairs[i]->printMapInfo();
+            part_tree_pairs[i]->printBackMapInfo();
+        }*/
+        
+        
         
         /*  TODO:
+         
          *  DONE: 1. get submatrix (for testing purposes, any submatrix of original presence-absence matrix)
          *  DONE: 2. get initial tree (for testing purposes, any subtree of the representative tree?)
          *  DONE: 3. get low-level induced partition trees (i.e. create a sub-terrace)
-         *      ABER: -> branch and taxon maps look fine, but you need to introduce flags for separating them
+         *  DONE: -> branch and taxon maps look fine, but you need to introduce flags for separating them
          *  DONE: 4. get a vector of terraces for high- and low-level induced partition trees
          *      ABER: -> not thouroughly tested
-         *  5. perform branch mapping from subparent to low-level induced partition trees
-         *  6. perform taxon mappings from high- to low-level induced partition trees
+         *  DONE: 5. perform branch mapping from subparent to low-level induced partition trees
+         *  DONE: 6. perform taxon mappings from high- to low-level induced partition trees
+         
          *  7. order taxa - who should be inserted first?
          *  8. get feasible branches for a taxon from all low-level induced partition trees
-         *  9. insert taxon
+         
+         *  WORK IN PROGRESS.... 9. insert taxon
+                    TODO: at the moment there is a bit of cheating: insert taxa, clear all information about link neighbours, re-link with the new taxa, move on
+         
          *  10. update all low-level induced partition trees
          *  11. update branch and taxon maps (is there a fast way, without performing a tree traversal again?)
          *  12. insert next taxon .... if no possibilities to insert, return without a tree
          *  13. if no taxa to insert -> you got a tree from a terrace. Add a tree to a list (write it to the file). Go one level up, check next possibility to insert final leaf.
          */
+
+        
+        // Get a list of taxa to be inserted.
+        vector<string> list_taxa_to_insert;
+        for(i=0; i<terrace->taxa_num; i++){
+            if(init_terrace->matrix->findTaxonID(terrace->matrix->taxa_names[i])==-1){
+               list_taxa_to_insert.push_back(terrace->matrix->taxa_names[i]);
+            }
+        }
+        
+        cout<<"Taxa to insert on initial tree: "<<endl;
+        for(i=0; i<list_taxa_to_insert.size(); i++){
+            cout<<i<<":"<<list_taxa_to_insert[i]<<endl;
+        }
+        
+        /* insert taxon (here should be a loop afterwards, at the moment just test everything for this test example)
+            - find allowed branches:
+                - find node
+                + FORLOOP over part
+                    - get link_neighbor for part for nei_1
+                    - get link_neigbour for part for nei_2
+                    - get back_maps
+                + get allowed branches by the overlap of branches from all partitions
+        */
+        
+        init_terrace->insertNewTaxon(list_taxa_to_insert[0],, )
+        
+        
+        
+        
+        // clear link info
+        cout<<endl<<"INITIAL TREE: Clearing the link info.."<<endl;
+        init_terrace->cleanAllLinkNeighboursAndTaxa();
+        //init_terrace->printMapInfo();
+        //init_terrace->printBackMapInfo();
+        //cout<<endl;
+        
+        for(i=0; i<terrace->part_num; i++){
+            part_tree_pairs[i]->cleanAllLinkNeighboursAndTaxa();
+            
+            cout<<endl<<"TOP-LOW PAIR "<<i<<": Clearing the link info.."<<endl;
+            // INFO: only clear, if taxon occurs on the tree... NOPE, branch map will change, so for the moment clear everything!!!
+            part_tree_pairs[i]->cleanAllLinkNeighboursAndTaxa();
+            //part_tree_pairs[i]->printMapInfo();
+            //part_tree_pairs[i]->printBackMapInfo();
+            //cout<<endl;
+            
+        }
+        
+        // insert a taxon on induced partition trees, where it occurs
+        
+        
+        // re-link
+        init_terrace->linkTrees(true, false);
+        
+        // repeat
+        
+        
+        
         
         
         
         
         // BELOW stuff was only used for testing. I think, you can delete it.
+        
         
         /**
         PresenceAbsenceMatrix matrix;
@@ -137,8 +215,6 @@ void runterraceanalysis(Params &params){
         tree.printTree(cout);
         cout<<endl<<endl;
          */
-        
-        
         
        /**
         Neighbor *nei1 = tree.root->neighbors[0]->node->neighbors[0];

@@ -63,6 +63,12 @@ public:
     
     void getSubPrAbMatrix(vector<string> taxa_names_subset, PresenceAbsenceMatrix *submatrix, IntVector *parts = nullptr);
     void getSubPrAbMatrix(NodeVector taxon_nodes, PresenceAbsenceMatrix *submatrix, IntVector *parts = nullptr);
+    
+    /*
+     *  Extend presence-absence matrix by the new taxon
+     */
+    
+    void extend_by_new_taxa(string taxon_name, IntVector pr_ab_pattern);
 };
 
 vector<IntVector> getSubMatrix(vector<IntVector> pr_ab_complete, vector<string> taxa_names, MTree* tree);

@@ -122,6 +122,8 @@ void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree,
 
 void PresenceAbsenceMatrix::reorderAccordingToTree(NodeVector taxa_nodes){
 
+    // WARNING: when adding new taxa, this function is not helpful, because the ids of new taxa (at the current setting, as of 06.10.20) are larger than the number of taxa (id of new taxon is set to the number of nodes, which is then increased by 1, when a taxon is added)
+    
     //cout<<"BEFORE reordering according to the tree:"<<endl;
     //print_pr_ab_matrix();
     
@@ -206,10 +208,12 @@ void PresenceAbsenceMatrix::getSubPrAbMatrix(vector<string> taxa_names_subset, P
     if(not_found_taxon_names.size()<taxa_names_subset.size()){
         submatrix->taxa_num = submatrix->taxa_names.size();
         submatrix->part_num = submatrix->pr_ab_matrix[0].size();
-        cout<<"INFO: original matrix."<<endl;
-        print_pr_ab_matrix();
-        cout<<endl<<"INFO: a submatrix for "<<submatrix->taxa_num<<" taxa was extracted."<<endl;
-        submatrix->print_pr_ab_matrix();
+        if(false){
+            cout<<"INFO: original matrix."<<endl;
+            print_pr_ab_matrix();
+            cout<<endl<<"INFO: a submatrix for "<<submatrix->taxa_num<<" taxa was extracted."<<endl;
+            submatrix->print_pr_ab_matrix();
+        }
     }
 }
 
@@ -221,4 +225,12 @@ void PresenceAbsenceMatrix::getSubPrAbMatrix(NodeVector taxon_nodes, PresenceAbs
     }
     
     getSubPrAbMatrix(taxon_names,submatrix,parts);
+}
+
+void PresenceAbsenceMatrix::extend_by_new_taxa(string taxon_name, IntVector pr_ab_pattern){
+    
+    taxa_names.push_back(taxon_name);
+    pr_ab_matrix.push_back(pr_ab_pattern);
+    
+    flag_reorderAccordingToTree = false;
 }

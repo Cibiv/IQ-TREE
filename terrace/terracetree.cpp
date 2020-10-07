@@ -31,7 +31,7 @@ Node* TerraceTree::newNode(int node_id, int node_name) {
 
 void TerraceTree::copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names){
     
-    cout<<"Copying a tree using a vector of taxon names..."<<endl;
+    //cout<<"Copying a tree using a vector of taxon names..."<<endl;
     
     int i,j, sum = 0;
     int taxa_num = taxon_names.size();
@@ -64,5 +64,54 @@ void TerraceTree::copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names)
     taxa_set.insert(taxa_set.begin(), check_int.begin(), check_int.end());
     copyTree(tree,taxa_set);
 
-    printTree(cout,WT_BR_LEN_ROUNDING | WT_NEWLINE);
+    //printTree(cout,WT_BR_LEN_ROUNDING | WT_NEWLINE);
+}
+
+void TerraceTree::cleanAllLinkINFO(TerraceNode *node, TerraceNode *dad){
+    
+    if(!node){
+        if(root->isLeaf()){
+            node = (TerraceNode*) root->neighbors[0]->node;
+        }else{
+            node = (TerraceNode*) root;
+        }
+        
+        ASSERT(node);
+    }
+    
+    int part;
+    if(dad){
+        TerraceNeighbor *nei = (TerraceNeighbor*)node->findNeighbor(dad);
+        TerraceNeighbor *dad_nei = (TerraceNeighbor*)dad->findNeighbor(node);
+        if(nei->link_neighbors.size()>0){
+            for(part=0; part<nei->link_neighbors.size(); part++){
+                if(((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.size()>0){
+                    ((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.clear();
+                    ((TerraceNeighbor*)dad_nei->link_neighbors[part])->link_neighbors.clear();
+                }
+                if(((TerraceNeighbor*)nei->link_neighbors[part])->taxa_to_insert.size()>0){
+                    ((TerraceNeighbor*)nei->link_neighbors[part])->taxa_to_insert.clear();
+                    ((TerraceNeighbor*)dad_nei->link_neighbors[part])->taxa_to_insert.clear();
+                }
+            }
+            nei->link_neighbors.clear();
+            dad_nei->link_neighbors.clear();
+            
+        }
+        
+        node->empty_taxa.clear();
+        node->empty_branches.clear();
+        node->empty_br_dad_nei.clear();
+        node->empty_br_node_nei.clear();
+        
+        dad->empty_taxa.clear();
+        dad->empty_branches.clear();
+        dad->empty_br_dad_nei.clear();
+        dad->empty_br_node_nei.clear();
+    }
+    
+    FOR_NEIGHBOR_DECLARE(node, dad, it){
+        cleanAllLinkINFO((TerraceNode*) (*it)->node, (TerraceNode*) node);
+    }
+    
 }

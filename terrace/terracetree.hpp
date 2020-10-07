@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include "tree/mtree.h"
+#include "terracenode.hpp"
 
 class TerraceTree: public MTree {
 
@@ -63,6 +64,12 @@ public:
      copy the tree given a list of taxon names that should remain on the tree (not yet a 0-1 vector)
      */
     void copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names);
+    
+    /**
+     *  Clean all info about link neighbours and taxa
+     */
+    
+    void cleanAllLinkINFO(TerraceNode *node = nullptr, TerraceNode *dad = nullptr);
     
 };
 

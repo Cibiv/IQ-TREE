@@ -73,17 +73,17 @@ public:
      * link parent tree and induced partition trees
      */
     
-    void linkTrees();
+    void linkTrees(bool back_branch_map, bool back_taxon_map);
     
     /*
      * link parent tree and a single induced partition tree
      */
-    void linkTree(int part, NodeVector &part_taxa, TerraceNode *node = nullptr, TerraceNode *dad = nullptr);
+    void linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bool back_taxon_map, TerraceNode *node = nullptr, TerraceNode *dad = nullptr);
     
     /*
      *  link one branch of parent tree on partition tree part (for internal branches only, oder?)
      */
-    void linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_nei);
+    void linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_nei, bool back_branch_map, bool back_taxon_map);
     
     /*
      *  TODO: Map "epsilon" branches, which were not mapped by the general tree linking function
@@ -107,6 +107,28 @@ public:
     
     void clearEmptyBranchAndTaxaINFO(TerraceNode *node = nullptr, TerraceNode *dad = nullptr);
     
+    /*
+     *  For a given taxon name get allowed branches. aux_terrace contains pointers to top level induced partition trees (which are stored as terraces)
+     */
+    void getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, vector<TerraceNeighbor*> *nei1_vec, vector<TerraceNeighbor*> *nei2_vec);
+    
+    /*
+     *  Insert a new taxon to the parent tree, update induced partition trees, update mapping
+     */
+    
+    void insertNewTaxon(string node_name, TerraceNeighbor *nei_1, TerraceNeighbor *nei_2);
+    
+    /*
+     *  Clean all link neighbours and taxa on parent tree and on induced partition trees
+     */
+    
+    void cleanAllLinkNeighboursAndTaxa();
+    
+    /*
+     *  Prepare top-low induced partition tree pairs: induced tree from the terrace and a common subtree with the initial tree (to be modified by inserting new taxa). Top level provided by the passed terrace, low level by the current terrace (which is initial terrace).
+     */
+    
+    void create_Top_Low_Part_Tree_Pairs(vector<Terrace*> &part_tree_pairs, Terrace *terrace);
 };
 
 #endif /* terrace_hpp */

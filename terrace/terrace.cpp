@@ -143,7 +143,7 @@ void Terrace::printInfo(){
     }
 }
 
-void Terrace::linkTrees(){
+void Terrace::linkTrees(bool back_branch_map, bool back_taxon_map){
     NodeVector part_taxa;
 
     if(!matrix->flag_reorderAccordingToTree){
@@ -163,13 +163,13 @@ void Terrace::linkTrees(){
         
         //cout<<"YUPEE-YUPEE-YEAH! PARTITION "<<part<<endl<<endl;
         //clearEmptyBranchAndTaxaINFO();
-        linkTree(part,part_taxa);
+        linkTree(part, part_taxa, back_branch_map, back_taxon_map);
     }
     flag_trees_linked = true;
     
 }
 
-void Terrace::linkTree(int part, NodeVector &part_taxa, TerraceNode *node, TerraceNode *dad){
+void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bool back_taxon_map, TerraceNode *node, TerraceNode *dad){
     
     // SEHR WICHTIG! WARNING: do not mix mapping from the parent tree and upper level induced partition trees, because empty branches and empty taxa will be messed up on partition trees.
     
@@ -202,10 +202,12 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, TerraceNode *node, Terra
             nei->link_neighbors[part] = (TerraceNeighbor*) node_part->neighbors[0];
             dad_nei->link_neighbors[part] = dad_part_nei;
             
-            // Back map from induced partition tree onto parent tree
-            // for partition trees link_neighbours contain all nei's from parent tree, that map on this branch
-            ((TerraceNeighbor*) node_part->neighbors[0])->link_neighbors.push_back(nei);
-            dad_part_nei->link_neighbors.push_back(dad_nei);
+            if(back_branch_map){
+                // Back map from induced partition tree onto parent tree
+                // for partition trees link_neighbours contain all nei's from parent tree, that map on this branch
+                ((TerraceNeighbor*) node_part->neighbors[0])->link_neighbors.push_back(nei);
+                dad_part_nei->link_neighbors.push_back(dad_nei);
+            }
             
         } else {
             
@@ -214,10 +216,12 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, TerraceNode *node, Terra
             dad->empty_br_dad_nei.push_back(dad_nei);
             dad->empty_br_node_nei.push_back(nei);
             
-            // the empty taxa are needed for a map from induced partition tree to "common" induced partition tree
-            // when you know the link_neighbor, you have to map all empty taxa to that neighbor
-            dad->empty_taxa.push_back(node);
-            //cout<<"INFO CHECK: the length of the empty leaves: dad("<<dad->id<<") = "<<dad->empty_taxa.size()<<endl;
+            if(back_taxon_map){
+                // the empty taxa are needed for a map from induced partition tree to "common" induced partition tree
+                // when you know the link_neighbor, you have to map all empty taxa to that neighbor
+                dad->empty_taxa.push_back(node);
+                //cout<<"INFO CHECK: the length of the empty leaves: dad("<<dad->id<<") = "<<dad->empty_taxa.size()<<endl;
+            }
         }
         return;
     }
@@ -225,13 +229,13 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, TerraceNode *node, Terra
     //cout<<"MASTER NODE:"<<node->id<<endl;
     FOR_NEIGHBOR_DECLARE(node, dad, it) {
         //cout<<"Node->id = "<<(*it)->node->id<<" | Dad->id = "<<node->id<<endl;
-        linkTree(part, part_taxa, (TerraceNode*) (*it)->node, (TerraceNode*) node);
+        linkTree(part, part_taxa, back_branch_map, back_taxon_map, (TerraceNode*) (*it)->node, (TerraceNode*) node);
     }
     
     if (!dad) {
         // Check, if the final dad has empty_branches and empty_taxa and map them to branch, which is available.
         // Note, that if there are some empty branches/taxa, there will be exactly one branch available for mapping.
-        if(node->empty_taxa.size()>0){
+        if(node->empty_taxa.size()>0 or node->empty_branches.size()>0){
             //cout<<"I got here! Partition: "<<part<<"| Node->id:"<<node->id<<endl;
             FOR_NEIGHBOR_DECLARE(node, NULL, it) {
                 if(((TerraceNeighbor*)(*it))->link_neighbors[part]){
@@ -242,20 +246,23 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, TerraceNode *node, Terra
                         ((TerraceNeighbor*)node->empty_br_node_nei[i])->link_neighbors[part] = node_nei_part;
                         ((TerraceNeighbor*)node->empty_br_dad_nei[i])->link_neighbors[part] = dad_nei_part;
             
-                        node_nei_part->link_neighbors.push_back(node->empty_br_node_nei[i]);
-                        dad_nei_part->link_neighbors.push_back(node->empty_br_dad_nei[i]);
+                        if(back_branch_map){
+                            node_nei_part->link_neighbors.push_back(node->empty_br_node_nei[i]);
+                            dad_nei_part->link_neighbors.push_back(node->empty_br_dad_nei[i]);
+                        }
                     }
                     
-                    //cout<<endl<<"INFO CHECK (in IF!dad): node="<<node->id<<" | empty taxa:"<<endl;
-                    for(i=0; i<node->empty_taxa.size(); i++){
-                        //cout<<" "<<node->empty_taxa[i]->id<<",";
-                        node_nei_part->taxa_to_insert.push_back(node->empty_taxa[i]);
-                        dad_nei_part->taxa_to_insert.push_back(node->empty_taxa[i]);
+                    if(back_taxon_map){
+                        //cout<<endl<<"INFO CHECK (in IF!dad): node="<<node->id<<" | empty taxa:"<<endl;
+                        for(i=0; i<node->empty_taxa.size(); i++){
+                            //cout<<" "<<node->empty_taxa[i]->id<<",";
+                            node_nei_part->taxa_to_insert.push_back(node->empty_taxa[i]);
+                            dad_nei_part->taxa_to_insert.push_back(node->empty_taxa[i]);
+                        }
+                        //cout<<endl;
+                        node->empty_taxa.clear();
                     }
-                    
-                    //cout<<endl;
-                    
-                    node->empty_taxa.clear();
+                        
                     node->empty_branches.clear();
                     node->empty_br_node_nei.clear();
                     node->empty_br_dad_nei.clear();
@@ -269,10 +276,10 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, TerraceNode *node, Terra
         }
         return;
     }
-    linkBranch(part, nei, dad_nei);
+    linkBranch(part, nei, dad_nei, back_branch_map, back_taxon_map);
 }
 
-void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_nei) {
+void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_nei, bool back_branch_map, bool back_taxon_map) {
     //cout<<endl;
     TerraceNode *node = (TerraceNode*)dad_nei->node;
     TerraceNode *dad = (TerraceNode*)nei->node;
@@ -315,23 +322,25 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
         dad->empty_br_dad_nei.push_back(dad_nei);
         dad->empty_br_node_nei.push_back(nei);
         
-        if(node_empty_taxa_size>0){
-            /*cout<<"INFO CHECK (in two children nodes are empty): passing empty taxa to dad="<<dad->id<<" :"<<endl;
-            if(dad->empty_taxa.size()>0){
-                cout<<"currently list of empty taxa for dad:";
-                for(i=0; i<dad->empty_taxa.size(); i++){
-                    cout<<" "<<dad->empty_taxa[i]->id;
+        if(back_taxon_map){
+            if(node_empty_taxa_size>0){
+                /*cout<<"INFO CHECK (in two children nodes are empty): passing empty taxa to dad="<<dad->id<<" :"<<endl;
+                if(dad->empty_taxa.size()>0){
+                    cout<<"currently list of empty taxa for dad:";
+                    for(i=0; i<dad->empty_taxa.size(); i++){
+                        cout<<" "<<dad->empty_taxa[i]->id;
+                    }
+                    cout<<endl;
                 }
-                cout<<endl;
+                 */
+                
+                for(i=0; i<node_empty_taxa_size; i++){
+                    //cout<<" "<<node->empty_taxa[i]->id;
+                    dad->empty_taxa.push_back(node->empty_taxa[i]);
+                }
+                //cout<<endl;
+                node->empty_taxa.clear();
             }
-             */
-            
-            for(i=0; i<node_empty_taxa_size; i++){
-                //cout<<" "<<node->empty_taxa[i]->id;
-                dad->empty_taxa.push_back(node->empty_taxa[i]);
-            }
-            //cout<<endl;
-            node->empty_taxa.clear();
         }
         return;
     }
@@ -343,8 +352,10 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
         nei->link_neighbors[part] = child_part_vec[0];
         dad_nei->link_neighbors[part] = part_vec[0];
         
-        child_part_vec[0]->link_neighbors.push_back(nei);
-        part_vec[0]->link_neighbors.push_back(dad_nei);
+        if(back_branch_map){
+            child_part_vec[0]->link_neighbors.push_back(nei);
+            part_vec[0]->link_neighbors.push_back(dad_nei);
+        }
         
         // Get maps for empty branches
         if(node_empty_branch_size>0){
@@ -354,21 +365,24 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
                 ((TerraceNeighbor*)node->empty_br_node_nei[i])->link_neighbors[part]=child_part_vec[0];
                 ((TerraceNeighbor*)node->empty_br_dad_nei[i])->link_neighbors[part] = part_vec[0];
                 
-                child_part_vec[0]->link_neighbors.push_back(node->empty_br_node_nei[i]);
-                part_vec[0]->link_neighbors.push_back(node->empty_br_dad_nei[i]);
-                
-                //cout<<i<<":"<<"("<<node->empty_br_node_nei[i]->node->id<<","<<node->empty_br_dad_nei[i]->node->id<<") -> ("<<child_part_vec[0]->node->id<<","<<part_vec[0]->node->id<<")"<<endl;
+                if(back_branch_map){
+                    child_part_vec[0]->link_neighbors.push_back(node->empty_br_node_nei[i]);
+                    part_vec[0]->link_neighbors.push_back(node->empty_br_dad_nei[i]);
+                    //cout<<i<<":"<<"("<<node->empty_br_node_nei[i]->node->id<<","<<node->empty_br_dad_nei[i]->node->id<<") -> ("<<child_part_vec[0]->node->id<<","<<part_vec[0]->node->id<<")"<<endl;
+                }
             }
             node->empty_branches.clear();
             node->empty_br_node_nei.clear();
             node->empty_br_dad_nei.clear();
             
-            //cout<<"Passing empty taxa to partition branches:"<<endl;
-            for(i=0; i<node_empty_taxa_size; i++){
-                child_part_vec[0]->taxa_to_insert.push_back(node->empty_taxa[i]);
-                part_vec[0]->taxa_to_insert.push_back(node->empty_taxa[i]);
+            if(back_taxon_map){
+                //cout<<"Passing empty taxa to partition branches:"<<endl;
+                for(i=0; i<node_empty_taxa_size; i++){
+                    child_part_vec[0]->taxa_to_insert.push_back(node->empty_taxa[i]);
+                    part_vec[0]->taxa_to_insert.push_back(node->empty_taxa[i]);
+                }
+                node->empty_taxa.clear();
             }
-            node->empty_taxa.clear();
         }
         
         return;
@@ -389,8 +403,10 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
         nei->link_neighbors[part] = child_part_vec[0];
         dad_nei->link_neighbors[part] = child_part_vec[1];
         
-        child_part_vec[0]->link_neighbors.push_back(nei);
-        child_part_vec[1]->link_neighbors.push_back(dad_nei);
+        if(back_branch_map){
+            child_part_vec[0]->link_neighbors.push_back(nei);
+            child_part_vec[1]->link_neighbors.push_back(dad_nei);
+        }
         
         return;
     }
@@ -414,8 +430,10 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
     nei->link_neighbors[part] = (TerraceNeighbor*)node_part->findNeighbor(dad_part);
     dad_nei->link_neighbors[part] = (TerraceNeighbor*)dad_part->findNeighbor(node_part);
     
-    ((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.push_back(nei);
-    ((TerraceNeighbor*)dad_nei->link_neighbors[part])->link_neighbors.push_back(dad_nei);
+    if(back_branch_map){
+        ((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.push_back(nei);
+        ((TerraceNeighbor*)dad_nei->link_neighbors[part])->link_neighbors.push_back(dad_nei);
+    }
 
 }
 
@@ -433,30 +451,32 @@ void Terrace::printMapInfo(){
             (*it)->drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE );
         }
         for (int i = 0; i < nodes1.size(); i++) {
-            Neighbor *nei1 = ((TerraceNeighbor*)nodes1[i]->findNeighbor(nodes2[i]))->link_neighbors[part];
-            Neighbor *nei2 = ((TerraceNeighbor*)nodes2[i]->findNeighbor(nodes1[i]))->link_neighbors[part];
-            cout << nodes1[i]->findNeighbor(nodes2[i])->id << ":";
-            if (nodes1[i]->isLeaf()) cout << nodes1[i]->name; else cout << nodes1[i]->id;
-            cout << ",";
-            if (nodes2[i]->isLeaf()) cout << nodes2[i]->name; else cout << nodes2[i]->id;
-            //cout <<"("<<nodes1[i]->findNeighbor(nodes2[i])->length<<")"<< " -> ";
-            cout<<" -> ";
-            if (nei2) {
-                cout << nei2->id << ":";
-                if (nei2->node->isLeaf())
-                    cout << nei2->node->name;
-                else cout << nei2->node->id;
+            if(((TerraceNeighbor*)nodes1[i]->findNeighbor(nodes2[i]))->link_neighbors.size()>0){
+                Neighbor *nei1 = ((TerraceNeighbor*)nodes1[i]->findNeighbor(nodes2[i]))->link_neighbors[part];
+                Neighbor *nei2 = ((TerraceNeighbor*)nodes2[i]->findNeighbor(nodes1[i]))->link_neighbors[part];
+                cout << nodes1[i]->findNeighbor(nodes2[i])->id << ":";
+                if (nodes1[i]->isLeaf()) cout << nodes1[i]->name; else cout << nodes1[i]->id;
+                cout << ",";
+                if (nodes2[i]->isLeaf()) cout << nodes2[i]->name; else cout << nodes2[i]->id;
+                //cout <<"("<<nodes1[i]->findNeighbor(nodes2[i])->length<<")"<< " -> ";
+                cout<<" -> ";
+                if (nei2) {
+                    cout << nei2->id << ":";
+                    if (nei2->node->isLeaf())
+                        cout << nei2->node->name;
+                    else cout << nei2->node->id;
+                }
+                else cout << -1;
+                cout << ",";
+                if (nei1){
+                    if (nei1->node->isLeaf())
+                        cout << nei1->node->name;
+                    else cout << nei1->node->id;
+                    //cout <<"("<<nei1->length<<")";
+                }
+                else cout << -1;
+                cout << endl;
             }
-            else cout << -1;
-            cout << ",";
-            if (nei1){
-                if (nei1->node->isLeaf())
-                    cout << nei1->node->name;
-                else cout << nei1->node->id;
-                //cout <<"("<<nei1->length<<")";
-            }
-            else cout << -1;
-            cout << endl;
         }
     }
     cout << endl;
@@ -493,6 +513,171 @@ void Terrace::printBackMapInfo(){
     }
 }
 
+void Terrace::create_Top_Low_Part_Tree_Pairs(vector<Terrace*> &part_tree_pairs, Terrace *terrace){
+    
+    int i=0, j=0;
+    NodeVector aux_taxon_nodes;
+    vector<TerraceTree*> aux_induced_part_trees;
+    IntVector parts;
+    bool back_branch_map = false, back_taxon_map = true;
+    
+    for(i=0; i<terrace->part_num; i++){
+        parts.clear();
+        parts.push_back(i);
+        aux_taxon_nodes.clear();
+        
+        // 1. get submatrix for taxa, which are common for the initial tree and for the top level induced partition tree. common taxa, are the leaves of the low level induced tree (assert: they should be with 1's!!!)
+        induced_trees[i]->getTaxa(aux_taxon_nodes);
+        PresenceAbsenceMatrix *aux_submatrix = new PresenceAbsenceMatrix();
+        matrix->getSubPrAbMatrix(aux_taxon_nodes, aux_submatrix,&parts);
+        
+        // 2. now update matrix with taxa, which occur only on the top level induced partition tree and not on the initial tree. Simply add 0, because it does not occur on the common subtree, i.e. low level induced partition tree
+        aux_taxon_nodes.clear();
+        terrace->induced_trees[i]->getTaxa(aux_taxon_nodes);
+        
+        parts.clear(); // auxiliary use of the variable, just need an integer vec with 0 value.
+        parts.push_back(0);
+        
+        for(j=0; j<aux_taxon_nodes.size(); j++){
+            if(aux_submatrix->findTaxonID(aux_taxon_nodes[j]->name) == -1){
+                aux_submatrix->pr_ab_matrix.push_back(parts);
+                aux_submatrix->taxa_names.push_back(aux_taxon_nodes[j]->name);
+                aux_submatrix->taxa_num +=1;
+            }
+        }
+        
+        //aux_submatrix->print_pr_ab_matrix();
+        //terrace->induced_trees[i]->printTree(cout,WT_BR_LEN_ROUNDING + WT_NEWLINE);
+        //cout<<endl;
+        
+        aux_induced_part_trees.clear();
+        aux_induced_part_trees.push_back(induced_trees[i]);
+        Terrace *aux_terrace = new Terrace(*(terrace->induced_trees[i]), aux_submatrix, aux_induced_part_trees);
+        aux_terrace->linkTrees(back_branch_map, back_taxon_map);
+        //aux_terrace->printMapInfo();
+        //aux_terrace->printBackMapInfo();
+        
+        part_tree_pairs.push_back(aux_terrace);
+        
+    }
+    
+}
+void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, vector<TerraceNeighbor*> *nei1_vec, vector<TerraceNeighbor*> *nei2_vec){
+    
+    int i, j, h;
+    TerraceNode *node;
+    TerraceNeighbor *nei, *dad_nei, *link_nei, *link_dad_nei;
+    
+    IntVector branch_ids, intersection;
+    bool found = false;
+    
+    for(i=0;i<aux_terrace.size();i++){
+        node = (TerraceNode*) aux_terrace[i]->findLeafName(taxon_name);
+        if(node){
+            assert(node->isLeaf());
+            
+            nei = (TerraceNeighbor*) node->neighbors[0];
+            dad_nei = (TerraceNeighbor*) nei->node->findNeighbor(node);
+            
+            link_nei = (TerraceNeighbor*) nei->link_neighbors[0];
+            link_dad_nei = (TerraceNeighbor*) dad_nei->link_neighbors[0];
+            
+            assert(link_nei->link_neighbors.size()==link_dad_nei->link_neighbors.size());
+            
+            if(branch_ids.empty()){
+                for(j=0; j<link_nei->link_neighbors.size(); j++){
+                    branch_ids.push_back(link_nei->link_neighbors[j]->id);
+                    
+                    // nei1_vec->push_back((TerraceNeighbor*)link_nei->link_neighbors[j]);
+                    // nei2_vec->push_back((TerraceNeighbor*)link_dad_nei->link_neighbors[j]);
+                }
+            } else {
+                
+                // TODO: The way to keep track of allowed branches is not optimal, too many unnessary savings and clearings. Optimize at the next step. Also the intersection is O(n^2).
+                nei1_vec->clear();
+                nei2_vec->clear();
+                
+                // check, if the element occurs in branch ids
+                for(j=0; j<link_nei->link_neighbors.size(); j++){
+                    found = false;
+                    for(h=0; h<branch_ids.size(); h++){
+                        if(link_nei->link_neighbors[j]->id==branch_ids[h]){
+                            found = true;
+                            break;
+                        }
+                    }
+                    if(found){
+                        intersection.push_back(link_nei->link_neighbors[j]->id);
+                        nei1_vec->push_back((TerraceNeighbor*)link_nei->link_neighbors[j]);
+                        nei2_vec->push_back((TerraceNeighbor*)link_dad_nei->link_neighbors[j]);
+                    }
+                }
+                
+                branch_ids.clear();
+                
+                if(intersection.size()>0){
+                    for(j=0; j<intersection.size(); j++){
+                        branch_ids.push_back(intersection[j]);
+                    }
+                    intersection.clear();
+                } else {
+                    nei1_vec->clear();
+                    nei2_vec->clear();
+                    
+                    // QUESTION: is this "break" breaks the FORLOOP with aux_terraces? in principle, if at some point intersection is empty, it means, that there is no point to look at other aux_terraces for allowed branches
+                    break;
+                }
+            }
+        }
+    }
+    
+    /*if(!branch_ids.empty()){
+        // get neighbours for branch with id branch_ids[i]
+        for(i=0; i<branch_ids.size(); i++){
+            
+        }
+    }*/
+    
+    
+}
+
+void Terrace::insertNewTaxon(string node_name, TerraceNeighbor *nei_1, TerraceNeighbor *nei_2){
+    
+    // TODO:
+    // DONE: Node_1: get a corresponding node (it should be new one, create a new node)
+    // DONE: Node_2: create a neighbour of the node
+    // DONE: Update neighbours on the branch you need to insert the taxon to node_2 becomes a neighbour of noda_A and node_B, where the taxon is allowed to be inserted
+    //       -> ABER: you have to provide a branch to be inserted to;
+    //       -> QUESTION: how about updates of the link_neighbours? should you first update them and then update them on the final tree
+    // Update mapping from parent tree to low-level induced partition trees
+    // Update mapping from top-level to low-level trees (only if the top-level has the corresponding taxon)
+    // repeat: get allowed positions for the next taxon
+   
+    // IMPORTANT!!!!!! WARNING: CAREFULL about calling a presence_absence matrix entries by the leaf id!!!!!! CHECK the corresponding code, because your maps will be fucked up!
+    TerraceNode *node_1, *node_2;
+    
+    newNode(nodeNum, node_name.c_str());
+    node_1 = (TerraceNode*)(this->findNodeID(nodeNum));
+    
+    leafNum += 1;
+    nodeNum += 1;
+    taxa_num += 1;
+
+    newNode(nodeNum);
+    node_2 = (TerraceNode*)(this->findNodeID(nodeNum));
+    nodeNum += 1;
+    branchNum += 1;
+    
+    node_1->addNeighbor(node_2, -1);
+    
+    nei_1->node->updateNeighbor(nei_2->node, node_2, -1);
+    nei_2->node->updateNeighbor(nei_1->node, node_2, -1);
+    
+    node_2->addNeighbor(node_1, -1);
+    node_2->addNeighbor(nei_1->node, -1);
+    node_2->addNeighbor(nei_2->node, -1);
+    
+}
 
 // INFO: TWO FUNCTIONs BELOW ARE not finished (kind of obvious), but also maybe unnecessary in the current setting of the mapping
 void Terrace::linkTreesEmptyImage(){
@@ -538,3 +723,8 @@ void Terrace::clearEmptyBranchAndTaxaINFO(TerraceNode *node, TerraceNode *dad){
     
 }
 
+void Terrace::cleanAllLinkNeighboursAndTaxa(){
+ 
+    cleanAllLinkINFO();
+    
+}
