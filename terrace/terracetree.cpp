@@ -115,3 +115,41 @@ void TerraceTree::cleanAllLinkINFO(TerraceNode *node, TerraceNode *dad){
     }
     
 }
+
+void TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch){
+    
+    // IMPORTANT!!!!!! WARNING: CAREFULL about calling a presence_absence matrix entries by the leaf id!!!!!! CHECK the corresponding code, because your maps will be fucked up!
+    // TODO: safe option is a function to re-number taxa, nodes
+    
+    TerraceNode *node_1, *node_2;
+    
+    node_1 = (TerraceNode*) newNode(nodeNum, node_name.c_str());
+    
+    leafNum += 1;
+    nodeNum += 1;
+    
+    node_2 = (TerraceNode*)(newNode(nodeNum));
+    nodeNum += 1;
+    
+    int br_id = branchNum;
+    branchNum += 1;
+    
+    // WARNING: you need unique branch ids for intersection in allowed branches!!!!!
+    // CHECK: if there are any issues with current handling of branch ids
+    node_1->addNeighbor(node_2, 0.0, br_id);
+    node_2->addNeighbor(node_1, 0.0, br_id);
+    
+    br_id = node_1_branch->findNeighbor(node_2_branch)->id;
+    node_1_branch->updateNeighbor(node_2_branch, node_2, 0.0);
+    node_1_branch->findNeighbor(node_2)->id = br_id;
+    node_2->addNeighbor(node_1_branch, 0.0, br_id);
+    
+    br_id = branchNum;
+    node_2_branch->updateNeighbor(node_1_branch, node_2, 0.0);
+    node_2_branch->findNeighbor(node_2)->id = br_id;
+    
+    node_2->addNeighbor(node_2_branch, 0.0, br_id);
+    
+    drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
+    
+}

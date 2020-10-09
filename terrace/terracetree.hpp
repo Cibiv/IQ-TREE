@@ -71,6 +71,11 @@ public:
     
     void cleanAllLinkINFO(TerraceNode *node = nullptr, TerraceNode *dad = nullptr);
     
+    /**
+     *  Insert a new taxon on given branch 
+     */
+    void insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch);
+    
 };
 
 

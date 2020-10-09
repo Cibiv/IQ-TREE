@@ -116,7 +116,7 @@ public:
      *  Insert a new taxon to the parent tree, update induced partition trees, update mapping
      */
     
-    void insertNewTaxon(string node_name, TerraceNeighbor *nei_1, TerraceNeighbor *nei_2);
+    void extendNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, vector<Terrace*> aux_terrace);
     
     /*
      *  Clean all link neighbours and taxa on parent tree and on induced partition trees

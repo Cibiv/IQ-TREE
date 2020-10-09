@@ -85,18 +85,21 @@ void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree,
     
     part_taxa.resize(taxa_num);
     
-    if(!flag_reorderAccordingToTree){
-        reorderAccordingToTree(taxa_nodes);
-    }
+    //if(!flag_reorderAccordingToTree){
+    //    reorderAccordingToTree(taxa_nodes);
+    //}
     
     Node *node;
+    int taxon_matrix_id;
     for(NodeVector::iterator it=taxa_nodes.begin(); it<taxa_nodes.end(); it++){
         //cout<<(*it)->name<<" id = "<<(*it)->id<<endl;
-        if(pr_ab_matrix[(*it)->id][part] == 1){
+        taxon_matrix_id = findTaxonID((*it)->name);
+        //cout<<"TAXON_MATRIX_ID:"<<taxon_matrix_id<<endl;
+        if(pr_ab_matrix[taxon_matrix_id][part] == 1){
             node = part_tree->findLeafName((*it)->name);
             //cout<<"PREPARING PART_TAXA: part = "<<part<<"|leaf_id = "<<(*it)->id<<"|leaf_name = "<<(*it)->name<<endl;
             assert(node && "ERROR: The leaf is not found on partition tree!");
-            part_taxa[(*it)->id]=node;
+            part_taxa[taxon_matrix_id]=node;
         }
     }
     
@@ -108,6 +111,12 @@ void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree,
             cout<<pr_ab_matrix[i][part]<<" ";
         }
         cout<<endl;
+        cout<<"Taxon names info:"<<endl;
+        for(int i=0; i<taxa_num; i++){
+            cout<<taxa_names[i]<<" ";
+        }
+        cout<<endl;
+        
         cout<<"Partition taxa info:"<<endl;
         for(int i=0; i<taxa_num; i++){
             if(part_taxa[i]){
@@ -231,6 +240,8 @@ void PresenceAbsenceMatrix::extend_by_new_taxa(string taxon_name, IntVector pr_a
     
     taxa_names.push_back(taxon_name);
     pr_ab_matrix.push_back(pr_ab_pattern);
+    
+    taxa_num+=1;
     
     flag_reorderAccordingToTree = false;
 }

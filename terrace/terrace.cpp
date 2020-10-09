@@ -146,11 +146,12 @@ void Terrace::printInfo(){
 void Terrace::linkTrees(bool back_branch_map, bool back_taxon_map){
     NodeVector part_taxa;
 
-    if(!matrix->flag_reorderAccordingToTree){
-        NodeVector tree_taxa;
-        this->getTaxa(tree_taxa);
-        matrix->reorderAccordingToTree(tree_taxa);
-    }
+    // BUG: there is an issue with taxon ids, after you insert new taxon.....
+    //if(!matrix->flag_reorderAccordingToTree){
+    //    NodeVector tree_taxa;
+    //    this->getTaxa(tree_taxa);
+    //    matrix->reorderAccordingToTree(tree_taxa);
+    //}
     
     for(int part=0; part<part_num; part++){
         part_taxa.clear();
@@ -173,6 +174,8 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bo
     
     // SEHR WICHTIG! WARNING: do not mix mapping from the parent tree and upper level induced partition trees, because empty branches and empty taxa will be messed up on partition trees.
     
+    // INFO/CHECK: make sure that your branches have proper unique ids, further code relies on that.
+    
     if (!node) {
         if (!root->isLeaf())
             node = (TerraceNode*) root;
@@ -194,7 +197,18 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bo
     }
     if (node->isLeaf()) {
         ASSERT(dad);
-        TerraceNode *node_part = (TerraceNode*)part_taxa[node->id]; //part_taxa[] is a node on PARTITION tree
+        // BUG: I think this is the case. again issue with the node ids. Find another way of getting node->id. Check if this is actually what causes problem
+        //TerraceNode *node_part = (TerraceNode*)part_taxa[node->id]; //part_taxa[] is a node on PARTITION tree
+        TerraceNode *node_part = nullptr;
+        for(NodeVector::iterator it=part_taxa.begin(); it<part_taxa.end(); it++){
+            if((*it)){
+                //cout<<"IN_LINK_TREE: NODE_NAME = "<<node->name<<" vs. LEAF_NAME = "<<(*it)->name<<endl;
+                if(node->name == (*it)->name){
+                    node_part = (TerraceNode*)(*it);
+                }
+            }
+        }
+        
         if (node_part) {
             TerraceNode *dad_part = (TerraceNode*)node_part->neighbors[0]->node;
             TerraceNeighbor *dad_part_nei = (TerraceNeighbor*)dad_part->findNeighbor(node_part);
@@ -564,6 +578,8 @@ void Terrace::create_Top_Low_Part_Tree_Pairs(vector<Terrace*> &part_tree_pairs, 
 }
 void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, vector<TerraceNeighbor*> *nei1_vec, vector<TerraceNeighbor*> *nei2_vec){
     
+    // INFO/CHECK: make sure that your branches have proper unique ids, below code relies on that.
+    
     int i, j, h;
     TerraceNode *node;
     TerraceNeighbor *nei, *dad_nei, *link_nei, *link_dad_nei;
@@ -641,7 +657,7 @@ void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace
     
 }
 
-void Terrace::insertNewTaxon(string node_name, TerraceNeighbor *nei_1, TerraceNeighbor *nei_2){
+void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, vector<Terrace*> part_tree_pairs){
     
     // TODO:
     // DONE: Node_1: get a corresponding node (it should be new one, create a new node)
@@ -652,30 +668,35 @@ void Terrace::insertNewTaxon(string node_name, TerraceNeighbor *nei_1, TerraceNe
     // Update mapping from parent tree to low-level induced partition trees
     // Update mapping from top-level to low-level trees (only if the top-level has the corresponding taxon)
     // repeat: get allowed positions for the next taxon
-   
-    // IMPORTANT!!!!!! WARNING: CAREFULL about calling a presence_absence matrix entries by the leaf id!!!!!! CHECK the corresponding code, because your maps will be fucked up!
-    TerraceNode *node_1, *node_2;
     
-    newNode(nodeNum, node_name.c_str());
-    node_1 = (TerraceNode*)(this->findNodeID(nodeNum));
+    TerraceNeighbor *nei_1, *nei_2;
+    nei_1 = (TerraceNeighbor*) node_1_branch->findNeighbor(node_2_branch);
+    nei_2 = (TerraceNeighbor*) node_2_branch->findNeighbor(node_1_branch);
     
-    leafNum += 1;
-    nodeNum += 1;
+    for(int i=0; i<part_num; i++){
+        
+        cout<<endl<<"TOP-LOW PAIR "<<i<<": Clearing the link info.."<<endl;
+        // INFO: only clear, if taxon occurs on the tree... NOPE, branch map will change, so for the moment clear everything!!!
+        part_tree_pairs[i]->cleanAllLinkNeighboursAndTaxa();
+        part_tree_pairs[i]->printMapInfo();
+        part_tree_pairs[i]->printBackMapInfo();
+        cout<<endl;
+        
+        // check if the taxon occurs in top level induced partition trees and add a taxon to corresponding low-level part trees
+        if(part_tree_pairs[i]->findLeafName(node_name)){
+            induced_trees[i]->insertNewTaxon(node_name, (TerraceNode*) nei_1->link_neighbors[i]->node, (TerraceNode*) nei_2->link_neighbors[i]->node);
+        }
+    }
+    
+    // clear link info
+    cout<<endl<<"INITIAL TREE: Clearing the link info.."<<endl;
+    cleanAllLinkNeighboursAndTaxa();
+    //printMapInfo();
+    //printBackMapInfo();
+    //cout<<endl;
+    
+    insertNewTaxon(node_name,node_1_branch,node_2_branch);
     taxa_num += 1;
-
-    newNode(nodeNum);
-    node_2 = (TerraceNode*)(this->findNodeID(nodeNum));
-    nodeNum += 1;
-    branchNum += 1;
-    
-    node_1->addNeighbor(node_2, -1);
-    
-    nei_1->node->updateNeighbor(nei_2->node, node_2, -1);
-    nei_2->node->updateNeighbor(nei_1->node, node_2, -1);
-    
-    node_2->addNeighbor(node_1, -1);
-    node_2->addNeighbor(nei_1->node, -1);
-    node_2->addNeighbor(nei_2->node, -1);
     
 }
 

@@ -162,40 +162,72 @@ void runterraceanalysis(Params &params){
                     - get back_maps
                 + get allowed branches by the overlap of branches from all partitions
         */
+        vector<TerraceNeighbor*> nei1_vec, nei2_vec;
         
-        init_terrace->insertNewTaxon(list_taxa_to_insert[0],, )
+        string taxon_name;
+        int id;
         
-        
-        
-        
-        // clear link info
-        cout<<endl<<"INITIAL TREE: Clearing the link info.."<<endl;
-        init_terrace->cleanAllLinkNeighboursAndTaxa();
-        //init_terrace->printMapInfo();
-        //init_terrace->printBackMapInfo();
-        //cout<<endl;
-        
-        for(i=0; i<terrace->part_num; i++){
-            part_tree_pairs[i]->cleanAllLinkNeighboursAndTaxa();
+        for(i=0; i<list_taxa_to_insert.size(); i++){
             
-            cout<<endl<<"TOP-LOW PAIR "<<i<<": Clearing the link info.."<<endl;
-            // INFO: only clear, if taxon occurs on the tree... NOPE, branch map will change, so for the moment clear everything!!!
-            part_tree_pairs[i]->cleanAllLinkNeighboursAndTaxa();
-            //part_tree_pairs[i]->printMapInfo();
-            //part_tree_pairs[i]->printBackMapInfo();
-            //cout<<endl;
+            taxon_name = list_taxa_to_insert[i];
+            // TODO: do not use FORLOOP for taxa, but a recursive function, bitte
+            nei1_vec.clear();
+            nei2_vec.clear();
             
+            init_terrace->getAllowedBranches(taxon_name, part_tree_pairs, &nei1_vec, &nei2_vec);
+            
+            if(!nei1_vec.empty()){
+                for(j=0; j<nei1_vec.size(); j++){
+                    init_terrace->extendNewTaxon(taxon_name,(TerraceNode*)nei1_vec[j]->node,(TerraceNode*)nei2_vec[j]->node,part_tree_pairs); // insert a taxon on induced partition trees, where it occurs -> DONE in extendNewTaxon
+                    id = terrace->matrix->findTaxonID(taxon_name);
+                    assert(id!=-1);
+                    init_terrace->matrix->extend_by_new_taxa(list_taxa_to_insert[i], terrace->matrix->pr_ab_matrix[id]);
+                    
+                    for(i=0; i<terrace->part_num; i++){
+                        // update matrices of top-low part tree pairs
+                        if(part_tree_pairs[i]->findLeafName(taxon_name)){
+                            //IntVector aux_ident_vec;
+                            //aux_ident_vec.push_back(1);
+                            //BUG: you do not have to add a new taxon to the matrix. Just update the entry from 0 to 1.
+                            //part_tree_pairs[i]->matrix->extend_by_new_taxa(taxon_name, aux_ident_vec);
+                            int taxon_matrix_id = part_tree_pairs[i]->matrix->findTaxonID(taxon_name);
+                            part_tree_pairs[i]->matrix->pr_ab_matrix[taxon_matrix_id][0]=1;
+                        }
+                        
+                    }
+                    
+                    // re-link
+                    cout<<endl<<endl<<"-----------------------------------"<<endl<<" AFTER TAXON INSERTION"<<endl<<"-----------------------------------"<<endl<<endl;
+                    cout<<endl<<"PARENT TREE:"<<endl<<endl;
+                    init_terrace->drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
+                    init_terrace->linkTrees(true, false);
+                    //init_terrace->printMapInfo();
+                    //init_terrace-> printBackMapInfo();
+                    for(i=0; i<terrace->part_num; i++){
+                        cout<<"====================================================="<<endl;
+                        cout<<endl<<"PARTITION TREE "<<i<<":"<<endl<<endl;
+                        cout<<"====================================================="<<endl;
+                        //if(init_terrace->induced_trees[i]->leafNum>2){
+                        //    init_terrace->induced_trees[i]->drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
+                        //}
+                        //part_tree_pairs[i]->drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
+                        part_tree_pairs[i]->linkTrees(false, true); //INFO/CHECK: I think you do not need back_taxon_map
+                        part_tree_pairs[i]->printMapInfo();
+                        part_tree_pairs[i]->printBackMapInfo();
+                        cout<<endl;
+                    }
+                    
+                    // repeat
+                    
+                    break; // for testing
+                
+                }
+            } else {
+                cout<<"For a given taxon "<<list_taxa_to_insert[i]<<" there are no allowed branches.. Dead end.."<<endl;
+                break; //for testing, should be return in a separate function, I guess
+            }
+            break; // for testing
         }
-        
-        // insert a taxon on induced partition trees, where it occurs
-        
-        
-        // re-link
-        init_terrace->linkTrees(true, false);
-        
-        // repeat
-        
-        
         
         
         
