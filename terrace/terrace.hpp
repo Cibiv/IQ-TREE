@@ -110,7 +110,8 @@ public:
     /*
      *  For a given taxon name get allowed branches. aux_terrace contains pointers to top level induced partition trees (which are stored as terraces)
      */
-    void getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, vector<TerraceNeighbor*> *nei1_vec, vector<TerraceNeighbor*> *nei2_vec);
+    //void getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, vector<TerraceNeighbor*> *nei1_vec, vector<TerraceNeighbor*> *nei2_vec);
+    void getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, NodeVector *node1_vec, NodeVector *node2_vec);
     
     /*
      *  Insert a new taxon to the parent tree, update induced partition trees, update mapping
@@ -129,6 +130,29 @@ public:
      */
     
     void create_Top_Low_Part_Tree_Pairs(vector<Terrace*> &part_tree_pairs, Terrace *terrace);
+    
+    /*
+     *  The main function to generate trees by recursive taxon insertion
+     */
+    
+    void generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_pairs, vector<string> *list_taxa_to_insert, int taxon_to_insert, bool *progress_status);
+    
+    /*
+     *  Remove one taxon from the terrace tree, from induced partition trees, update the mapping
+     */
+    
+    void remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pairs);
+    
+    /*
+     *  Re-link
+     */
+    void relinkALL(vector<Terrace*> part_tree_pairs);
+    
+    /*
+     * Print initial tree, print TOP and LOW induced trees
+     */
+    
+    void print_ALL_DATA(vector<Terrace*> part_tree_pairs);
 };
 
 #endif /* terrace_hpp */

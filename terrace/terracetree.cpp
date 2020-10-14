@@ -31,7 +31,7 @@ Node* TerraceTree::newNode(int node_id, int node_name) {
 
 void TerraceTree::copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names){
     
-    //cout<<"Copying a tree using a vector of taxon names..."<<endl;
+    cout<<"Copying a tree using a vector of taxon names..."<<endl;
     
     int i,j, sum = 0;
     int taxa_num = taxon_names.size();
@@ -42,8 +42,7 @@ void TerraceTree::copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names)
     
     NodeVector::iterator it2;
     vector<uint32_t> check_int;
-    check_int.resize(tree->leafNum);
-    std::fill(check_int.begin(), check_int.end(), 0);
+    check_int.resize(tree->leafNum,0);
     
     tree->getTaxa(taxa_nodes);
     
@@ -51,24 +50,24 @@ void TerraceTree::copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names)
         check = false;
         for(i=0; i<taxa_num; i++){
             if(taxa_nodes[j]->name == taxon_names[i]){
-                check_int[j]=1;
+                check_int[taxa_nodes[j]->id]=1;
                 sum+=1;
                 check = true;
                 break;
             }
         }
-        //cout<<"Taxon["<<j<<"] = "<<check_int[j]<<"| main_tree:"<<taxa_nodes[j]->name<<"-> subtree: "<<((check) ? taxon_names[i] : "")<<endl;
+        //cout<<"Taxon["<<j<<"] = "<<check_int[j]<<"| main_tree:"<<taxa_nodes[j]->name<<"("<<taxa_nodes[j]->id<<") "<<"-> subtree: "<<((check) ? taxon_names[i] : "")<<endl;
     }
     assert(sum == taxa_num && "Not all of the taxa appear in the complete tree!");
     taxa_set.clear();
     taxa_set.insert(taxa_set.begin(), check_int.begin(), check_int.end());
     copyTree(tree,taxa_set);
 
-    //printTree(cout,WT_BR_LEN_ROUNDING | WT_NEWLINE);
+    printTree(cout,WT_BR_LEN_ROUNDING | WT_NEWLINE);
 }
 
 void TerraceTree::cleanAllLinkINFO(TerraceNode *node, TerraceNode *dad){
-    
+
     if(!node){
         if(root->isLeaf()){
             node = (TerraceNode*) root->neighbors[0]->node;
@@ -84,6 +83,7 @@ void TerraceTree::cleanAllLinkINFO(TerraceNode *node, TerraceNode *dad){
         TerraceNeighbor *nei = (TerraceNeighbor*)node->findNeighbor(dad);
         TerraceNeighbor *dad_nei = (TerraceNeighbor*)dad->findNeighbor(node);
         if(nei->link_neighbors.size()>0){
+            //cout<<"| IF link_neighbours_exist -> clear them: size "<<nei->link_neighbors.size()<<endl;
             for(part=0; part<nei->link_neighbors.size(); part++){
                 if(((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.size()>0){
                     ((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.clear();
@@ -150,6 +150,26 @@ void TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_branch, T
     
     node_2->addNeighbor(node_2_branch, 0.0, br_id);
     
-    drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
+    initializeTree();
+    
+    //drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
+    
+}
+
+void TerraceTree::remove_taxon(string taxon_name){
+    
+    // WARNING: I think it does not remove taxon correctly and some neighbours appear to be present as Neighbors instead of TerraceNeighbours
+    // TODO: check and rewrite, if necessary
+    // Node *taxon_node = findLeafName(taxon_name);
+
+    StrVector taxa;
+    taxa.push_back(taxon_name);
+    
+    //TerraceNode *node = (TerraceNode*) findLeafName(taxon_name);
+    //NodeVector neighbours;
+    //FOR_NEIGHBOR_DECLARE(nei, node, it);
+    
+    
+    removeTaxa(taxa);
     
 }

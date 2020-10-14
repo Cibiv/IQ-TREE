@@ -13,6 +13,8 @@
 
 void runterraceanalysis(Params &params){
     
+    int i=0, j=0;
+    
     if(params.user_file && params.pr_ab_matrix){
         
         /*  INFO:
@@ -35,17 +37,71 @@ void runterraceanalysis(Params &params){
         
         vector<string> taxa_names_sub;
         
+        //exit(0);
+        
         // TODO: At this point taxa_names_sub is just a test example. Later on get initial tree by a smart choice.
-        taxa_names_sub.push_back(terrace->matrix->taxa_names[2]);
+        // chosen for testing, will not produce all trees from a terrace
+        /*taxa_names_sub.push_back(terrace->matrix->taxa_names[2]);
         taxa_names_sub.push_back(terrace->matrix->taxa_names[5]);
         taxa_names_sub.push_back(terrace->matrix->taxa_names[6]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[8]);*/
+        
+        // for 9 taxa example
+        /*taxa_names_sub.push_back(terrace->matrix->taxa_names[0]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[1]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[2]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[3]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[5]);*/
+        
+        
+        // for 10 taxa example
+        /*taxa_names_sub.push_back(terrace->matrix->taxa_names[0]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[1]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[2]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[3]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[6]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[7]);*/
+        
+        // for 15 taxa example cov_15_1 and tree_15_1
+        /*taxa_names_sub.push_back(terrace->matrix->taxa_names[0]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[1]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[2]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[3]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[4]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[5]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[7]);
         taxa_names_sub.push_back(terrace->matrix->taxa_names[8]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[9]);*/
+        
+        // for 6 taxa example
+        /*taxa_names_sub.push_back(terrace->matrix->taxa_names[2]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[3]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[4]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[5]);*/
+        
+        // for cov_7_1
+        /*taxa_names_sub.push_back(terrace->matrix->taxa_names[3]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[4]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[5]);
+        taxa_names_sub.push_back(terrace->matrix->taxa_names[6]);*/
+        
+        int init_part = 2;
+        for(i=0; i<terrace->taxa_num; i++){
+            if(terrace->matrix->pr_ab_matrix[i][init_part]==1){
+                taxa_names_sub.push_back(terrace->matrix->taxa_names[i]);
+                cout<<"TAXON "<<terrace->matrix->taxa_names[i]<<endl;
+            }
+        }
+        
+        cout<<endl;
         
         // Creating a subterrace: submatrix and an initial tree
         PresenceAbsenceMatrix *submatrix = new PresenceAbsenceMatrix();
         terrace->matrix->getSubPrAbMatrix(taxa_names_sub, submatrix);
+        
         TerraceTree tree_init;
         tree_init.copyTree_byTaxonNames(terrace,taxa_names_sub);
+        //tree_init.drawTree(cout, WT_BR_SCALE | WT_TAXON_ID | WT_NEWLINE);
         Terrace *init_terrace = new Terrace(tree_init, submatrix);
         
         //cout<<"taxa_names.size() = "<<init_terrace->matrix->taxa_names.size()<<endl;
@@ -58,8 +114,6 @@ void runterraceanalysis(Params &params){
         //init_terrace-> printBackMapInfo();
         
         vector<Terrace*> part_tree_pairs;
-        
-        int i=0, j=0;
         
         /*
         NodeVector aux_taxon_nodes;
@@ -153,6 +207,17 @@ void runterraceanalysis(Params &params){
             cout<<i<<":"<<list_taxa_to_insert[i]<<endl;
         }
         
+        cout<<endl<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
+        cout<<endl<<"READY TO GENERATE TREES FROM A TERRACE"<<endl;
+        cout<<endl<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
+        init_terrace->print_ALL_DATA(part_tree_pairs);
+        
+        bool progress_status = true;
+        init_terrace->generateTerraceTrees(terrace, part_tree_pairs, &list_taxa_to_insert, 0, &progress_status);
+        
+        
+        // ==================================================================================================================================================
+        
         /* insert taxon (here should be a loop afterwards, at the moment just test everything for this test example)
             - find allowed branches:
                 - find node
@@ -162,7 +227,7 @@ void runterraceanalysis(Params &params){
                     - get back_maps
                 + get allowed branches by the overlap of branches from all partitions
         */
-        vector<TerraceNeighbor*> nei1_vec, nei2_vec;
+        /*vector<TerraceNeighbor*> nei1_vec, nei2_vec;
         
         string taxon_name;
         int id;
@@ -219,6 +284,8 @@ void runterraceanalysis(Params &params){
                     
                     // repeat
                     
+                    // TODO: write function to DELETE a taxon
+                    
                     break; // for testing
                 
                 }
@@ -229,8 +296,9 @@ void runterraceanalysis(Params &params){
             break; // for testing
         }
         
+         */
         
-        
+        // ==================================================================================================================================================
         
         
         // BELOW stuff was only used for testing. I think, you can delete it.

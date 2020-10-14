@@ -76,6 +76,10 @@ public:
      */
     void insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch);
     
+    /**
+     *  Remove one taxon
+     */
+    void remove_taxon(string taxon_name);
 };
 
 

@@ -107,6 +107,11 @@ public:
      */
     virtual void addNeighbor(Node *node, double length, int id = -1);
     
+    /**
+     used for the destructor
+     */
+    virtual void deleteNode();
+    
     ~TerraceNode();
     
     /*

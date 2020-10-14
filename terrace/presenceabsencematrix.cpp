@@ -214,10 +214,11 @@ void PresenceAbsenceMatrix::getSubPrAbMatrix(vector<string> taxa_names_subset, P
         }
     }
     
+    bool print_info = false;
     if(not_found_taxon_names.size()<taxa_names_subset.size()){
         submatrix->taxa_num = submatrix->taxa_names.size();
         submatrix->part_num = submatrix->pr_ab_matrix[0].size();
-        if(false){
+        if(print_info){
             cout<<"INFO: original matrix."<<endl;
             print_pr_ab_matrix();
             cout<<endl<<"INFO: a submatrix for "<<submatrix->taxa_num<<" taxa was extracted."<<endl;
@@ -244,4 +245,28 @@ void PresenceAbsenceMatrix::extend_by_new_taxa(string taxon_name, IntVector pr_a
     taxa_num+=1;
     
     flag_reorderAccordingToTree = false;
+}
+
+void PresenceAbsenceMatrix::remove_taxon(string taxon_name){
+    
+    cout<<"REMOVING taxon "<<taxon_name<<" from matrix."<<endl;
+    int id = findTaxonID(taxon_name);
+    
+    /*cout<<"BEFORE:"<<endl;
+    print_pr_ab_matrix();
+    cout<<"MATRIX   dim: "<<pr_ab_matrix.size()<<"x"<<pr_ab_matrix[0].size()<<endl;
+    cout<<"TAXAname dim:"<<taxa_names.size()<<endl;*/
+    
+    pr_ab_matrix.erase(pr_ab_matrix.begin()+id);
+    taxa_names.erase(taxa_names.begin()+id);
+    
+    taxa_num-=1;
+    
+    /*cout<<"AFTER:"<<endl;
+    print_pr_ab_matrix();
+    cout<<"MATRIX   dim: "<<pr_ab_matrix.size()<<"x"<<pr_ab_matrix[0].size()<<endl;
+    cout<<"TAXAname dim:"<<taxa_names.size()<<endl;*/
+    
+    flag_reorderAccordingToTree = false;
+    
 }

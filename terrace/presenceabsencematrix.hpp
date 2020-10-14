@@ -69,6 +69,12 @@ public:
      */
     
     void extend_by_new_taxa(string taxon_name, IntVector pr_ab_pattern);
+    
+    /*
+     *  Remove a taxon from presence_absence matrix
+     */
+    
+    void remove_taxon(string taxon_name);
 };
 
 vector<IntVector> getSubMatrix(vector<IntVector> pr_ab_complete, vector<string> taxa_names, MTree* tree);
