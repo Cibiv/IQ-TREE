@@ -1400,6 +1400,13 @@ public:
 
     vector<TraversalInfo> traversal_info;
 
+    /*cassius: asymptotic approximation of the derivative*/
+
+    bool asymptotic_computed;
+
+    double asymptotic;
+
+
 
     /****************************************************************************
             Nearest Neighbor Interchange by maximum likelihood

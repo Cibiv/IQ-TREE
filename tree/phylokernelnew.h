@@ -2504,6 +2504,249 @@ void PhyloTree::computeLikelihoodDervGenericSIMD(PhyloNeighbor *dad_branch, Phyl
         cout << "WARNING: Numerical underflow for lh-derivative" << endl;
         *df = *ddf = 0.0;
     }
+
+    /*Cassius: The computation of the asymptotics starts */
+    if (not asymptotic_computed) {
+        double tolerance = 1e-6;
+        double biggest_eval = -1000;
+        int position_zero = -1;
+        
+        // We find the position of the zero eigenvalue position_zero and the largest nonzero eigenvalue biggest_eval
+        for (int i = 0; i < nstates; ++i) {
+            if (abs(eval[i]) < tolerance) {
+                if (position_zero > -1) cout << endl << "Warning: There are at least two zero eigenvalues." << endl;
+                position_zero = i;
+            } else if (eval[i] > biggest_eval) {
+                biggest_eval = eval[i];
+            }
+        }
+        if (position_zero == -1) cout << endl << "Warning: There is no zero eigenvalue." << endl;
+
+        // We compute the algebraic multiplicity (number of times repeated) of eigenvalue biggest_eval
+        int amount_of_equal_eigenvalues = 0;
+        for (int i = 0; i < nstates; ++i) {
+            if (abs (biggest_eval - eval[i]) < tolerance)
+                ++amount_of_equal_eigenvalues;
+        }
+
+        // Find the position(s) of biggest_eval
+        vector<int> positions_of_biggest(amount_of_equal_eigenvalues, 0);
+        int aux = 0;
+        for (int i = 0; i < nstates; ++i) {
+            if (abs (biggest_eval - eval[i]) < tolerance) {
+                positions_of_biggest[aux] = i;
+                ++aux;
+            }
+        }
+
+        double sum = 0;
+
+        int bloque = int(nstates * ncat * vector_size);
+
+        int i,j,k;
+
+        int number_blocks = int(aln->size()+int(vector_size)-1)/int(vector_size);
+        for (i = 0; i < number_blocks; ++i) {
+            for (j = 0; j < int(vector_size) and vector_size * i + j < aln->size(); ++j) {
+                if (theta_all[bloque*i + vector_size*position_zero + j] <= 0)
+                    cout << endl <<  "Warning: A coefficient associated to a zero eigenvalue is zero." << endl;
+                for (k = 0; k < amount_of_equal_eigenvalues; ++k) {
+                    sum +=  ptn_freq[vector_size * i + j] * theta_all[bloque*i + vector_size*positions_of_biggest[k]]/theta_all[bloque*i + vector_size*position_zero];
+                }
+            }
+        }
+        asymptotic = sum;
+        //cout << endl << "this is the sum " << asymptotic << endl;
+        asymptotic_computed = true;
+
+        //we compute the likelihood at infinite
+
+        cout << " holaaaaaaaaa " << current_it->lh_scale_factor << endl;
+        cout << " holaaaaaaaaa " << current_it_back->lh_scale_factor << endl;
+        double like_inf = 0;
+        for (i = 0; i < number_blocks; ++i) {
+            for (j = 0; j < int(vector_size); ++j) {
+                like_inf +=  ptn_freq[vector_size * i + j] * (log(theta_all[bloque*i + vector_size*position_zero]) - buffer_scale_all[vector_size * i + j]);
+            }
+        }
+
+
+
+        for (i = 0; i < number_blocks; ++i) {
+            for (j = 0; j < int(vector_size); ++j) {
+                if (vector_size * i + j < aln->size()) {
+                    cout << vector_size * i + j << endl;
+                    cout <<  ptn_freq[vector_size * i + j] << endl;
+                    cout << (log(theta_all[bloque*i + vector_size*position_zero])) << endl;
+                    cout << buffer_scale_all[vector_size * i + j] << endl;
+                }
+            }
+        }
+
+        //asymptotic = like_inf;
+    }
+
+    if (false) {
+        ASSERT(theta_all && theta_computed);
+
+#ifndef KERNEL_FIX_STATES
+        size_t nstates = aln->num_states;
+#endif
+        size_t ncat = site_rate->getNRate();
+        size_t ncat_mix = (model_factory->fused_mix_rate) ? ncat : ncat*model->getNMixtures();
+
+        size_t block = ncat_mix * nstates;
+//    size_t tip_block = nstates * model->getNMixtures();
+        size_t ptn; // for big data size > 4GB memory required
+        size_t c, i;
+        size_t orig_nptn = aln->size();
+        size_t max_orig_nptn = ((orig_nptn+VectorClass::size()-1)/VectorClass::size())*VectorClass::size();
+        size_t nptn = max_orig_nptn+model_factory->unobserved_ptns.size();
+        bool isASC = model_factory->unobserved_ptns.size() > 0;
+
+        size_t mix_addr_nstates[ncat_mix], mix_addr[ncat_mix];
+        size_t denom = (model_factory->fused_mix_rate) ? 1 : ncat;
+        for (c = 0; c < ncat_mix; c++) {
+            size_t m = c/denom;
+            mix_addr_nstates[c] = m*nstates;
+            mix_addr[c] = mix_addr_nstates[c]*nstates;
+        }
+
+        double *eval = model->getEigenvalues();
+        ASSERT(eval);
+
+        double *val0 = NULL;
+        double cat_length[ncat];
+        double cat_prop[ncat];
+
+        if (SITE_MODEL) {
+            for (c = 0; c < ncat; c++) {
+                //cat_length[c] = site_rate->getRate(c) * current_it->length;
+                //cat_prop[c] = site_rate->getProp(c);
+                cat_length[c] = 10;
+                cat_prop[c] = 10;
+            }
+        } else {
+            val0 = buffer_partial_lh;
+            if (nstates % VectorClass::size() == 0) {
+                VectorClass *vc_val0 = (VectorClass*)val0;
+                size_t loop_size = nstates / VectorClass::size();
+                for (c = 0; c < ncat_mix; c++) {
+                    size_t m = c/denom;
+                    VectorClass *eval_ptr = (VectorClass*)(eval + mix_addr_nstates[c]);
+                    size_t mycat = c%ncat;
+                    double prop = site_rate->getProp(mycat) * model->getMixtureWeight(m);
+                    //double len = site_rate->getRate(mycat) * current_it->getLength(mycat);
+                    double len = 10;
+                    for (i = 0; i < loop_size; i++) {
+                        vc_val0[i] = exp(eval_ptr[i] * len) * prop;
+                        //if (eval_ptr[i] == 0) vc_val0[i] = prop;
+                        //else if (eval_ptr[i] < 0) vc_val0[i] = 0;
+
+                    }
+                    vc_val0 += loop_size;
+                }
+            } else {
+                for (c = 0; c < ncat_mix; c++) {
+                    size_t m = c/denom;
+                    double *eval_ptr = eval + mix_addr_nstates[c];
+                    size_t mycat = c%ncat;
+                    double prop = site_rate->getProp(mycat) * model->getMixtureWeight(m);
+                    size_t addr = c*nstates;
+                    for (i = 0; i < nstates; i++) {
+                        double cof = eval_ptr[i]*site_rate->getRate(mycat);
+                        double val = exp(cof*current_it->getLength(mycat)) * prop;
+                        val0[addr+i] = val;
+                    }
+                }
+            }
+        }
+
+//    double tree_lh = node_branch->lh_scale_factor + dad_branch->lh_scale_factor;
+
+        VectorClass all_tree_lh(0.0), all_prob_const(0.0);
+
+#ifdef _OPENMP
+#pragma omp parallel private(ptn, i, c) num_threads(num_threads)
+        {
+#endif
+            VectorClass vc_tree_lh(0.0), vc_prob_const(0.0);
+#ifdef _OPENMP
+#pragma omp for schedule(static) nowait
+#endif
+            for (ptn = 0; ptn < nptn; ptn+=VectorClass::size()) {
+                VectorClass lh_ptn(0.0);
+                VectorClass *theta = (VectorClass*)(theta_all + ptn*block);
+                if (SITE_MODEL) {
+                    VectorClass *eval_ptr = (VectorClass*)&eval[ptn*nstates];
+                    for (c = 0; c < ncat; c++) {
+                        VectorClass lh_cat;
+#ifdef KERNEL_FIX_STATES
+                        dotProductExp<VectorClass, double, nstates, FMA>(eval_ptr, theta, cat_length[c], lh_cat);
+#else
+                        dotProductExp<VectorClass, double, FMA>(eval_ptr, theta, cat_length[c], lh_cat, nstates);
+#endif
+                        lh_ptn = mul_add(lh_cat, cat_prop[c], lh_ptn);
+                        theta += nstates;
+                    }
+                } else {
+                    dotProductVec<VectorClass, double, FMA>(val0, theta, lh_ptn, block);
+                }
+
+                // Sum later to avoid underflow of invariant sites
+                lh_ptn = abs(lh_ptn) + VectorClass().load_a(&ptn_invar[ptn]);
+
+                if (ptn < orig_nptn) {
+                    lh_ptn = log(abs(lh_ptn)) + VectorClass().load_a(&buffer_scale_all[ptn]);
+                    lh_ptn.store_a(&_pattern_lh[ptn]);
+                    vc_tree_lh = mul_add(lh_ptn, VectorClass().load_a(&ptn_freq[ptn]), vc_tree_lh);
+                } else {
+                    // ascertainment bias correction
+                    if (ptn+VectorClass::size() > nptn) {
+                        // cutoff the last entries if going beyond
+                        lh_ptn.cutoff(nptn-ptn);
+                    }
+                    if (horizontal_or(VectorClass().load_a(&buffer_scale_all[ptn]) != 0.0)) {
+                        // some entries are rescaled
+                        double *lh_ptn_dbl = (double*)&lh_ptn;
+                        for (i = 0; i < VectorClass::size(); i++)
+                            if (buffer_scale_all[ptn+i] != 0.0)
+                                lh_ptn_dbl[i] *= SCALING_THRESHOLD;
+                    }
+                    vc_prob_const += lh_ptn;
+                }
+            }
+#ifdef _OPENMP
+#pragma omp critical
+            {
+                all_tree_lh += vc_tree_lh;
+            }
+        }
+#else
+        all_tree_lh = vc_tree_lh;
+    all_prob_const = vc_prob_const;
+#endif
+
+        double tree_lh = horizontal_add(all_tree_lh);
+
+        if (!safe_numeric && !std::isfinite(tree_lh))
+            outError("Numerical underflow (lh-from-buffer). Run again with the safe likelihood kernel via `-safe` option");
+
+        ASSERT(std::isfinite(tree_lh) && "Numerical underflow for lh-from-buffer");
+
+        // arbitrarily fix tree_lh if underflown for some sites
+        if (!std::isfinite(tree_lh)) {
+            tree_lh = 0.0;
+            for (ptn = 0; ptn < orig_nptn; ptn++) {
+                if (!std::isfinite(_pattern_lh[ptn])) {
+                    _pattern_lh[ptn] = LOG_SCALING_THRESHOLD*4; // log(2^(-1024))
+                }
+                tree_lh += _pattern_lh[ptn] * ptn_freq[ptn];
+            }
+        }
+
+        //asymptotic =  tree_lh;
+    }
 }
 
 
@@ -3010,6 +3253,7 @@ double PhyloTree::computeLikelihoodFromBufferGenericSIMD()
 
 	ASSERT(theta_all && theta_computed);
 
+	//marcacassius
 //	double tree_lh = current_it->lh_scale_factor + current_it_back->lh_scale_factor;
 
 #ifndef KERNEL_FIX_STATES
@@ -3060,6 +3304,7 @@ double PhyloTree::computeLikelihoodFromBufferGenericSIMD()
                 double len = site_rate->getRate(mycat) * current_it->getLength(mycat);
                 for (i = 0; i < loop_size; i++) {
                     vc_val0[i] = exp(eval_ptr[i] * len) * prop;
+
                 }
                 vc_val0 += loop_size;
             }
