@@ -20,6 +20,8 @@
 #ifndef EIGENDECOMPOSITION_H
 #define EIGENDECOMPOSITION_H
 
+#include <complex>
+
 //const double ZERO_FREQ = 0.000001;
 const double ZERO_FREQ = 1e-10;
 
@@ -185,6 +187,77 @@ protected:
 	void luinverse(double **inmat, double **imtrx, int size);
 
 	void checkevector(double *evec, double *ivec, int nn);
+
+
+	/*********************************************************
+* Cassius' functions to implement the closed formulas for the eigensystem.
+*********************************************************/
+
+
+	/** check that inversion was ok using complex numbers*/
+
+	void checkevector_complex(std::complex<double> *evec, std::complex<double> *civec, int nn);
+
+    /**
+        Formula to solve the cubic equation
+         @param (IN) Solve ax^3 + bx^2 + cx + d = 0
+         @param (OUT) root_real real part of eigenvalues
+         @param (OUT) root_imag imaginary part of eigenvalues
+    */
+    void solve_cubic_equation(double a, double b, double c, double d, double* root_real, double* root_imag);
+
+    /**
+        Eigenvalues for general 4 DIMENSIONAL non-symmetric matrix using the closed formula of the cubic
+        @param rate_matrix rate matrix
+        @param eval (OUT) real part of eigenvalues
+        @param eval_imag (OUT) imaginary part of eigenvalues
+    */
+    void eigenvalues_closed_formula_nonrev(double *rate_matrix, std::complex<double> *ceval, double *eigenvalues, double *eigenvalues_imag);
+
+    /**
+         Eigenvalues for general 4 DIMENSIONAL reversible matrix using the closed formula of the cubic
+         @param rate_matrix rate matrix with all the 16 entries
+         @param eval (OUT) real part of eigenvalues
+         @param eval_imag (OUT) imaginary part of eigenvalues
+    */
+    void eigenvalues_closed_formula_rev(double *rate_matrix, double *eval);
+
+
+    /**
+        EigenSystem for 4 DIMENSIONAL general non-symmetric matrix with state frequencies
+        @param rate_matrix rate matrix with all the 16 entries
+        @param eval (IN) real part of eigenvalues (computed in eigenvalues_closed_formuka_nonrev() )
+        @param eval_imag (IN) imaginary part of eigenvalues (computed in eigenvalues_closed_formuka_nonrev() )
+        @param evec (OUT) eigenvectors
+        @param inv_evec (OUT) inverse matrix of eigenvectors
+        @param num_state (IN) number of states
+	*/
+    void eigensystem_closed_formula_nonrev(double *rate_matrix, double *state_freq,
+                                           std::complex<double> *ceval, std::complex<double> *cevec,  std::complex<double> *inv_cevec);
+
+    /**
+		EigenSystem for 4 DIMENSIONAL general non-symmetric matrix with state frequencies
+		@param rate_matrix rate matrix with all the 16 entries
+		@param eval (IN) real part of eigenvalues (computed in eigenvalues_closed_formuka_nonrev() )
+		@param eval_imag (IN) imaginary part of eigenvalues (computed in eigenvalues_closed_formuka_nonrev() )
+		@param evec (OUT) eigenvectors
+		@param inv_evec (OUT) inverse matrix of eigenvectors
+		@param num_state (IN) number of states
+	*/
+    void eigensystem_closed_formula_nonrev_real(double *rate_matrix, double *state_freq, double *eval, double *evec, double *inv_evec);
+
+
+    /**
+		EigenSystem for 4 DIMENSIONAL general reversible matrix with state frequencies
+		@param rate_matrix rate matrix with all the 16 entries
+		@param eval (IN) real eigenvalues (computed in eigenvalues_closed_formula_rev() )
+		@param evec (OUT) eigenvectors
+		@param inv_evec (OUT) inverse matrix of eigenvectors
+		@param num_state (IN) number of states
+	*/
+    void eigensystem_closed_formula_rev(double *rate_matrix, double *state_freq,
+                                           double *eval, double *evec,  double *inv_evec);
+
 
 };
 

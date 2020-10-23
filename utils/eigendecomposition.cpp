@@ -1300,6 +1300,7 @@ void EigenDecomposition::checkevector(double *evec, double *ivec, int nn) {
 			}
 		}
 	}
+
 	if (error) {
 		cout << "\nWARNING: Inversion of eigenvector matrix not perfect!\n";
 	}
@@ -1308,3 +1309,610 @@ void EigenDecomposition::checkevector(double *evec, double *ivec, int nn) {
 		delete [] matx[i];
 	delete [] matx;
 } /* checkevector */
+
+
+
+/*Cassius: From now on, these are my functions to implement the closed formulae of the decomposition*/
+
+/* check inversion with complex entries*/
+void EigenDecomposition::checkevector_complex(complex<double> *evec, complex<double> *ivec, int nn) {
+	int i, j, ia, ib, ic, error;
+	complex<double> **matx = (complex<double>**) new complex<double> [nn];
+	complex<double> sum;
+
+	for (i = 0; i < nn; i++)
+		matx[i] = new complex<double>[nn];
+
+	/* multiply matrix of eigenvectors and its inverse */
+	for (ia = 0; ia < nn; ia++) {
+		for (ic = 0; ic < nn; ic++) {
+			sum = 0.0;
+			for (ib = 0; ib < nn; ib++) sum += evec[ia*nn+ib] * ivec[ib*nn+ic];
+			matx[ia][ic] = sum;
+		}
+	}
+	/* check whether the unitary matrix is obtained */
+	error = 0;
+	for (i = 0; i < nn; i++) {
+		for (j = 0; j < nn; j++) {
+			if (i == j) {
+				if (abs(matx[i][j] - 1.0) > 1.0e-5)
+					error = 1;
+			} else {
+				if (abs(matx[i][j]) > 1.0e-5)
+					error = 1;
+			}
+		}
+	}
+
+	if (error) {
+		cout << "\nWARNING: Inversion of eigenvector matrix not perfect!\n";
+	}
+
+	for (i = nn-1; i >= 0; i--)
+		delete [] matx[i];
+	delete [] matx;
+}
+
+
+/* eigensystem */
+
+/* solve the cubic equation*/
+
+void EigenDecomposition::solve_cubic_equation(double a, double b, double c, double d, double* root_real, double* root_imag) {
+    const double PI = 4.0 * atan( 1.0 );
+
+    // Reduced equation: X^3 - 3pX - 2q = 0, where X = x-b/(3a)
+    double p = ( b * b - 3.0 * a * c ) / ( 9.0 * a * a );
+    double q = ( 9.0 * a * b * c - 27.0 * a * a * d - 2.0 * b * b * b ) / ( 54.0 * a * a * a );
+    double offset = b / ( 3.0 * a );
+
+    // Discriminant
+    double discriminant = p * p * p - q * q;
+
+    if (abs(discriminant) < 1e-12)
+        discriminant = 0;
+    if (abs(q) < 1e-18)
+        q = 0;
+
+    if ( discriminant > 0)           // set X = 2 sqrt(p) cos(theta) and compare 4 cos^3(theta)-3 cos(theta) = cos(3 theta)
+    {
+        double theta = acos( q / ( p * sqrt( p ) ) );
+        double r = 2.0 * sqrt( p );
+        for ( int n = 0; n < 3; n++ ) {
+            root_real[n] = r * cos( ( theta + 2.0 * n * PI ) / 3.0 ) - offset;
+            root_imag[n] = 0;
+        }
+    }
+    else
+    {
+        double gamma1 = cbrt( q + sqrt( -discriminant ) );
+        double gamma2 = cbrt( q - sqrt( -discriminant ) );
+
+        root_real[0] = gamma1 + gamma2 - offset;
+        root_imag[0] = 0;
+
+        double re = -0.5 * ( gamma1 + gamma2 ) - offset;
+        double im = ( gamma1 - gamma2 ) * sqrt( 3.0 ) / 2.0;
+        if ( discriminant == 0 )                // Equal roots
+        {
+            root_real[1] = root_real[2] = re;
+            root_imag[1] = root_imag[2] = 0;
+        }
+        else
+        {
+            root_real[1] = root_real[2] = re;
+            root_imag[1] = im;
+            root_imag[2] = -im;
+        }
+    }
+}
+
+/* For NONREVERSIBLE matrices WITH 4 STATES, find the eigenvalues using the closed formulae */
+void EigenDecomposition::eigenvalues_closed_formula_nonrev(
+        double *rate_matrix, complex<double> *ceval, double *eval, double *ieval)
+{
+    auto *root_real = new double[3];
+    auto *root_imag = new double[3];
+
+    double c0 = 0;
+    double c1 = 0;
+    double c2 = 0;
+    for (int i = 0; i < 4; i++){
+        for (int j = 0; j < i; j++) {
+            c2 += rate_matrix[4*i + j];
+        }
+        for (int j = i+1; j < 4; j++) {
+            c2 += rate_matrix[4*i + j];
+        }
+    }
+
+    //The following are the parameters as output by Mathematica using CForm. I extract common factor whenever possible, to minimize computation.
+
+    c1 = rate_matrix[11]*(rate_matrix[12] + rate_matrix[13] + rate_matrix[1] + rate_matrix[2] + rate_matrix[3] + rate_matrix[4] + rate_matrix[6] + rate_matrix[7]) + (rate_matrix[4] + rate_matrix[6])*rate_matrix[8] + rate_matrix[4]*rate_matrix[9] +
+         rate_matrix[2]*(rate_matrix[4] + rate_matrix[6] + rate_matrix[7] + rate_matrix[9]) + rate_matrix[7]*(rate_matrix[8] + rate_matrix[9]) +
+         rate_matrix[13]*(rate_matrix[1] + rate_matrix[2] + rate_matrix[3] + rate_matrix[4] + rate_matrix[6] + rate_matrix[8] + rate_matrix[9]) + rate_matrix[1]*(rate_matrix[6] + rate_matrix[7] + rate_matrix[8] + rate_matrix[9]) +
+         rate_matrix[3]*(rate_matrix[4] + rate_matrix[6] + rate_matrix[7] + rate_matrix[8] + rate_matrix[9]) + rate_matrix[12]*(rate_matrix[1] + rate_matrix[2] + rate_matrix[4] + rate_matrix[6] + rate_matrix[7] + rate_matrix[8] + rate_matrix[9]) +
+         rate_matrix[14]*(rate_matrix[1] + rate_matrix[2] + rate_matrix[3] + rate_matrix[4] + rate_matrix[6] + rate_matrix[7] + rate_matrix[8] + rate_matrix[9]);
+
+    c0 = rate_matrix[11]*(rate_matrix[13]*(rate_matrix[1] + rate_matrix[2] + rate_matrix[3] + rate_matrix[4]) + rate_matrix[1]*(rate_matrix[6] + rate_matrix[7])
+                          + rate_matrix[2]*(rate_matrix[4] + rate_matrix[6] + rate_matrix[7]) + rate_matrix[3]*(rate_matrix[4] + rate_matrix[6] + rate_matrix[7]) +
+                          rate_matrix[12]*(rate_matrix[1] + rate_matrix[4] + rate_matrix[6] + rate_matrix[7])) + rate_matrix[2]*rate_matrix[7]*rate_matrix[9] +
+         rate_matrix[1]*rate_matrix[7]*(rate_matrix[8] + rate_matrix[9]) + rate_matrix[3]*((rate_matrix[4] + rate_matrix[6])*rate_matrix[8] + rate_matrix[4]*rate_matrix[9] +
+                                                                                           rate_matrix[7]*(rate_matrix[8] + rate_matrix[9])) + rate_matrix[12]*((rate_matrix[4] + rate_matrix[6])*rate_matrix[8] + rate_matrix[4]*rate_matrix[9] +
+                                                                                                                                                                rate_matrix[2]*(rate_matrix[4] + rate_matrix[6] + rate_matrix[7] + rate_matrix[9]) + rate_matrix[7]*(rate_matrix[8] + rate_matrix[9]) + rate_matrix[1]*(rate_matrix[6] + rate_matrix[8] + rate_matrix[9])) +
+         rate_matrix[13]*((rate_matrix[4] + rate_matrix[6])*rate_matrix[8] + rate_matrix[4]*rate_matrix[9] + rate_matrix[2]*(rate_matrix[4] +
+                                                                                                                             rate_matrix[6] + rate_matrix[9]) + rate_matrix[1]*(rate_matrix[6] + rate_matrix[8] + rate_matrix[9]) + rate_matrix[3]*(rate_matrix[6] + rate_matrix[8] + rate_matrix[9])) +
+         rate_matrix[14]*((rate_matrix[4] + rate_matrix[6])*rate_matrix[8] + rate_matrix[7]*rate_matrix[8] + rate_matrix[4]*rate_matrix[9] + rate_matrix[2]*(rate_matrix[4] + rate_matrix[6] +
+                                                                                                                                                             rate_matrix[7] + rate_matrix[9]) + rate_matrix[3]*(rate_matrix[4] + rate_matrix[6] + rate_matrix[7] + rate_matrix[9]) + rate_matrix[1]*(rate_matrix[6] + rate_matrix[7] + rate_matrix[8] + rate_matrix[9]));
+
+    solve_cubic_equation(1, c2, c1, c0, root_real, root_imag);
+
+
+
+    ceval[3] = (0.0, 0.0);
+    eval[3] = 0.0;
+    ieval[3] = 0.0;
+    for (int i = 0; i < 3; ++i) {
+        complex<double> aux(root_real[i], root_imag[i]);
+        ceval[i] = aux;
+        eval[i] = root_real[i];
+        ieval[i] = root_imag[i];
+    }
+
+    delete [] root_real;
+    delete [] root_imag;
+
+}
+
+/* Find the eigenvalues of a REVERSIBLE rate matrix with DIMENSION 4 using closed formulae*/
+void EigenDecomposition::eigenvalues_closed_formula_rev(
+        double *rate_matrix, double *eval)
+{
+
+    auto *root_real = new double[3];
+    auto *root_imag = new double[3];
+
+    double c0;
+    double c1;
+    double c2 = 0;
+    for (int i = 0; i < 4; i++){
+        for (int j = 0; j < i; j++) {
+            c2 += rate_matrix[4*i + j];
+        }
+        for (int j = i+1; j < 4; j++) {
+            c2 += rate_matrix[4*i + j];
+        }
+    }
+
+    //The following are the parameters as output by Mathematica using CForm. I extract common factor whenever possible, to minimize computation.
+
+    c1 = rate_matrix[11]*(rate_matrix[12] + rate_matrix[13] + rate_matrix[1] + rate_matrix[2] + rate_matrix[3] + rate_matrix[4] + rate_matrix[6] + rate_matrix[7]) + (rate_matrix[4] + rate_matrix[6])*rate_matrix[8] + rate_matrix[4]*rate_matrix[9] +
+         rate_matrix[2]*(rate_matrix[4] + rate_matrix[6] + rate_matrix[7] + rate_matrix[9]) + rate_matrix[7]*(rate_matrix[8] + rate_matrix[9]) +
+         rate_matrix[13]*(rate_matrix[1] + rate_matrix[2] + rate_matrix[3] + rate_matrix[4] + rate_matrix[6] + rate_matrix[8] + rate_matrix[9]) + rate_matrix[1]*(rate_matrix[6] + rate_matrix[7] + rate_matrix[8] + rate_matrix[9]) +
+         rate_matrix[3]*(rate_matrix[4] + rate_matrix[6] + rate_matrix[7] + rate_matrix[8] + rate_matrix[9]) + rate_matrix[12]*(rate_matrix[1] + rate_matrix[2] + rate_matrix[4] + rate_matrix[6] + rate_matrix[7] + rate_matrix[8] + rate_matrix[9]) +
+         rate_matrix[14]*(rate_matrix[1] + rate_matrix[2] + rate_matrix[3] + rate_matrix[4] + rate_matrix[6] + rate_matrix[7] + rate_matrix[8] + rate_matrix[9]);
+
+    c0 = rate_matrix[11]*(rate_matrix[13]*(rate_matrix[1] + rate_matrix[2] + rate_matrix[3] + rate_matrix[4]) + rate_matrix[1]*(rate_matrix[6] + rate_matrix[7])
+                          + rate_matrix[2]*(rate_matrix[4] + rate_matrix[6] + rate_matrix[7]) + rate_matrix[3]*(rate_matrix[4] + rate_matrix[6] + rate_matrix[7]) +
+                          rate_matrix[12]*(rate_matrix[1] + rate_matrix[4] + rate_matrix[6] + rate_matrix[7])) + rate_matrix[2]*rate_matrix[7]*rate_matrix[9] +
+         rate_matrix[1]*rate_matrix[7]*(rate_matrix[8] + rate_matrix[9]) + rate_matrix[3]*((rate_matrix[4] + rate_matrix[6])*rate_matrix[8] + rate_matrix[4]*rate_matrix[9]
+                                                                                           + rate_matrix[7]*(rate_matrix[8] + rate_matrix[9])) + rate_matrix[12]*((rate_matrix[4] + rate_matrix[6])*rate_matrix[8] + rate_matrix[4]*rate_matrix[9] +
+                                                                                                                                                                  rate_matrix[2]*(rate_matrix[4] + rate_matrix[6] + rate_matrix[7] + rate_matrix[9]) + rate_matrix[7]*(rate_matrix[8] + rate_matrix[9]) + rate_matrix[1]*(rate_matrix[6] +
+                                                                                                                                                                                                                                                                                                                          rate_matrix[8] + rate_matrix[9])) + rate_matrix[13]*((rate_matrix[4] + rate_matrix[6])*rate_matrix[8] + rate_matrix[4]*rate_matrix[9] + rate_matrix[2]*(rate_matrix[4] +
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  rate_matrix[6] + rate_matrix[9]) + rate_matrix[1]*(rate_matrix[6] + rate_matrix[8] + rate_matrix[9]) + rate_matrix[3]*(rate_matrix[6] + rate_matrix[8] + rate_matrix[9])) +
+         rate_matrix[14]*((rate_matrix[4] + rate_matrix[6])*rate_matrix[8] + rate_matrix[7]*rate_matrix[8] + rate_matrix[4]*rate_matrix[9] + rate_matrix[2]*(rate_matrix[4] + rate_matrix[6] +
+                                                                                                                                                             rate_matrix[7] + rate_matrix[9]) + rate_matrix[3]*(rate_matrix[4] + rate_matrix[6] + rate_matrix[7] + rate_matrix[9]) + rate_matrix[1]*(rate_matrix[6] + rate_matrix[7] + rate_matrix[8] + rate_matrix[9]));
+
+    solve_cubic_equation(1, c2, c1, c0, root_real, root_imag);
+
+    eval[3] = 0.0;
+    for (int i = 0; i < 3; ++i)
+        eval[i] = root_real[i];
+
+    delete [] root_real;
+    delete [] root_imag;
+}
+
+/* Closed formula for the eigenvectors of a (nonreversible) rate matrix with DIMENSION 4 and DIFFERENT EIGENVALUES */
+
+void EigenDecomposition::eigensystem_closed_formula_nonrev(double *rate_matrix, double *state_freq, complex<double> *ceval,
+                                                           complex<double> *cevec, complex<double> *cinv_evec) {
+
+	int i,j,k;
+
+	double square_rate_mat[16];
+	for (i = 0; i < 4; ++i) {
+		for (j = 0; j < 4; ++j) {
+			square_rate_mat[4*i + j] = 0.;
+			for (k = 0; k < 4; ++k) square_rate_mat[4*i + j] += rate_matrix[4*i + k]*rate_matrix[4*k + j];
+		}
+	}
+
+
+    // Declare the right eigenvectors using close formulae
+
+    for (i = 0; i < 4; ++i)
+        cevec[4*i + 3] =  1.0;
+
+    for (k = 0; k < 3; ++k) {
+        int pre = (k + 2) % 3;
+        int post = (k + 1) % 3;
+        for (i = 0; i < 4; ++i) {
+            cevec[4*i + k] =   ceval[pre]*ceval[post]*( bool(i==0) - state_freq[0]) - (ceval[pre] + ceval[post])*rate_matrix[4*i] + square_rate_mat[4*i];
+        }
+    }
+
+    // Declare the left eigenvectors using close formulae
+
+    for (i = 0; i < 4; ++i)
+        cinv_evec[4*3 + i] = state_freq[i];
+
+    for (k = 0; k < 3; ++k) {
+        int pre = (k + 2) % 3;
+        int post = (k + 1) % 3;
+        for (i = 0; i < 4; ++i) {
+            cinv_evec[4*k + i] =   ceval[pre]*ceval[post]*( bool(i==0) - state_freq[i]) - (ceval[pre] + ceval[post])*rate_matrix[i] + square_rate_mat[i];
+        }
+    }
+
+	// Rescale the eigenvectors so that inv_evec is the inverse of evec. This is arbitrary up to a constant factor.
+
+	complex<double> root_scalar_products[4];
+	for (i = 0; i < 4; ++i) {
+		root_scalar_products[i] = 0.;
+		for (j = 0; j < 4; ++j) root_scalar_products[i] += cevec[4*j + i] *cinv_evec[4*i + j];
+		if (abs(root_scalar_products[i]) < 1e-6) {
+		    cout << "Warning: The module of one eigenvector was arbitrarily set too small." <<  endl;
+		    cout << "Here comes the right vector" << endl;
+		    for (j = 0; j < 4; ++j) {
+		        cout << cevec[4*j + i] << "   ";
+		    }
+		    cout << endl;
+            cout << "Here comes the left vector" << endl;
+            for (j = 0; j < 4; ++j) {
+                cout << cinv_evec[4*i + j] << "   ";
+            }
+            cout << endl;
+
+		}
+		root_scalar_products[i] = sqrt(root_scalar_products[i]);
+	}
+
+	for (i = 0; i < 4; ++i)
+		for (j = 0; j < 4; ++j) cevec[4 * i + j] /= root_scalar_products[j];
+
+
+	for (i = 0; i < 4; ++i)
+		for (j = 0; j < 4; ++j) cinv_evec[4 * i + j] /= root_scalar_products[i];
+
+
+	checkevector_complex(cevec, cinv_evec, 4); /* check whether inversion was OK */
+
+}
+
+/* Closed formula for the eigenvectors of a rate matrix with DIMENSION 4 and DIFFERENT REAL eigenvalues */
+
+void EigenDecomposition::eigensystem_closed_formula_nonrev_real(double *rate_matrix, double *state_freq, double *eval, double *evec, double *inv_evec) {
+
+    // Set true to output all interesting parts of the process
+    bool verbose = false;
+
+    int i,j,k;
+
+    // Some threshold for very small numbers
+    double small = 1e-6;
+
+    auto *square_rate_mat = new double [16];
+    memset(square_rate_mat, 0, sizeof(double)*16);
+
+    for (i = 0; i < 4; ++i) {
+        for (j = 0; j < 4; ++j) {
+            for (k = 0; k < 4; ++k) square_rate_mat[4*i + j] += rate_matrix[4*i + k]*rate_matrix[4*k + j];
+        }
+    }
+
+    vector<bool> got_right(3, false);
+    vector<bool> got_left(3, false);
+
+    // Declare the right eigenvectors using close formulae
+
+
+    for (i = 0; i < 4; ++i)
+        evec[4*i + 3] =  1.0;
+
+    for (k = 0; k < 3; ++k) {
+        int pre = (k + 2) % 3;
+        int post = (k + 1) % 3;
+        // the loop for "candidate" iterates looking for a nonzero eigenvector
+        for (int candidate = 0; candidate < 4 and not got_right[k]; ++ candidate) {
+            for (i = 0; i < 4; ++i) {
+                evec[4 * i + k] = eval[pre] * eval[post] * (bool(i == candidate) - state_freq[candidate]) - (eval[pre] + eval[post]) * rate_matrix[4 * i + candidate] + square_rate_mat[4 * i + candidate];
+                if (abs(evec[4 * i + k]) > small) got_right[k] = true;
+            }
+        }
+    }
+
+
+
+    // Declare the left eigenvectors using close formulae
+
+    for (i = 0; i < 4; ++i)
+        inv_evec[4*3 + i] = state_freq[i];
+
+
+    for (k = 0; k < 3; ++k) {
+        int pre = (k + 2) % 3;
+        int post = (k + 1) % 3;
+        // the loop for "candidate" iterates looking for a nonzero eigenvector
+        for (int candidate = 0; candidate < 4 and not got_left[k]; ++ candidate) {
+            for (i = 0; i < 4; ++i) {
+                inv_evec[4*k + i] =   eval[pre]*eval[post]*( bool(i == candidate) - state_freq[i]) - (eval[pre] + eval[post])*rate_matrix[4* candidate + i] + square_rate_mat[4*candidate + i];
+                if (abs(inv_evec[4*k + i]) > small) got_left[k] = true;
+            }
+        }
+    }
+
+
+    // Rescale the eigenvectors so that inv_evec is the inverse of evec. This is arbitrary up to a constant factor.
+
+    auto *scalar_products = new double[4];
+    memset(scalar_products, 0, sizeof(double)*4);
+
+    for (i = 0; i < 4; ++i) {
+        for (j = 0; j < 4; ++j) scalar_products[i] += evec[4*j + i] *inv_evec[4*i + j];
+
+        if (abs(scalar_products[i]) < 1e-6) {
+            cout << "Warning: The module of one eigenvector was arbitrarily set too small." <<  endl;
+
+            // The following "if" is for debugging
+            if (verbose) {
+                cout << "Here comes the right vector" << endl;
+                for (j = 0; j < 4; ++j) {
+                    cout << evec[4*j + i] << "   ";
+                }
+                cout << endl;
+                cout << "Here comes the left vector" << endl;
+                for (j = 0; j < 4; ++j) {
+                    cout << inv_evec[4*i + j] << "   ";
+                }
+                cout << endl;
+            }
+        }
+    }
+
+
+
+    for (i = 0; i < 4; ++i)
+        for (j = 0; j < 4; ++j) evec[4 * i + j] /= scalar_products[j];
+
+
+    checkevector(evec, inv_evec, 4); /* check whether inversion was OK */
+
+    delete [] square_rate_mat;
+    delete [] scalar_products;
+
+    // The following is just for debugging
+    if (verbose) {
+
+        cout << "Roots of scalar products " << endl;
+        for (int i = 0; i < 4; ++i) cout << scalar_products[i] << "  ";
+        cout << endl;
+
+
+
+        vector<double> scalars(16);
+
+        for (i = 0; i < 4; ++i){
+            for (j = 0; j < 4; ++j) {
+                scalars[4*i + j] = 0;
+                for (k = 0; k < 4; ++k) {
+                    scalars[4*i+j] += evec[4*i+k]*evec[4*j+k];
+                }
+            }
+        }
+
+        cout << "Scalar cross-products   " << endl;
+        for (i = 0; i < 4; ++i) {
+            for (j = 0; j < 4; ++j) {
+                cout << scalars[4*i + j]/sqrt(scalars[4*i+i] * scalars[4*j + j]) << "   ";
+            }
+            cout << endl;
+        }
+
+        cout << "Right eigenvectors " << endl;
+        for (i = 0; i < 4; ++i) {
+            for (j = 0; j < 4; ++j) {
+                cout << evec[4*i + j] << "   ";
+            }
+            cout << endl;
+        }
+    }
+
+
+}
+
+
+/* Closed formula for the eigenvectors of a REVERSIBLE rate matrix with different eigenvalues */
+
+void EigenDecomposition::eigensystem_closed_formula_rev(double *rate_matrix, double *state_freq, double *eval,
+                                                           double *evec, double *inv_evec) {
+
+
+    // Set true to output all interesting parts of the process
+    bool verbose = false;
+
+	int i,j,k;
+
+	// Some threshold for very small numbers
+	double small = 1e-6;
+
+	// These bools indicate if we found a nonzero eigenvector;
+    // only three suffice, because eigenvalue 0 has trivial associated eigenvectors
+
+	vector<bool> got_right(3, false);
+    vector<bool> got_left(3, false);
+
+
+    auto *square_rate_mat = new double[16];
+    memset(square_rate_mat, 0, sizeof(double)*16);
+    for (i = 0; i < 4; ++i) {
+        for (j = 0; j < 4; ++j) {
+            square_rate_mat[4*i + j] = 0.;
+            for (k = 0; k < 4; ++k) square_rate_mat[4*i + j] += rate_matrix[4*i + k]*rate_matrix[4*k + j];
+        }
+    }
+
+    // Declare the right eigenvectors using close formulae
+
+
+	for (i = 0; i < 4; ++i)
+		evec[4*i + 3] =  1.0;
+
+    for (k = 0; k < 3; ++k) {
+        int pre = (k + 2) % 3;
+        int post = (k + 1) % 3;
+        // the loop for "candidate" iterates looking for a nonzero eigenvector
+        for (int candidate = 0; candidate < 4 and not got_right[k]; ++ candidate) {
+            for (i = 0; i < 4; ++i) {
+                evec[4 * i + k] = eval[pre] * eval[post] * (bool(i == candidate) - state_freq[candidate]) - (eval[pre] + eval[post]) * rate_matrix[4 * i + candidate] + square_rate_mat[4 * i + candidate];
+                if (abs(evec[4 * i + k]) > small) got_right[k] = true;
+            }
+        }
+    }
+
+
+
+	// Declare the left eigenvectors using close formulae
+
+	for (i = 0; i < 4; ++i)
+		inv_evec[4*3 + i] = state_freq[i];
+
+
+    for (k = 0; k < 3; ++k) {
+        int pre = (k + 2) % 3;
+        int post = (k + 1) % 3;
+        // the loop for "candidate" iterates looking for a nonzero eigenvector
+        for (int candidate = 0; candidate < 4 and not got_left[k]; ++ candidate) {
+            for (i = 0; i < 4; ++i) {
+                inv_evec[4*k + i] =   eval[pre]*eval[post]*( bool(i == candidate) - state_freq[i]) - (eval[pre] + eval[post])*rate_matrix[4* candidate + i] + square_rate_mat[4*candidate + i];
+                if (abs(inv_evec[4*k + i]) > small) got_left[k] = true;
+            }
+        }
+    }
+
+
+	// Rescale the eigenvectors so that inv_evec is the inverse of evec, as also that inv_evec[4*i + j] = evec[4*j + i] * state_freq[j].
+
+    double small_scalar = 4*small*small;
+	double scalar_products[4];
+	for (i = 0; i < 4; ++i) {
+		scalar_products[i] = 0.;
+		for (j = 0; j < 4; ++j) scalar_products[i] += evec[4*j + i] *inv_evec[4*i + j];
+		if (abs(scalar_products[i]) < small_scalar) {
+		    cout << "Warning: The module of one eigenvector was arbitrarily set very small." <<  endl;
+
+		    if (verbose) {
+                cout << "This is the right eigenvector" <<  endl;
+                for (j = 0; j < 4; ++j) cout << evec[4*j + i] << "   ";
+                cout << endl;
+
+                cout << "This is the left eigenvector" <<  endl;
+                for (j = 0; j < 4; ++j) cout << inv_evec[4*i + j] << "   ";
+                cout << endl;
+		    }
+		}
+	}
+
+	double quotients[4];
+	for (i = 0; i < 4; ++i) {
+		quotients[i] = 0;
+		for (j = 0; j < 4 and quotients[i] == 0; ++j) {
+			if (abs(evec[4*j + i]) > small) {
+			    quotients[i] = inv_evec[4*i + j]/(evec[4*j + i]*state_freq[j]);
+			}
+		}
+		if (abs(quotients[i]) < small) cout << "Warning: The module of left and right eigenvectors were arbitrarily set very different." <<  endl;
+	}
+
+	double scaling_right[4];
+	for (i = 0; i < 4; ++i) scaling_right[i] = sqrt(quotients[i]/scalar_products[i]);
+
+	for (i = 0; i < 4; ++i) {
+		for (j = 0; j < 4; ++j) evec[4 * i + j] *= scaling_right[j];
+	}
+
+	double scaling_left[4];
+	for (i = 0; i < 4; ++i) scaling_left[i] = sqrt(1/(quotients[i]*scalar_products[i]));
+
+	for (i = 0; i < 4; ++i) {
+		for (j = 0; j < 4; ++j) inv_evec[4 * i + j] *= scaling_left[i];
+	}
+
+    checkevector(evec, inv_evec, 4); /* check whether inversion was OK */
+    delete [] square_rate_mat;
+
+	if (verbose) {
+        double prod[16];
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                prod[4*i + j] = 0.;
+                for (int k = 0; k < 4; ++k) prod[4*i + j] += evec[4*i + k] *inv_evec[4*k + j];
+            }
+        }
+
+        double aux[16];
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                aux[4*i + j] = evec[4*i + j]*eval[j];
+            }
+        }
+        double recons[16];
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                recons[4*i + j] = 0.;
+                for (int k = 0; k < 4; ++k) recons[4*i + j] += aux[4*i + k]*inv_evec[4*k+j];
+            }
+        }
+
+        cout << endl << "I give you the rate matrix: " << endl;
+        for (int k = 0; k < 4; ++k) {
+            for (int j = 0; j < 4; ++j) {
+                cout << rate_matrix[4*k + j] << "  ";
+            }
+            cout  << endl;
+        }
+
+        cout << endl << "I give you the eigenvalues: " << endl;
+        for (int k = 0; k < 4; ++k) {
+            cout << eval[k] << "  ";
+            cout  << endl;
+        }
+
+        cout << endl << "These are my right eigenvectors: " << endl;
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) cout << evec[4*i + j] << "  ";
+            cout  << endl;
+        }
+
+        cout << endl << "These are my left eigenvectors : " << endl;
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) cout << inv_evec[4*i + j] << "  ";
+            cout  << endl;
+        }
+
+        cout << endl << "I give you the product between left and right eigenvectors: " << endl;
+        for (int k = 0; k < 4; ++k) {
+            for (int j = 0; j < 4; ++j) {
+                cout << real(prod[4*j + k]) << "  ";
+            }
+            cout  << endl;
+        }
+
+        cout << endl << "This is the differnce between my aimed reconstruction and the rate matrix: " << endl;
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) cout << rate_matrix[4*i + j] - recons[4*i + j] << "  ";
+            cout  << endl;
+        }
+	}
+}

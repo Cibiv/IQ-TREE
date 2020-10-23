@@ -29,6 +29,10 @@ using namespace Eigen;
 /** number of squaring for scaling-squaring technique */
 const int TimeSquare = 10;
 
+/** Cassius : threshold for two eigenvalues to be too similar*/
+const double thr_eigenvalues = 1e-3;
+
+
 //----- declaration of some helper functions -----/
 int matexp (double Q[], double t, int n, int TimeSquare, double space[]);
 int computeStateFreqFromQMatrix (double Q[], double pi[], int n, double space[]);
@@ -115,6 +119,18 @@ void ModelMarkov::setReversible(bool reversible) {
 
         if (!ceval)
             ceval = aligned_alloc<complex<double> >(num_states);
+
+        /*Cassius: I initialize the real counterparts, because I use them when the eigenvalues are real*/
+        if (!eigenvalues)
+            eigenvalues = aligned_alloc<double>(num_states);
+        if (!eigenvalues)
+            eigenvalues_imag = aligned_alloc<double>(num_states);
+        if (!eigenvectors)
+            eigenvectors = aligned_alloc<double>(num_states*num_states);
+        if (!inv_eigenvectors)
+            inv_eigenvectors = aligned_alloc<double>(num_states*num_states);
+        /*Cassius: End of my edits*/
+
         if (!cevec)
             cevec = aligned_alloc<complex<double> >(num_states*num_states);
         if (!cinv_evec)
@@ -389,9 +405,13 @@ void ModelMarkov::report_state_freqs(ostream& out, double *custom_state_freq) {
 void ModelMarkov::computeTransMatrix(double time, double *trans_matrix, int mixture) {
 
     if (!is_reversible) {
-        if (phylo_tree->params->matrix_exp_technique == MET_EIGEN_DECOMPOSITION) {
+
+        // Cassius: If eigenvalues are different enough, use --eigen mehtod (closed formulae)
+        // This thr_eigenvalues is also used in decomposeRateMatrix()
+        // For consistency, the threshold must be the same in both instances
+        if (phylo_tree->params->matrix_exp_technique == MET_EIGEN_DECOMPOSITION and minimum_difference_eval > thr_eigenvalues and num_states == 4) {
             computeTransMatrixEigen(time, trans_matrix);
-        } else if (phylo_tree->params->matrix_exp_technique == MET_SCALING_SQUARING) {
+        } else if (phylo_tree->params->matrix_exp_technique == MET_SCALING_SQUARING or minimum_difference_eval <= thr_eigenvalues or num_states != 4) {
             // scaling and squaring technique
             int statesqr = num_states*num_states;
             memcpy(trans_matrix, rate_matrix, statesqr*sizeof(double));
@@ -405,46 +425,47 @@ void ModelMarkov::computeTransMatrix(double time, double *trans_matrix, int mixt
     //        trans_matrix[i] *= time;
     //    double space[NCODE*NCODE*3] = {0};
     //    matexp2(trans_matrix, num_states, 7, 5, space);
-    }
+    } else {
+        /* compute P(t) */
+        double evol_time = time / total_num_subst;
+        double exptime[num_states];
+        int i, j, k;
 
-	/* compute P(t) */
-	double evol_time = time / total_num_subst;
-	double exptime[num_states];
-	int i, j, k;
+        for (i = 0; i < num_states; i++)
+            exptime[i] = exp(evol_time * eigenvalues[i]);
 
-	for (i = 0; i < num_states; i++)
-		exptime[i] = exp(evol_time * eigenvalues[i]);
-
-	int row_offset;
-	for (i = 0, row_offset = 0; i < num_states; i++, row_offset+=num_states) {
-		double *trans_row = trans_matrix + row_offset;
-		for (j = i+1; j < num_states; j ++) { 
-			// compute upper triangle entries
-			double *trans_entry = trans_row + j;
+        int row_offset;
+        for (i = 0, row_offset = 0; i < num_states; i++, row_offset+=num_states) {
+            double *trans_row = trans_matrix + row_offset;
+            for (j = i+1; j < num_states; j ++) {
+                // compute upper triangle entries
+                double *trans_entry = trans_row + j;
 //			double *coeff_entry = eigen_coeff + ((row_offset+j)*num_states);
-			*trans_entry = 0.0;
-			for (k = 0; k < num_states; k ++) {
-				*trans_entry += eigenvectors[i*num_states+k] * inv_eigenvectors[k*num_states+j] * exptime[k];
-			}
-			if (*trans_entry < 0.0) {
-				*trans_entry = 0.0;
-			}
-			// update lower triangle entries
-			trans_matrix[j*num_states+i] = (state_freq[i]/state_freq[j]) * (*trans_entry);
-		}
-		trans_row[i] = 0.0; // initialize diagonal entry
-		// taking the sum of row
-		double sum = 0.0;
-		for (j = 0; j < num_states; j++)
-			sum += trans_row[j];
-		trans_row[i] = 1.0 - sum; // update diagonal entry
-	}
+                *trans_entry = 0.0;
+                for (k = 0; k < num_states; k ++) {
+                    *trans_entry += eigenvectors[i*num_states+k] * inv_eigenvectors[k*num_states+j] * exptime[k];
+                }
+                if (*trans_entry < 0.0) {
+                    *trans_entry = 0.0;
+                }
+                // update lower triangle entries
+                trans_matrix[j*num_states+i] = (state_freq[i]/state_freq[j]) * (*trans_entry);
+            }
+            trans_row[i] = 0.0; // initialize diagonal entry
+            // taking the sum of row
+            double sum = 0.0;
+            for (j = 0; j < num_states; j++)
+                sum += trans_row[j];
+            trans_row[i] = 1.0 - sum; // update diagonal entry
+        }
 //	delete [] exptime;
+    }
 }
 
 double ModelMarkov::computeTrans(double time, int state1, int state2) {
 
     if (is_reversible) {
+
         double evol_time = time / total_num_subst;
         int i;
         double trans_prob = 0.0;
@@ -867,11 +888,8 @@ void ModelMarkov::decomposeRateMatrix(){
 
     if (!is_reversible) {
         double sum;
-        //double m[num_states];
-        double *space = new double[num_states*(num_states+1)];
 
-        for (i = 0; i < num_states; i++)
-            state_freq[i] = 1.0/num_states;
+        auto *space = new double[num_states*(num_states+1)];
 
         for (i = 0, k = 0; i < num_states; i++) {
             rate_matrix[i*num_states+i] = 0.0;
@@ -882,6 +900,7 @@ void ModelMarkov::decomposeRateMatrix(){
                 }
             rate_matrix[i*num_states+i] = -row_sum;
         }
+
         computeStateFreqFromQMatrix(rate_matrix, state_freq, num_states, space);
 
 
@@ -900,56 +919,91 @@ void ModelMarkov::decomposeRateMatrix(){
         }
         delete [] space;
 
-        if (phylo_tree->params->matrix_exp_technique == MET_EIGEN_DECOMPOSITION) {
-            eigensystem_nonrev(rate_matrix, state_freq, eigenvalues, eigenvalues_imag, eigenvectors, inv_eigenvectors, num_states);
+
+        // Begin of Cassius' edits
+
+        // The closed formulae only apply for 4 states, for nonreversible and different-than-4 states there is no implementation
+        if (num_states == 4) {
+            // Cassius: We use the closed formula for the eigenvalues
+            eigenvalues_closed_formula_nonrev(rate_matrix, ceval, eigenvalues, eigenvalues_imag);
+            all_eigenvalues_real = true;
+            for (int i = 0; i < num_states; ++i)
+                if (abs(eigenvalues_imag[i]) > 1e-6) all_eigenvalues_real = false;
+
+            minimum_difference_eval = 1000;
+            for (int i = 0; i < 4; ++i) {
+                for (int j = 0; j < i; ++j) {
+                    minimum_difference_eval = min (minimum_difference_eval, abs(ceval[i] - ceval[j]));
+                }
+            }
+
+            //Cassius: When two eigenvalues are equal, we should forget eigenvectors and go for the squaring technique in computeTransMatrix
+            if (phylo_tree->params->matrix_exp_technique == MET_EIGEN_DECOMPOSITION and minimum_difference_eval > thr_eigenvalues) {
+                if (all_eigenvalues_real) {
+                    eigensystem_closed_formula_nonrev_real(rate_matrix, state_freq, eigenvalues, eigenvectors, inv_eigenvectors);
+                } else {
+                    eigensystem_closed_formula_nonrev(rate_matrix, state_freq, ceval, cevec, cinv_evec);
+                }
+            } else {
+                /*Our effort was useless, we will use approximate the exponential using the squaring technique*/
+                //ASSERT(0 && "this line should not be reached");
+                return;
+            }
+        } else {
+            // Cassius: I commented the following line because this function is from the previous implementation and doesn't work.
+            // eigensystem_nonrev(rate_matrix, state_freq, eigenvalues, eigenvalues_imag, eigenvectors, inv_eigenvectors, num_states);
+            return;
         }
+
+        /*end of Cassius edits*/
+
     } else if (num_params == -1) {
         // reversible model
-		// manual compute eigenvalues/vectors for F81-style model
-		eigenvalues[0] = 0.0;
-		double mu = 0.0;
-		for (i = 0; i < num_states; i++)
-			mu += state_freq[i]*state_freq[i];
-		mu = total_num_subst/(1.0 - mu);
+        // manual compute eigenvalues/vectors for F81-style model
+        eigenvalues[0] = 0.0;
+        double mu = 0.0;
+        for (i = 0; i < num_states; i++)
+            mu += state_freq[i]*state_freq[i];
+        mu = total_num_subst/(1.0 - mu);
 
-		// compute eigenvalues
-		for (i = 1; i < num_states; i++)
-			eigenvalues[i] = -mu;
+        // compute eigenvalues
+        for (i = 1; i < num_states; i++)
+            eigenvalues[i] = -mu;
 
-//		double *f = new double[num_states];
-//		for (i = 0; i < num_states; i++) f[i] = sqrt(state_freq[i]);
-		// compute eigenvectors
-		memset(eigenvectors, 0, num_states*num_states*sizeof(double));
-		memset(inv_eigenvectors, 0, num_states*num_states*sizeof(double));
-		eigenvectors[0] = 1.0;
-		for (i = 1; i < num_states; i++)
-			eigenvectors[i] = -1.0;
-//			eigenvectors[i] = f[i]/f[num_states-1];
-		for (i = 1; i < num_states; i++) {
-			eigenvectors[i*num_states] = 1.0;
-			eigenvectors[i*num_states+i] = state_freq[0]/state_freq[i];
-		}
+    //		double *f = new double[num_states];
+    //		for (i = 0; i < num_states; i++) f[i] = sqrt(state_freq[i]);
+        // compute eigenvectors
+        memset(eigenvectors, 0, num_states*num_states*sizeof(double));
+        memset(inv_eigenvectors, 0, num_states*num_states*sizeof(double));
+        eigenvectors[0] = 1.0;
+        for (i = 1; i < num_states; i++)
+            eigenvectors[i] = -1.0;
+    //			eigenvectors[i] = f[i]/f[num_states-1];
+        for (i = 1; i < num_states; i++) {
+            eigenvectors[i*num_states] = 1.0;
+            eigenvectors[i*num_states+i] = state_freq[0]/state_freq[i];
+        }
 
-		for (i = 0; i < num_states; i++)
-			for (j = 0; j < num_states; j++)
-				inv_eigenvectors[i*num_states+j] = state_freq[j]*eigenvectors[j*num_states+i];
-		writeInfo(cout);
-		// sanity check
-		double *q = new double[num_states*num_states];
-		getQMatrix(q);
-		double zero;
-		for (j = 0; j < num_states; j++) {
-			for (i = 0, zero = 0.0; i < num_states; i++) {
-				for (k = 0; k < num_states; k++) zero += q[i*num_states+k] * eigenvectors[k*num_states+j];
-				zero -= eigenvalues[j] * eigenvectors[i*num_states+j];
-				if (fabs(zero) > 1.0e-5) {
-					cout << "\nERROR: Eigenvector doesn't satisfy eigenvalue equation! (gap=" << fabs(zero) << ")" << endl;
-					abort();
-				}
-			}
-		}
-		delete [] q;
-/*    } else if (Params::getInstance().matrix_exp_technique == MET_EIGEN3LIB_DECOMPOSITION) {
+        for (i = 0; i < num_states; i++)
+            for (j = 0; j < num_states; j++)
+                inv_eigenvectors[i*num_states+j] = state_freq[j]*eigenvectors[j*num_states+i];
+        writeInfo(cout);
+        // sanity check
+        double *q = new double[num_states*num_states];
+        getQMatrix(q);
+        double zero;
+        for (j = 0; j < num_states; j++) {
+            for (i = 0, zero = 0.0; i < num_states; i++) {
+                for (k = 0; k < num_states; k++) zero += q[i*num_states+k] * eigenvectors[k*num_states+j];
+                zero -= eigenvalues[j] * eigenvectors[i*num_states+j];
+                if (fabs(zero) > 1.0e-5) {
+                    cout << "\nERROR: Eigenvector doesn't satisfy eigenvalue equation! (gap=" << fabs(zero) << ")" << endl;
+                    abort();
+                }
+            }
+        }
+        delete [] q;
+    /*    } else if (Params::getInstance().matrix_exp_technique == MET_EIGEN3LIB_DECOMPOSITION) {
         // Using Eigen3 libary for general time-reversible model
         Eigen::MatrixXd Q;
         Q.resize(num_states, num_states);
@@ -961,37 +1015,83 @@ void ModelMarkov::decomposeRateMatrix(){
         } else {
             // full matrix
         }
-*/
-	} else {
+    */
+    } else {
 
         // general reversible model
-		double **rate_matrix = new double*[num_states];
+        //the rates are a symmetrix matrix, don't confuse with the rate matrix
+        double **matrix_rates = new double *[num_states];
 
-		for (i = 0; i < num_states; i++)
-			rate_matrix[i] = new double[num_states];
+        for (i = 0; i < num_states; i++)
+            matrix_rates[i] = new double[num_states];
 
         if (half_matrix) {
             for (i = 0, k = 0; i < num_states; i++) {
-                rate_matrix[i][i] = 0.0;
-                for (j = i+1; j < num_states; j++, k++) {
-                    rate_matrix[i][j] = (state_freq[i] <= ZERO_FREQ || state_freq[j] <= ZERO_FREQ) ? 0 : rates[k];
-                    rate_matrix[j][i] = rate_matrix[i][j];
+                matrix_rates[i][i] = 0.0;
+                for (j = i + 1; j < num_states; j++, k++) {
+                    matrix_rates[i][j] = (state_freq[i] <= ZERO_FREQ || state_freq[j] <= ZERO_FREQ) ? 0 : rates[k];
+                    matrix_rates[j][i] = matrix_rates[i][j];
                 }
             }
         } else {
             // full matrix
             for (i = 0; i < num_states; i++) {
-                memcpy(rate_matrix[i], &rates[i*num_states], num_states*sizeof(double));
-                rate_matrix[i][i] = 0.0;
+                memcpy(matrix_rates[i], &rates[i * num_states], num_states * sizeof(double));
+                matrix_rates[i][i] = 0.0;
             }
         }
-		/* eigensystem of 1 PAM rate matrix */
-		eigensystem_sym(rate_matrix, state_freq, eigenvalues, eigenvectors, inv_eigenvectors, num_states);
-		//eigensystem(rate_matrix, state_freq, eigenvalues, eigenvectors, inv_eigenvectors, num_states);
-		for (i = num_states-1; i >= 0; i--)
-			delete [] rate_matrix[i];
-		delete [] rate_matrix;
-	}
+
+        /*Cassius' part begins*/
+
+        if (phylo_tree->params->matrix_exp_technique == MET_EIGEN_DECOMPOSITION and num_states == 4) {
+
+            if (!rate_matrix)
+                rate_matrix = aligned_alloc<double>(num_states*num_states);
+            //compute the actual rate matrix
+            for (i = 0; i < num_states; ++i) {
+                for (j = 0; j < num_states; ++j) rate_matrix[num_states*i+j] = matrix_rates[i][j]*state_freq[j];
+            }
+
+            //rows sum zero
+            for (i = 0; i < num_states; ++i) {
+                for (j = i+1;  j < num_states; ++j) rate_matrix[num_states*i + i] -= rate_matrix[num_states*i + j];
+                for (j = 0;  j < i; ++j) rate_matrix[num_states*i + i] -= rate_matrix[num_states*i + j];
+            }
+            //average mutation equal 1
+            double average_mut = 0;
+            for (i = 0; i < num_states; ++i) average_mut -= rate_matrix[num_states*i+i]*state_freq[i];
+            for (i = 0; i < num_states; ++i) {
+                for (j = 0; j < num_states; ++j) rate_matrix[num_states*i+j] /= average_mut;
+            }
+
+            // Compute eigenvalues. It holds that eigenvalues[3] == 0
+            eigenvalues_closed_formula_rev(rate_matrix, eigenvalues);
+
+
+            //only if eigenvalues are different we can apply the closed formulas
+            minimum_difference_eval = 1000;
+            for (int i = 0; i < num_states; ++i) {
+                for (int j = 0; j < i; ++j) {
+                    minimum_difference_eval = min (minimum_difference_eval, abs(eigenvalues[i] - eigenvalues[j]));
+                }
+            }
+
+         if (minimum_difference_eval > thr_eigenvalues)
+             eigensystem_closed_formula_rev(rate_matrix, state_freq, eigenvalues, eigenvectors, inv_eigenvectors);
+         else
+             eigensystem_sym(matrix_rates, state_freq, eigenvalues, eigenvectors, inv_eigenvectors, num_states);
+
+         // Cassius' part ends.
+
+        } else {
+            /* eigensystem of 1 PAM rate matrix */
+            eigensystem_sym(matrix_rates, state_freq, eigenvalues, eigenvectors, inv_eigenvectors, num_states);
+            //eigensystem(matrix_rates, state_freq, eigenvalues, eigenvectors, inv_eigenvectors, num_states);
+        }
+        for (i = num_states - 1; i >= 0; i--)
+            delete[] matrix_rates[i];
+        delete[] matrix_rates;
+    }
 }
 
 void ModelMarkov::readRates(istream &in) throw(const char*, string) {
@@ -1300,56 +1400,79 @@ void ModelMarkov::update_eigen_pointers(double *eval, double *evec, double *inv_
 }
 
 void ModelMarkov::computeTransMatrixEigen(double time, double *trans_matrix) {
-	/* compute P(t) */
-	double evol_time = time / total_num_subst;
-    int nstates_2 = num_states*num_states;
-	double *exptime = new double[nstates_2];
-	int i, j, k;
 
-    memset(exptime, 0, sizeof(double)*nstates_2);
-	for (i = 0; i < num_states; i++)
-        if (eigenvalues_imag[i] == 0.0) {
-            exptime[i*num_states+i] = exp(evol_time * eigenvalues[i]);
-        } else {
-            ASSERT(i < num_states-1 && eigenvalues_imag[i+1] != 0.0 && eigenvalues_imag[i] > 0.0);
-            complex<double> exp_eval(eigenvalues[i] * evol_time, eigenvalues_imag[i] * evol_time);
-            exp_eval = exp(exp_eval);
-            exptime[i*num_states+i] = exp_eval.real();
-            exptime[i*num_states+i+1] = exp_eval.imag();
-            i++;
-            exptime[i*num_states+i] = exp_eval.real();
-            exptime[i*num_states+i-1] = -exp_eval.imag();
+    if (all_eigenvalues_real) {
+        /* compute P(t) assuming everything is real */
+        double evol_time = time / total_num_subst;
+        int nstates_2 = num_states*num_states;
+        auto *exptime = new double[num_states];
+        auto *trans_aux = new double[nstates_2];
+        int i, j, k;
+
+
+
+        memset(exptime, 0, sizeof(double)*num_states);
+        for (i = 0; i < num_states; i++)
+            exptime[i] = exp(eigenvalues[i]*evol_time);
+
+        memset(trans_aux, 0, sizeof(double)*nstates_2);
+        // Compute V * exp(L t) * V^{-1}
+        for (i = 0; i < num_states; i++)
+            for (j = 0; j < num_states; j++) {
+                for (k = 0; k < num_states; ++k)
+                    trans_aux[num_states*i + j] += eigenvectors[num_states*i + k] * exptime[k]*inv_eigenvectors[num_states*k + j];
+            }
+
+        for (i = 0; i < num_states; i++) {
+            double row_sum = 0.0;
+            for (j = 0; j < num_states; j++) {
+                trans_matrix[num_states * i + j] = trans_aux[num_states * i + j];
+                row_sum += trans_matrix[num_states * i + j];
+                ASSERT(trans_matrix[num_states * i + j] >= -0.001);
+            }
+            ASSERT(fabs(row_sum - 1.0) < 1e-4);
         }
 
 
-    // compute V * exp(L t)
-    for (i = 0; i < num_states; i++)
-        for (j = 0; j < num_states; j++) {
-            double val = 0;
-            for (k = 0; k < num_states; k++)
-                val += eigenvectors[i*num_states+k] * exptime[k*num_states+j];
-            trans_matrix[i*num_states+j] = val;
+        delete [] trans_aux;
+        delete [] exptime;
+
+    } else {
+        /* compute P(t) assuming everything is complex */
+
+        double evol_time = time / total_num_subst;
+        int nstates_2 = num_states*num_states;
+        auto *exptime = new complex<double>[num_states];
+        auto *trans_aux = new complex<double>[nstates_2];
+        int i, j, k;
+
+
+        memset(exptime, 0, sizeof(std::complex<double>)*num_states);
+        for (i = 0; i < num_states; i++)
+            exptime[i] = exp(ceval[i]*evol_time);
+
+        memset(trans_aux, 0, sizeof(std::complex<double>)*nstates_2);
+        // Compute V * exp(L t) * V^{-1}
+        for (i = 0; i < num_states; i++)
+            for (j = 0; j < num_states; j++) {
+                for (k = 0; k < num_states; ++k)
+                    trans_aux[num_states*i + j] += cevec[num_states*i + k] * exptime[k]*cinv_evec[num_states*k + j];
+            }
+
+        for (i = 0; i < num_states; i++) {
+            double row_sum = 0.0;
+            for (j = 0; j < num_states; j++) {
+                trans_matrix[num_states * i + j] = trans_aux[num_states * i + j].real();
+                row_sum += trans_matrix[num_states * i + j];
+                ASSERT(abs(trans_aux[num_states * i + j].imag()) < 1e-6);
+                ASSERT(trans_matrix[num_states * i + j] >= -0.001);
+            }
+            ASSERT(fabs(row_sum - 1.0) < 1e-4);
         }
 
-    memcpy(exptime, trans_matrix, sizeof(double)*nstates_2);
-
-    // then compute V * exp(L t) * V^{-1}
-    for (i = 0; i < num_states; i++) {
-        double row_sum = 0.0;
-        for (j = 0; j < num_states; j++) {
-            double val = 0;
-            for (k = 0; k < num_states; k++)
-                val += exptime[i*num_states+k] * inv_eigenvectors[k*num_states+j];
-            // make sure that trans_matrix are non-negative
-            ASSERT(val >= -0.001);
-            val = fabs(val);
-            trans_matrix[i*num_states+j] = val;
-            row_sum += val;
-        }
-        ASSERT(fabs(row_sum-1.0) < 1e-4);
+        delete [] trans_aux;
+        delete [] exptime;
     }
-
-    delete [] exptime;
 }
 
 
@@ -1490,3 +1613,5 @@ int matexp (double Q[], double t, int n, int TimeSquare, double space[])
         for (i=0;i<n*n;i++) Q[i]=T[1][i];
     return(0);
 }
+
+
