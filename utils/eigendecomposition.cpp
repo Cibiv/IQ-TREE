@@ -1336,10 +1336,10 @@ void EigenDecomposition::checkevector_complex(complex<double> *evec, complex<dou
 	for (i = 0; i < nn; i++) {
 		for (j = 0; j < nn; j++) {
 			if (i == j) {
-				if (fabs(matx[i][j] - 1.0) > 1.0e-5)
+				if (abs(matx[i][j] - 1.0) > 1.0e-5)
 					error = 1;
 			} else {
-				if (fabs(matx[i][j]) > 1.0e-5)
+				if (abs(matx[i][j]) > 1.0e-5)
 					error = 1;
 			}
 		}
