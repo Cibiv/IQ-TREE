@@ -36,6 +36,7 @@ void PresenceAbsenceMatrix::read_pr_ab_matrix(istream &in){
     for(i=0; i<taxa_num; i++){
         if(!(in>>name)) throw "Each line should start with a taxon name!";
         if(name == "0" or name == "1") throw "Each line should start with a taxon name! 0 and 1 are not allowed as taxon names.";
+        //cout<<"Taxon "<<i<<": "<<name<<endl;
         taxa_names.push_back(name);
         vector<int> vec(part_num, -1);
         for(j=0; j<part_num; j++){
@@ -249,7 +250,7 @@ void PresenceAbsenceMatrix::extend_by_new_taxa(string taxon_name, IntVector pr_a
 
 void PresenceAbsenceMatrix::remove_taxon(string taxon_name){
     
-    cout<<"REMOVING taxon "<<taxon_name<<" from matrix."<<endl;
+    //cout<<"REMOVING taxon "<<taxon_name<<" from matrix."<<endl;
     int id = findTaxonID(taxon_name);
     
     /*cout<<"BEFORE:"<<endl;
@@ -270,3 +271,207 @@ void PresenceAbsenceMatrix::remove_taxon(string taxon_name){
     flag_reorderAccordingToTree = false;
     
 }
+
+void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_names_sub, vector<string> &list_taxa_to_insert){
+    
+    int i,j,k;
+    
+    IntVector part_cov, taxon_cov;
+    part_cov.resize(part_num,0);
+    taxon_cov.resize(taxa_num,0);
+    
+    for(i=0; i<part_num;i++){
+        for(j=0; j<taxa_num; j++){
+            taxon_cov[j]+=pr_ab_matrix[j][i];
+        }
+    }
+    
+    for(i=0; i<part_num; i++){
+        for(j=0; j<taxa_num; j++){
+            if(taxon_cov[j]!=1){ // taxa covered only by one partition
+                part_cov[i]+=pr_ab_matrix[j][i]; // per partition you only sum up taxa, which are present in more than one partition
+            }
+        }
+    }
+    
+    // order partitions by taxon coverage
+    vector<int> ordered_partitions;
+    int id;
+    ordered_partitions.push_back(0);
+    
+    bool inserted;
+    for(i=1; i<part_num; i++){
+        inserted = FALSE;
+        for(j=0; j<ordered_partitions.size(); j++){ // TODO: maybe implement something more efficient
+            id=ordered_partitions[j];
+            if(part_cov[i]>=part_cov[id]){
+                ordered_partitions.insert(ordered_partitions.begin()+j, i);
+                inserted = TRUE;
+                break;
+            }
+        }
+        if(!inserted){
+            ordered_partitions.push_back(i);
+        }
+    }
+    
+    //cout<<"Partition with maximum coverage based on non-spesific taxa is "<<ordered_partitions[0]<<" with "<<part_cov[ordered_partitions[0]]<<" taxa."<<endl;
+    
+    // Vector for part id stores its order
+    vector<int> part_order;
+    part_order.resize(part_num);
+    for(i=0; i<ordered_partitions.size(); i++){
+        part_order[ordered_partitions[i]]=i;
+    }
+    
+    /*for(i=0; i<part_num; i++){
+        cout<<"Partition "<<i<<": ordered as "<<part_order[i]<<" with coverage of "<<part_cov[i]<<endl;
+    }*/
+    
+    int part_max = ordered_partitions[0];
+    
+    vector<IntVector> ordered_taxa_ids;
+    ordered_taxa_ids.resize(part_num+1);
+    
+    // collecting taxon names from partition with the largest subtree excluding unique taxa
+    for(j=0; j<taxa_num; j++){
+        if(pr_ab_matrix[j][part_max]==1 && taxon_cov[j]>1){
+            taxa_names_sub.push_back(taxa_names[j]);
+        } else {
+            // ordering other taxa by the number of partitions they are covered by
+            for(i=1;i<part_num+1;i++){
+                if(taxon_cov[j]==i){
+                    ordered_taxa_ids[i].push_back(j);
+                    break;
+                }
+            }
+        }
+    }
+    
+    IntVector ordered_ids;
+    
+    for(i=1; i<part_num; i++){
+        if(ordered_taxa_ids[i].size()>1){
+            //cout<<endl<<"ANALYSING COVERAGE SIZE "<<i<<endl;
+            vector<IntVector> cov_within_cat;
+            cov_within_cat.resize(ordered_taxa_ids[i].size());
+            ordered_ids.clear();
+            
+            for(j=0; j<ordered_taxa_ids[i].size(); j++){
+                for(k=0;k<part_num;k++){
+                    if(pr_ab_matrix[ordered_taxa_ids[i][j]][k]==1){
+                        cov_within_cat[j].push_back(part_order[k]);
+                    }
+                }
+                sort(cov_within_cat[j].begin(), cov_within_cat[j].end());
+                
+                /*cout<<"TAXON_COVERAGE_INFO: taxon_"<<ordered_taxa_ids[i][j]<<"|"<<taxa_names[ordered_taxa_ids[i][j]];
+                for(k=0; k<cov_within_cat[j].size(); k++){
+                    cout<<" "<<cov_within_cat[j][k];
+                }
+                cout<<endl;
+                 */
+                
+            }
+            
+            // REORDER taxa within each coverage category
+            orderTaxaByCoverage(ordered_taxa_ids[i],cov_within_cat,ordered_ids);
+            
+            ordered_taxa_ids[i].clear();
+            ordered_taxa_ids[i] = ordered_ids;
+            
+            /*cout<<"REORDERED taxa:"<<endl;
+            for(k=0; k<ordered_taxa_ids[i].size(); k++){
+                cout<<k+1<<"|taxon "<<ordered_taxa_ids[i][k]<<"|"<<taxa_names[ordered_taxa_ids[i][k]]<<endl;
+            }*/
+            
+        }
+    }
+    
+    for(i=ordered_taxa_ids.size()-1; i>-1; i--){
+        if(!ordered_taxa_ids[i].empty()){
+            //cout<<"Taxa with "<<i<<" gene coverage: "<<endl;
+            for(j=0; j<ordered_taxa_ids[i].size(); j++){
+                //cout<<" "<<j<<": "<<ordered_taxa_by_coverage[i][j]<<endl;
+                list_taxa_to_insert.push_back(taxa_names[ordered_taxa_ids[i][j]]);
+            }
+            cout<<endl;
+        }
+    }
+    
+    /*cout<<endl<<"FINAL taxon order:"<<endl;
+    for(j=0; j<list_taxa_to_insert.size(); j++){
+        cout<<j<<": "<<list_taxa_to_insert[j]<<endl;
+    }*/
+}
+
+
+void PresenceAbsenceMatrix::orderTaxaByCoverage(vector<int> &taxon_ids, vector<IntVector> &coverage_info, IntVector &ordered_taxa){
+    
+    int i,j,k;
+    
+    IntVector ordered_taxa_ids;
+    ordered_taxa_ids.push_back(0);
+    bool inserted_check;
+    
+    /*for(i=0; i<coverage_info.size(); i++){
+        for(j=0; j<coverage_info[i].size(); j++){
+            cout<<" "<<coverage_info[i][j];
+        }
+        cout<<endl;
+    }*/
+    
+    for(i=1; i<taxon_ids.size(); i++){
+        //cout<<"CHECKING taxon "<<i<<" with id "<<taxon_ids[i]<<endl;
+        inserted_check = FALSE;
+        
+        for(j=0; j<ordered_taxa_ids.size(); j++){
+            //cout<<"comparing with taxon "<<j<<" with id "<<taxon_ids[ordered_taxa_ids[j]]<<endl;
+            int ident=0;
+            for(k=0; k<coverage_info[0].size(); k++){
+                //cout<<"partition_order_info:"<<coverage_info[i][k]<<" vs. "<<coverage_info[ordered_taxa_ids[j]][k]<<endl;
+                if(coverage_info[i][k]<coverage_info[ordered_taxa_ids[j]][k]){
+                    // insert
+                    ordered_taxa_ids.insert(ordered_taxa_ids.begin()+j,i);
+                    inserted_check = TRUE;
+                    //cout<<"inserted"<<endl;
+                    break;
+                } else if(coverage_info[i][k]>coverage_info[ordered_taxa_ids[j]][k]){
+                    // do not insert, check next taxon
+                    //cout<<"breaking, check next taxon.."<<endl;
+                    break;
+                } else {
+                    ident+=1;
+                    // TODO: maybe do something more elaborate with taxa having identical pattern of partition coverage, such that you do not have to check next taxon with n taxa with the same partition order..
+                }
+            }
+            
+            if(inserted_check){
+                break;
+            }
+        }
+        
+        // if the taxon is last one, insert to the end of the vector
+        if(!inserted_check){
+            ordered_taxa_ids.push_back(i);
+        }
+    }
+    
+    for(i=0; i<taxon_ids.size(); i++){
+        ordered_taxa.push_back(taxon_ids[ordered_taxa_ids[i]]);
+    }
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

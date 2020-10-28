@@ -92,6 +92,12 @@ public:
     void linkTreeEmptyImage(int part, NodeVector &part_taxa, TerraceNode *node = nullptr, TerraceNode *dad = nullptr);
 
     /*
+     *  Local map update after insertion/deletion of the taxon
+     */
+    
+    void update_map(int part, NodeVector &part_taxa, bool back_branch_map, bool back_taxon_map, TerraceNode *node, TerraceNode *dad);
+    
+    /*
      *  Print Info about the branch between parent tree and induced partition trees
      */
     void printMapInfo();

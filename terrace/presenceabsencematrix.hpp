@@ -75,6 +75,20 @@ public:
      */
     
     void remove_taxon(string taxon_name);
+    
+    /*
+     *  Function to get informaton about initial tree and a taxon order for stepwise insertion.
+     *  taxa_names_sub - list of taxa to be on the intial tree (TODO: maybe get the tree right away?).
+     *  list_taxa_to_insert - taxa in the order to be inserted
+     */
+    
+    void getINFO_init_tree_taxon_order(vector<string> &taxa_names_sub, vector<string> &list_taxa_to_insert);
+    
+    /*
+     *  Order taxa by their coverage
+     */
+    
+    void orderTaxaByCoverage(vector<int> &taxon_ids, vector<IntVector> &coverage_info, IntVector &ordered_taxa);
 };
 
 vector<IntVector> getSubMatrix(vector<IntVector> pr_ab_complete, vector<string> taxa_names, MTree* tree);

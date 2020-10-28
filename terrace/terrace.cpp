@@ -200,7 +200,7 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bo
     }
     if (node->isLeaf()) {
         ASSERT(dad);
-        // BUG: I think this is the case. again issue with the node ids. Find another way of getting node->id. Check if this is actually what causes problem
+        // DONE: FIXED. BUG: I think this is the case. again issue with the node ids. Find another way of getting node->id. Check if this is actually what causes problem
         //TerraceNode *node_part = (TerraceNode*)part_taxa[node->id]; //part_taxa[] is a node on PARTITION tree
         TerraceNode *node_part = nullptr;
         for(NodeVector::iterator it=part_taxa.begin(); it<part_taxa.end(); it++){
@@ -451,7 +451,21 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
         ((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.push_back(nei);
         ((TerraceNeighbor*)dad_nei->link_neighbors[part])->link_neighbors.push_back(dad_nei);
     }
+}
 
+void Terrace::update_map(int part, NodeVector &part_taxa, bool back_branch_map, bool back_taxon_map, TerraceNode *node, TerraceNode *dad){
+    
+    /*
+     For insertion:
+     1. You need some kind of preprocessing step to remove link_neighbours of branches, which were allowed for the inserted taxon.
+     2. Then call this function recursively.
+     3. What shall we do with a drunken sailor early in the morning?:) take into account cases when the inserted taxon is 1st or 2nd for some partition.
+     
+     
+     
+     
+     */
+    
 }
 
 void Terrace::printMapInfo(){
@@ -498,7 +512,6 @@ void Terrace::printMapInfo(){
     }
     cout << endl;
 }
-
 
 void Terrace::printBackMapInfo(){
 
@@ -672,16 +685,6 @@ void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace
 
 void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, vector<Terrace*> part_tree_pairs){
     
-    // TODO:
-    // DONE: Node_1: get a corresponding node (it should be new one, create a new node)
-    // DONE: Node_2: create a neighbour of the node
-    // DONE: Update neighbours on the branch you need to insert the taxon to node_2 becomes a neighbour of noda_A and node_B, where the taxon is allowed to be inserted
-    //       -> ABER: you have to provide a branch to be inserted to;
-    //       -> QUESTION: how about updates of the link_neighbours? should you first update them and then update them on the final tree
-    // Update mapping from parent tree to low-level induced partition trees
-    // Update mapping from top-level to low-level trees (only if the top-level has the corresponding taxon)
-    // repeat: get allowed positions for the next taxon
-    
     TerraceNeighbor *nei_1, *nei_2;
     nei_1 = (TerraceNeighbor*) node_1_branch->findNeighbor(node_2_branch);
     nei_2 = (TerraceNeighbor*) node_2_branch->findNeighbor(node_1_branch);
@@ -711,6 +714,9 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     insertNewTaxon(node_name,node_1_branch,node_2_branch);
     taxa_num += 1;
     
+    cout<<"INTERMEDIATE_INFO_TAXA_"<<leafNum<<"_INSERTED_"<<node_name<<"_TREE_";
+    //printTree(cout, WT_BR_SCALE | WT_NEWLINE);
+    
 }
 
 void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_pairs, vector<string> *list_taxa_to_insert, int taxon_to_insert, bool *progress_status){
@@ -723,13 +729,9 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
     cout<<"*******************************************************"<<endl;
     
     if(progress_status){
-        //vector<TerraceNeighbor*> nei1_vec, nei2_vec;
         NodeVector node1_vec_branch, node2_vec_branch;
         
         int i, j, id;
-        //nei1_vec.clear();
-        //nei2_vec.clear();
-        //getAllowedBranches(taxon_name, part_tree_pairs, &nei1_vec, &nei2_vec);
         
         getAllowedBranches(taxon_name, part_tree_pairs, &node1_vec_branch, &node2_vec_branch);
         
@@ -752,10 +754,6 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
                 for(i=0; i<terrace->part_num; i++){
                     // update matrices of top-low part tree pairs
                     if(part_tree_pairs[i]->findLeafName(taxon_name)){
-                        //IntVector aux_ident_vec;
-                        //aux_ident_vec.push_back(1);
-                        //BUG: you do not have to add a new taxon to the matrix. Just update the entry from 0 to 1.
-                        //part_tree_pairs[i]->matrix->extend_by_new_taxa(taxon_name, aux_ident_vec);
                         int taxon_matrix_id = part_tree_pairs[i]->matrix->findTaxonID(taxon_name);
                         part_tree_pairs[i]->matrix->pr_ab_matrix[taxon_matrix_id][0]=1;
                     }
@@ -772,14 +770,16 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
                 
                 
                 if(taxon_to_insert != list_taxa_to_insert->size()-1){
+                    
                     generateTerraceTrees(terrace, part_tree_pairs, list_taxa_to_insert, taxon_to_insert+1, progress_status);
                     
-                    cout<<"RETURNED from generateTerraceTrees for"<<endl;
-                    cout<<" - taxon "<<taxon_to_insert<<":  "<<taxon_name<<endl;
-                    cout<<" - branch "<<j<<": "<<node1_vec_branch[j]->id<<"-"<<node2_vec_branch[j]->id<<endl;
+                    //cout<<"RETURNED from generateTerraceTrees for"<<endl;
+                    //cout<<" - taxon "<<taxon_to_insert<<":  "<<taxon_name<<endl;
+                    //cout<<" - branch "<<j<<": "<<node1_vec_branch[j]->id<<"-"<<node2_vec_branch[j]->id<<endl;
                     
                     // INFO: IF NEXT TAXON DOES NOT HAVE ALLOWED BRANCHES CURRENT IS DELETED AND NEXT BRANCH IS EXPLORED.
                     remove_one_taxon(taxon_name,part_tree_pairs);
+
                     // re-link
                     relinkALL(part_tree_pairs);
                     
@@ -803,7 +803,6 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
         }
     } else {
         // TODO: I THINK, THIS PART WILL NEVER BE CALLED! CHECK and DELETE
-        
         cout<<"--------> DEAD END"<<endl;
         remove_one_taxon(taxon_name,part_tree_pairs);
         relinkALL(part_tree_pairs);
@@ -856,7 +855,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
     matrix->remove_taxon(taxon_name);
     taxa_num -= 1;
     
-    cout<<endl<<"------ DONE REMOVING"<<endl;
+    //cout<<endl<<"------ DONE REMOVING"<<endl;
     
 }
 

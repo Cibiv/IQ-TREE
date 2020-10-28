@@ -1997,6 +1997,8 @@ void runTreeReconstruction(Params &params, IQTree* &iqtree) {
         PhyloSuperTree *stree = (PhyloSuperTree*)iqtree;
         for (auto i = stree->begin(); i != stree->end(); i++)
             absent_states += (*i)->aln->checkAbsentStates("partition " + (*i)->aln->name);
+        // OLGA: FOR TERRACES: GET PRESENCE ABSENCE MATRIX:
+        iqtree->aln->printPhylip(cout);
     } else {
         absent_states = iqtree->aln->checkAbsentStates("alignment");
     }
