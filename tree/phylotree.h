@@ -1400,11 +1400,16 @@ public:
 
     vector<TraversalInfo> traversal_info;
 
-    /*cassius: asymptotic approximation of the derivative*/
+    /*cassius: true when the asymtotics are computed */
 
-    bool asymptotic_computed;
-
-    double asymptotic;
+    bool asymptotics_computed;
+    
+    /*cassius: asymptotics of the likelihood and its derivative */
+    double asymptotic_likelihood;
+    double asymptotic_derivative;
+    
+    /*cassius: upper bound of the likelihood, computed from the alignment */
+    double upper_bound_likelihood;
 
 
 
