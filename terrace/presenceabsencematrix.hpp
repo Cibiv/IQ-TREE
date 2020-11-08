@@ -22,6 +22,7 @@ public:
     
     int taxa_num;
     int part_num;
+    double missing_percent;
     
     /*
      *  initialization
@@ -89,6 +90,12 @@ public:
      */
     
     void orderTaxaByCoverage(vector<int> &taxon_ids, vector<IntVector> &coverage_info, IntVector &ordered_taxa);
+    
+    /*
+     *  Compute amount of missing sequences (in %)
+     */
+    
+    void percent_missing();
 };
 
 vector<IntVector> getSubMatrix(vector<IntVector> pr_ab_complete, vector<string> taxa_names, MTree* tree);

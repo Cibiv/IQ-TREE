@@ -47,6 +47,11 @@ public:
     NeighborVec link_neighbors;
     
     /**
+     * vector to save backward maps from induced partition subtrees (low level) to induced partition trees (top level)
+     */
+    NeighborVec link_neighbors_lowtop_back;
+    
+    /**
         vector of taxa, which were collapsed onto branch. This vector will be used for partition trees.
      */
     vector<Node*> taxa_to_insert;

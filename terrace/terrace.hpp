@@ -51,7 +51,24 @@ public:
     
     int taxa_num;
     int part_num;
-    bool flag_trees_linked;
+    
+    /*
+     *  Number of trees on terrace
+     */
+    int terrace_trees_num;
+    
+    /*
+     *  Number of intermediate trees visited
+     */
+    int intermediated_trees_num;
+    
+    /*
+     *  Number of dead ends encountered
+     */
+    int dead_ends_num;
+    
+    // file to output all generated terrace trees
+    string out_file;
     
     /*
      *  Print terrace info: a representative tree, induced trees and presence-absence matrix
@@ -86,21 +103,15 @@ public:
     void linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_nei, bool back_branch_map, bool back_taxon_map);
     
     /*
-     *  TODO: Map "epsilon" branches, which were not mapped by the general tree linking function
-     */
-    void linkTreesEmptyImage();
-    void linkTreeEmptyImage(int part, NodeVector &part_taxa, TerraceNode *node = nullptr, TerraceNode *dad = nullptr);
-
-    /*
      *  Local map update after insertion/deletion of the taxon
      */
     
-    void update_map(int part, NodeVector &part_taxa, bool back_branch_map, bool back_taxon_map, TerraceNode *node, TerraceNode *dad);
+    void update_map(int part, NodeVector &part_taxa, bool back_branch_map, bool back_taxon_map, TerraceNode *node, TerraceNode *dad = nullptr);
     
     /*
      *  Print Info about the branch between parent tree and induced partition trees
      */
-    void printMapInfo();
+    void printMapInfo(int partition = -1);
     
     /*
      *  Print Info about inverse branch and taxon images from induced partition trees to master and upper level induced trees, respectivelly
@@ -116,20 +127,19 @@ public:
     /*
      *  For a given taxon name get allowed branches. aux_terrace contains pointers to top level induced partition trees (which are stored as terraces)
      */
-    //void getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, vector<TerraceNeighbor*> *nei1_vec, vector<TerraceNeighbor*> *nei2_vec);
     void getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, NodeVector *node1_vec, NodeVector *node2_vec);
     
     /*
      *  Insert a new taxon to the parent tree, update induced partition trees, update mapping
      */
     
-    void extendNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, vector<Terrace*> aux_terrace);
+    void extendNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, vector<Terrace*> aux_terrace,vector<int> pr_ab_info);
     
     /*
      *  Clean all link neighbours and taxa on parent tree and on induced partition trees
      */
     
-    void cleanAllLinkNeighboursAndTaxa();
+    void cleanAllLinkNeighboursAndTaxa(bool clean_induced_part_maps = false);
     
     /*
      *  Prepare top-low induced partition tree pairs: induced tree from the terrace and a common subtree with the initial tree (to be modified by inserting new taxa). Top level provided by the passed terrace, low level by the current terrace (which is initial terrace).

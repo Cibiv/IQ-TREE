@@ -39,7 +39,7 @@ void TerraceNode::addNeighbor(Node *node, double length, int id) {
 
 void TerraceNode::deleteNode(){
     
-    ((Node*) this)->deleteNode();
+    //((Node*) this)->deleteNode();
     
     NeighborVec::reverse_iterator it;
     for (it = empty_br_dad_nei.rbegin(); it != empty_br_dad_nei.rend(); it++)
@@ -50,11 +50,14 @@ void TerraceNode::deleteNode(){
         delete (*it);
     empty_br_node_nei.clear();
     
+    for (it = neighbors.rbegin(); it != neighbors.rend(); it++)
+        delete (*it);
+    neighbors.clear();
 }
 
 TerraceNode::~TerraceNode()
 {
-    //deleteNode();
+    deleteNode();
 }
 
 

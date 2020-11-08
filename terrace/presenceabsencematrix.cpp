@@ -77,6 +77,7 @@ int PresenceAbsenceMatrix::findTaxonID(string taxon_name){
 
 void PresenceAbsenceMatrix::init(){
     flag_reorderAccordingToTree = false;
+    missing_percent = 0.0;
 }
 
 void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree, NodeVector &part_taxa){
@@ -274,11 +275,13 @@ void PresenceAbsenceMatrix::remove_taxon(string taxon_name){
 
 void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_names_sub, vector<string> &list_taxa_to_insert){
     
+    //cout<<endl<<"=================================================="<<endl<<"INITIAL tree and Taxon Order:"<<endl<<endl;
     int i,j,k;
     
-    IntVector part_cov, taxon_cov;
+    IntVector part_cov, taxon_cov, uniq_taxa;
     part_cov.resize(part_num,0);
     taxon_cov.resize(taxa_num,0);
+    uniq_taxa.resize(part_num,0);
     
     for(i=0; i<part_num;i++){
         for(j=0; j<taxa_num; j++){
@@ -291,6 +294,7 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
             if(taxon_cov[j]!=1){ // taxa covered only by one partition
                 part_cov[i]+=pr_ab_matrix[j][i]; // per partition you only sum up taxa, which are present in more than one partition
             }
+            uniq_taxa[i]+=pr_ab_matrix[j][i];
         }
     }
     
@@ -304,7 +308,7 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
         inserted = FALSE;
         for(j=0; j<ordered_partitions.size(); j++){ // TODO: maybe implement something more efficient
             id=ordered_partitions[j];
-            if(part_cov[i]>=part_cov[id]){
+            if(part_cov[i]+uniq_taxa[i]>=part_cov[id]+uniq_taxa[id]){
                 ordered_partitions.insert(ordered_partitions.begin()+j, i);
                 inserted = TRUE;
                 break;
@@ -334,8 +338,10 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
     ordered_taxa_ids.resize(part_num+1);
     
     // collecting taxon names from partition with the largest subtree excluding unique taxa
+    cout<<"Partition "<<part_max+1<<" is chosen for the initial tree."<<endl;
     for(j=0; j<taxa_num; j++){
-        if(pr_ab_matrix[j][part_max]==1 && taxon_cov[j]>1){
+        //if(pr_ab_matrix[j][part_max]==1 && taxon_cov[j]>1){
+        if(pr_ab_matrix[j][part_max]==1){
             taxa_names_sub.push_back(taxa_names[j]);
         } else {
             // ordering other taxa by the number of partitions they are covered by
@@ -365,12 +371,12 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
                 }
                 sort(cov_within_cat[j].begin(), cov_within_cat[j].end());
                 
-                /*cout<<"TAXON_COVERAGE_INFO: taxon_"<<ordered_taxa_ids[i][j]<<"|"<<taxa_names[ordered_taxa_ids[i][j]];
-                for(k=0; k<cov_within_cat[j].size(); k++){
-                    cout<<" "<<cov_within_cat[j][k];
-                }
-                cout<<endl;
-                 */
+                //cout<<"TAXON_COVERAGE_INFO: taxon_"<<ordered_taxa_ids[i][j]<<"|"<<taxa_names[ordered_taxa_ids[i][j]];
+                //for(k=0; k<cov_within_cat[j].size(); k++){
+                //    cout<<" "<<cov_within_cat[j][k];
+                //}
+                //cout<<endl;
+                
                 
             }
             
@@ -395,14 +401,16 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
                 //cout<<" "<<j<<": "<<ordered_taxa_by_coverage[i][j]<<endl;
                 list_taxa_to_insert.push_back(taxa_names[ordered_taxa_ids[i][j]]);
             }
-            cout<<endl;
+            //cout<<endl;
         }
     }
     
-    /*cout<<endl<<"FINAL taxon order:"<<endl;
+    cout<<endl<<"FINAL taxon order:"<<endl;
     for(j=0; j<list_taxa_to_insert.size(); j++){
         cout<<j<<": "<<list_taxa_to_insert[j]<<endl;
-    }*/
+    }
+    
+    //cout<<endl<<"=================================================="<<endl;
 }
 
 
@@ -463,7 +471,19 @@ void PresenceAbsenceMatrix::orderTaxaByCoverage(vector<int> &taxon_ids, vector<I
     
 }
 
+void PresenceAbsenceMatrix::percent_missing(){
+    
+    missing_percent = 0.0;
+    int i,j,a = 0;
+    for(i=0; i<taxa_num; i++){
+        for(j=0; j<part_num; j++){
+            a+= pr_ab_matrix[i][j];
+        }
+    }
 
+    double total = taxa_num*part_num;
+    missing_percent=(total-a)/total*100.0;
+}
 
 
 

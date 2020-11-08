@@ -69,7 +69,7 @@ public:
      *  Clean all info about link neighbours and taxa
      */
     
-    void cleanAllLinkINFO(TerraceNode *node = nullptr, TerraceNode *dad = nullptr);
+    void cleanAllLinkINFO(bool clean_induced_part_maps = false, TerraceNode *node = nullptr, TerraceNode *dad = nullptr);
     
     /**
      *  Insert a new taxon on given branch 
@@ -80,6 +80,12 @@ public:
      *  Remove one taxon
      */
     void remove_taxon(string taxon_name);
+    
+    /**
+     *  print a tree, but taking into account that it can be empty, with one or two taxa or many taxa
+     */
+    void print_terrace_tree(bool draw = false);
+    
 };
 
 

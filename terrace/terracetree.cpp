@@ -31,7 +31,7 @@ Node* TerraceTree::newNode(int node_id, int node_name) {
 
 void TerraceTree::copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names){
     
-    cout<<"Copying a tree using a vector of taxon names..."<<endl;
+    //cout<<"Copying a tree using a vector of taxon names..."<<endl;
     
     int i,j, sum = 0;
     int taxa_num = taxon_names.size();
@@ -63,10 +63,10 @@ void TerraceTree::copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names)
     taxa_set.insert(taxa_set.begin(), check_int.begin(), check_int.end());
     copyTree(tree,taxa_set);
 
-    printTree(cout,WT_BR_LEN_ROUNDING | WT_NEWLINE);
+    //printTree(cout,WT_BR_LEN_ROUNDING | WT_NEWLINE);
 }
 
-void TerraceTree::cleanAllLinkINFO(TerraceNode *node, TerraceNode *dad){
+void TerraceTree::cleanAllLinkINFO(bool clean_induced_part_maps, TerraceNode *node, TerraceNode *dad){
 
     if(!node){
         if(root->isLeaf()){
@@ -84,34 +84,47 @@ void TerraceTree::cleanAllLinkINFO(TerraceNode *node, TerraceNode *dad){
         TerraceNeighbor *dad_nei = (TerraceNeighbor*)dad->findNeighbor(node);
         if(nei->link_neighbors.size()>0){
             //cout<<"| IF link_neighbours_exist -> clear them: size "<<nei->link_neighbors.size()<<endl;
-            for(part=0; part<nei->link_neighbors.size(); part++){
-                if(((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.size()>0){
-                    ((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.clear();
-                    ((TerraceNeighbor*)dad_nei->link_neighbors[part])->link_neighbors.clear();
-                }
-                if(((TerraceNeighbor*)nei->link_neighbors[part])->taxa_to_insert.size()>0){
-                    ((TerraceNeighbor*)nei->link_neighbors[part])->taxa_to_insert.clear();
-                    ((TerraceNeighbor*)dad_nei->link_neighbors[part])->taxa_to_insert.clear();
+            
+            // Clearing backward map from induced partition trees...
+            if(clean_induced_part_maps){
+                for(part=0; part<nei->link_neighbors.size(); part++){
+                    // since for the trees with less than 3 taxa you do not do any maps, first check if there is a link_neighbor for the neighbor on the parent tree
+                    if((TerraceNeighbor*)nei->link_neighbors[part]){
+                        if(((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.size()>0){
+                            ((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.clear();
+                            ((TerraceNeighbor*)dad_nei->link_neighbors[part])->link_neighbors.clear();
+                        }
+                        /*if(((TerraceNeighbor*)nei->link_neighbors[part])->taxa_to_insert.size()>0){
+                            ((TerraceNeighbor*)nei->link_neighbors[part])->taxa_to_insert.clear();
+                            ((TerraceNeighbor*)dad_nei->link_neighbors[part])->taxa_to_insert.clear();
+                        }*/
+                        /*if(((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors_lowtop_back.size()>0){
+                            ((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors_lowtop_back.clear();
+                            ((TerraceNeighbor*)dad_nei->link_neighbors[part])->link_neighbors_lowtop_back.clear();
+                        }*/
+                    }
                 }
             }
+            
+            // Clearing forward map from parent tree to induced partition trees...
             nei->link_neighbors.clear();
             dad_nei->link_neighbors.clear();
             
         }
         
-        node->empty_taxa.clear();
-        node->empty_branches.clear();
+        //node->empty_taxa.clear();
+        //node->empty_branches.clear();
         node->empty_br_dad_nei.clear();
         node->empty_br_node_nei.clear();
         
-        dad->empty_taxa.clear();
-        dad->empty_branches.clear();
+        //dad->empty_taxa.clear();
+        //dad->empty_branches.clear();
         dad->empty_br_dad_nei.clear();
         dad->empty_br_node_nei.clear();
     }
     
     FOR_NEIGHBOR_DECLARE(node, dad, it){
-        cleanAllLinkINFO((TerraceNode*) (*it)->node, (TerraceNode*) node);
+        cleanAllLinkINFO(clean_induced_part_maps, (TerraceNode*) (*it)->node, (TerraceNode*) node);
     }
     
 }
@@ -119,11 +132,11 @@ void TerraceTree::cleanAllLinkINFO(TerraceNode *node, TerraceNode *dad){
 void TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch){
     
     // IMPORTANT!!!!!! WARNING: CAREFULL about calling a presence_absence matrix entries by the leaf id!!!!!! CHECK the corresponding code, because your maps will be fucked up!
-    // TODO: safe option is a function to re-number taxa, nodes
+    // TODO: safe option is a function to re-number taxa, nodes -> I'm using the initializeTree();
     
     TerraceNode *node_1, *node_2;
     
-    node_1 = (TerraceNode*) newNode(nodeNum, node_name.c_str());
+    node_1 = (TerraceNode*) newNode(leafNum, node_name.c_str());
     
     leafNum += 1;
     nodeNum += 1;
@@ -135,7 +148,7 @@ void TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_branch, T
     branchNum += 1;
     
     // WARNING: you need unique branch ids for intersection in allowed branches!!!!!
-    // CHECK: if there are any issues with current handling of branch ids
+    // CHECK: if there are any issues with current handling of branch ids -> using initializeTree();
     node_1->addNeighbor(node_2, 0.0, br_id);
     node_2->addNeighbor(node_1, 0.0, br_id);
     
@@ -165,11 +178,76 @@ void TerraceTree::remove_taxon(string taxon_name){
     StrVector taxa;
     taxa.push_back(taxon_name);
     
-    //TerraceNode *node = (TerraceNode*) findLeafName(taxon_name);
-    //NodeVector neighbours;
-    //FOR_NEIGHBOR_DECLARE(nei, node, it);
+    if(leafNum>2){
+        // TODO: Do you actually need to clear anything?
+        TerraceNode *node = (TerraceNode*) findLeafName(taxon_name);
+        TerraceNeighbor* nei = (TerraceNeighbor*)node->neighbors[0];
+        ((TerraceNeighbor*)nei->node->findNeighbor(node))->link_neighbors.clear();
+
+        FOR_NEIGHBOR_IT(nei->node, NULL, it){
+            //((TerraceNeighbor*)(*it))->link_neighbors.clear();
+            ((TerraceNeighbor*)(*it)->node->findNeighbor(nei->node))->link_neighbors.clear();
+        }
+        
+        removeTaxa(taxa);
+        
+        initializeTree();
+        
+    } else {
+        if(leafNum==2){
+            //cout<<"two-taxon tree, remove one taxon"<<endl;
+
+            NeighborVec::reverse_iterator it;
+            for (it = root->neighbors[0]->node->neighbors.rbegin(); it != root->neighbors[0]->node->neighbors.rend(); it++)
+                delete (*it);
+            root->neighbors[0]->node->neighbors.clear();
+            
+            if(root->name == taxon_name){
+                TerraceNode * new_root = (TerraceNode*) root->neighbors[0]->node;
+                
+                for (it = root->neighbors.rbegin(); it != root->neighbors.rend(); it++)
+                    delete (*it);
+                root->neighbors.clear();
+                
+                delete root;
+                
+                root = new_root;
+                leafNum = 1;
+                nodeNum = 1;
+                branchNum = 0;
+                root->id = 0;
+            }else{
+                delete root->neighbors[0]->node;
+                
+                for (it = root->neighbors.rbegin(); it != root->neighbors.rend(); it++)
+                    delete (*it);
+                root->neighbors.clear();
+                
+                leafNum = 1;
+                nodeNum = 1;
+                branchNum = 0;
+                root->id = 0;
+            }
+        }else if(leafNum==1){
+            root = nullptr;
+            leafNum = 0;
+            nodeNum = 0;
+            branchNum = 0;
+        }
+    }
+
+}
+
+void TerraceTree::print_terrace_tree(bool draw){
     
-    
-    removeTaxa(taxa);
+    if(leafNum>2 && draw){
+        drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
+    }else if(leafNum==2 or (!draw && leafNum>1)){
+        printTree(cout, WT_BR_SCALE | WT_NEWLINE);
+    }else if(leafNum==1){
+        cout<<"("<<root->name<<");"<<endl;
+    }else{
+        cout<<"();"<<endl;
+    }
     
 }
