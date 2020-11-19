@@ -275,6 +275,14 @@ void PresenceAbsenceMatrix::remove_taxon(string taxon_name){
 
 void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_names_sub, vector<string> &list_taxa_to_insert){
     
+    
+    // TODO!!!!
+    // starting tree is the most important stuff
+    // one again think about the best choice
+    // - the one with the largest overlap or the largest?
+    // - include or not to include unique taxa on the initial tree?
+    
+    
     //cout<<endl<<"=================================================="<<endl<<"INITIAL tree and Taxon Order:"<<endl<<endl;
     int i,j,k;
     
@@ -294,7 +302,9 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
             if(taxon_cov[j]!=1){ // taxa covered only by one partition
                 part_cov[i]+=pr_ab_matrix[j][i]; // per partition you only sum up taxa, which are present in more than one partition
             }
-            uniq_taxa[i]+=pr_ab_matrix[j][i];
+            if(taxon_cov[j]==1 && pr_ab_matrix[j][i]==1){
+                uniq_taxa[i]+=1;
+            }
         }
     }
     
@@ -308,7 +318,8 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
         inserted = FALSE;
         for(j=0; j<ordered_partitions.size(); j++){ // TODO: maybe implement something more efficient
             id=ordered_partitions[j];
-            if(part_cov[i]+uniq_taxa[i]>=part_cov[id]+uniq_taxa[id]){
+            //if(part_cov[i]+uniq_taxa[i]>=part_cov[id]+uniq_taxa[id]){
+              if(part_cov[i]>=part_cov[id]){
                 ordered_partitions.insert(ordered_partitions.begin()+j, i);
                 inserted = TRUE;
                 break;

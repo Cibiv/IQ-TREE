@@ -88,20 +88,21 @@ void TerraceTree::cleanAllLinkINFO(bool clean_induced_part_maps, TerraceNode *no
             // Clearing backward map from induced partition trees...
             if(clean_induced_part_maps){
                 for(part=0; part<nei->link_neighbors.size(); part++){
-                    // since for the trees with less than 3 taxa you do not do any maps, first check if there is a link_neighbor for the neighbor on the parent tree
+                    // INFO: since for the trees with less than 3 taxa you do not do any maps, first check if there is a link_neighbor for the neighbor on the parent tree
                     if((TerraceNeighbor*)nei->link_neighbors[part]){
                         if(((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.size()>0){
                             ((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors.clear();
                             ((TerraceNeighbor*)dad_nei->link_neighbors[part])->link_neighbors.clear();
                         }
-                        /*if(((TerraceNeighbor*)nei->link_neighbors[part])->taxa_to_insert.size()>0){
-                            ((TerraceNeighbor*)nei->link_neighbors[part])->taxa_to_insert.clear();
-                            ((TerraceNeighbor*)dad_nei->link_neighbors[part])->taxa_to_insert.clear();
-                        }*/
-                        /*if(((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors_lowtop_back.size()>0){
+                        if(((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors_lowtop_back.size()>0){
                             ((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors_lowtop_back.clear();
                             ((TerraceNeighbor*)dad_nei->link_neighbors[part])->link_neighbors_lowtop_back.clear();
-                        }*/
+                        }
+                        
+                        /*if(((TerraceNeighbor*)nei->link_neighbors[part])->taxa_to_insert.size()>0){
+                         ((TerraceNeighbor*)nei->link_neighbors[part])->taxa_to_insert.clear();
+                         ((TerraceNeighbor*)dad_nei->link_neighbors[part])->taxa_to_insert.clear();
+                         }*/
                     }
                 }
             }

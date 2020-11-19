@@ -106,23 +106,33 @@ void runterraceanalysis(Params &params){
         cout<<endl<<"READY TO GENERATE TREES FROM A TERRACE"<<endl;
         cout<<endl<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
         //init_terrace->print_ALL_DATA(part_tree_pairs);
+        ofstream out;
+        out.exceptions(ios::failbit | ios::badbit);
+        out.open(init_terrace->out_file);
+        //out<<"Generated Terrace Trees:"<<endl;
+        out.close();
         
-        cout<<"Generating trees.."<<endl;
+        cout<<endl<<"Generating trees.."<<endl;
         bool progress_status = true;
         init_terrace->generateTerraceTrees(terrace, part_tree_pairs, &list_taxa_to_insert, 0, &progress_status);
         
-        cout<<endl<<"Done!"<<endl;
+        cout<<endl<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
+        cout<<endl<<"Done!"<<endl<<endl;
+        cout<<"---------------------------------------------------------"<<endl;
+        cout<<"SUMMARY:"<<endl;
+        cout<<"---------------------------------------------------------"<<endl;
         cout<<"Number of taxa: "<<terrace->taxa_num<<endl;
         cout<<"Number of partitions: "<<terrace->part_num<<endl;
         terrace->matrix->percent_missing();
-        cout<<"Percentage of missing entries in supermatrix: "<<terrace->matrix->missing_percent<<endl;
+        cout<<"% of missing entries in supermatrix: "<<terrace->matrix->missing_percent<<endl;
         cout<<"Number of taxa on initial tree: "<<init_terrace->taxa_num<<endl;
         cout<<"Number of taxa to be inserted: "<<list_taxa_to_insert.size()<<endl;
         cout<<"Number of trees on terrace: "<<init_terrace->terrace_trees_num<<endl;
         cout<<"Number of intermediated trees visited: "<<init_terrace->intermediated_trees_num - init_terrace->terrace_trees_num<<endl;
         cout<<"Number of dead ends encountered: "<<init_terrace->dead_ends_num<<endl;
-        
-        cout<<endl<<"Generated trees were written to: "<<init_terrace->out_file<<endl;
+        cout<<"---------------------------------------------------------"<<endl;
+        cout<<endl<<"Generated trees were written to: "<<endl<<init_terrace->out_file<<endl<<endl;
+        cout<<"---------------------------------------------------------"<<endl;
         
         cout<<endl;
     } else {

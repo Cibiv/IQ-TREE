@@ -1237,6 +1237,9 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     //printTree(cout, WT_BR_SCALE | WT_NEWLINE);
     
     intermediated_trees_num +=1;
+    if(intermediated_trees_num % 1000 == 0){
+        cout<<"... trees generated - "<<intermediated_trees_num<<"; intermediated - "<<intermediated_trees_num-terrace_trees_num<<"; terrace - "<<terrace_trees_num<<"; dead paths - "<<dead_ends_num<<endl;
+    }
     
     
     // For DEBUGGING:
@@ -1248,13 +1251,68 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     relinkALL(part_tree_pairs);*/
 }
 
+void Terrace::extendNewTaxon_naive(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, vector<Terrace*> part_tree_pairs,vector<int> pr_ab_info){
+    
+    TerraceNeighbor *nei_1, *nei_2;
+    nei_1 = (TerraceNeighbor*) node_1_branch->findNeighbor(node_2_branch);
+    nei_2 = (TerraceNeighbor*) node_2_branch->findNeighbor(node_1_branch);
+    
+    Neighbor *nei_part_1, *nei_part_2;
+    
+    NodeVector part_taxa;
+    
+    int i;
+    
+    for(i=0; i<part_num; i++){
+        if(part_tree_pairs[i]->findLeafName(node_name)){
+            if(induced_trees[i]->leafNum>2){
+                nei_part_1 = nei_1->link_neighbors[i];
+                nei_part_2 = nei_2->link_neighbors[i];
+                
+                induced_trees[i]->insertNewTaxon(node_name, (TerraceNode*) nei_part_1->node, (TerraceNode*)nei_part_2->node);
+                
+            }else if(induced_trees[i]->leafNum == 2){
+                assert(induced_trees[i]->root->isLeaf() && "ERROR: in extendNewTaxon: root is not a leaf... something is wrong");
+                induced_trees[i]->insertNewTaxon(node_name, (TerraceNode*) induced_trees[i]->root, (TerraceNode*) induced_trees[i]->root->neighbors[0]->node);
+            }else if(induced_trees[i]->leafNum == 1){
+                TerraceNode* node_new = (TerraceNode*)induced_trees[i]->newNode(1, node_name.c_str());
+                induced_trees[i]->root->addNeighbor(node_new, 0.0,0);
+                node_new->addNeighbor(induced_trees[i]->root, 0.0,0);
+                induced_trees[i]->leafNum += 1;
+                induced_trees[i]->nodeNum += 1;
+                induced_trees[i]->initializeTree();
+            }else{
+                assert(induced_trees[i]->leafNum == 0 && "ERROR in extendNewTaxon_naive: a tree should have 0 zero leaves...");
+                induced_trees[i]->root = (TerraceNode*)induced_trees[i]->newNode(0, node_name.c_str());
+                induced_trees[i]->leafNum += 1;
+                induced_trees[i]->nodeNum += 1;
+            }
+            
+            int id = part_tree_pairs[i]->matrix->findTaxonID(node_name);
+            part_tree_pairs[i]->matrix->pr_ab_matrix[id][0] = 1;
+            
+        }
+        part_tree_pairs[i]->cleanAllLinkNeighboursAndTaxa(true);
+    }
+    
+    cleanAllLinkNeighboursAndTaxa(true);
+    insertNewTaxon(node_name, node_1_branch, node_2_branch);
+    matrix->extend_by_new_taxa(node_name, pr_ab_info);
+    taxa_num += 1;
+    
+    relinkALL(part_tree_pairs);
+    
+    intermediated_trees_num +=1;
+    
+}
+
 void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_pairs, vector<string> *list_taxa_to_insert, int taxon_to_insert, bool *progress_status){
     
     string taxon_name;
     taxon_name = list_taxa_to_insert->at(taxon_to_insert);
     //cout<<endl;
     //cout<<"*******************************************************"<<endl;
-    //cout<<endl<<"GENERATE_TERRACE_TREES | TAXON "<<taxon_name<<endl<<endl;
+    //cout<<"GENERATE_TERRACE_TREES | TAXON "<<taxon_name<<endl;
     //cout<<"*******************************************************"<<endl;
     
     
@@ -1265,18 +1323,19 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
         getAllowedBranches(taxon_name, part_tree_pairs, &node1_vec_branch, &node2_vec_branch);
         
         if(!node1_vec_branch.empty()){
-            //cout<<"ALLOWED_BRANCHES_"<<taxon_name<<"_"<<node1_vec_branch.size()<<endl;
+            //cout<<"NUM_OF_ALLOWED_BRANCHES_"<<taxon_name<<"_"<<node1_vec_branch.size()<<endl;
             //cout<<"ALL ALLOWED BRANCHES:"<<endl;
             //for(j=0; j<node1_vec_branch.size(); j++){
             //    cout<<j<<":"<<node1_vec_branch[j]->id<<"-"<<node2_vec_branch[j]->id<<endl;
             //}
             
             for(j=0; j<node1_vec_branch.size(); j++){
-                cout<<"-----------------------------------"<<endl<<"INSERTing taxon "<<taxon_name<<" on branch "<<j+1<<" out of "<<node1_vec_branch.size()<<": "<<node1_vec_branch[j]->id<<"-"<<node2_vec_branch[j]->id<<endl<<"-----------------------------------"<<endl;
+                //cout<<"-----------------------------------"<<endl<<"INSERTing taxon "<<taxon_name<<" on branch "<<j+1<<" out of "<<node1_vec_branch.size()<<": "<<node1_vec_branch[j]->id<<"-"<<node2_vec_branch[j]->id<<endl<<"-----------------------------------"<<endl;
                 
                 id = terrace->matrix->findTaxonID(taxon_name);
                 assert(id!=-1);
                 extendNewTaxon(taxon_name,(TerraceNode*)node1_vec_branch[j],(TerraceNode*)node2_vec_branch[j],part_tree_pairs,terrace->matrix->pr_ab_matrix[id]);
+                //extendNewTaxon_naive(taxon_name,(TerraceNode*)node1_vec_branch[j],(TerraceNode*)node2_vec_branch[j],part_tree_pairs,terrace->matrix->pr_ab_matrix[id]);
                 
                 for(i=0; i<terrace->part_num; i++){
                     // update matrices of top-low part tree pairs
@@ -1286,30 +1345,27 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
                     }
                 }
                 
-                // re-link
-                //relinkALL(part_tree_pairs);
-                
                 if(taxon_to_insert != list_taxa_to_insert->size()-1){
                     
                     generateTerraceTrees(terrace, part_tree_pairs, list_taxa_to_insert, taxon_to_insert+1, progress_status);
                     
                     // INFO: IF NEXT TAXON DOES NOT HAVE ALLOWED BRANCHES CURRENT IS DELETED AND NEXT BRANCH IS EXPLORED.
+                    //remove_one_taxon_naive(taxon_name,part_tree_pairs);
                     remove_one_taxon(taxon_name,part_tree_pairs);
-
-                    // re-link
-                    //relinkALL(part_tree_pairs);
                     
                 } else {
                     ofstream out;
                     out.exceptions(ios::failbit | ios::badbit);
-                    out.open(out_file);
+                    out.open(out_file,std::ios_base::app);
                     
                     terrace_trees_num+=1;
-                    cout<<endl<<"YESSSSSS!!!!!!!!! It's ALIVE!!!!:))))"<<endl<<endl;
-                    printTree(cout, WT_BR_SCALE | WT_NEWLINE);
+                    //if(terrace_trees_num % 1000 == 0){
+                    //    cout<<"... generated tree "<<terrace_trees_num<<endl;
+                    //}
+                    //printTree(cout, WT_BR_SCALE | WT_NEWLINE);
                     printTree(out, WT_BR_SCALE | WT_NEWLINE);
                     
-                    remove_one_taxon(taxon_name,part_tree_pairs);
+                    remove_one_taxon_naive(taxon_name,part_tree_pairs);
                     // re-link
                     //relinkALL(part_tree_pairs);
                     
@@ -1317,7 +1373,8 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
                 }
             }
         } else {
-            cout<<"For a given taxon "<<taxon_name<<" there are no allowed branches.. Dead end.."<<endl;
+            //cout<<"NUM_OF_ALLOWED_BRANCHES_"<<taxon_name<<"_0_dead_end"<<endl;
+            //cout<<"For a given taxon "<<taxon_name<<" there are no allowed branches.. Dead end.."<<endl;
             dead_ends_num +=1;
             *progress_status = false;
         }
@@ -1327,7 +1384,7 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
 
 void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pairs){
     
-    cout<<"-----------------------------------"<<endl<<"REMOVING TAXON "<<taxon_name<<endl<<"-----------------------------------"<<endl;
+    //cout<<"-----------------------------------"<<endl<<"REMOVING TAXON: "<<taxon_name<<endl<<"-----------------------------------"<<endl;
     
     int i, j, h;
     NodeVector induced_part_tree_branch_1, induced_part_tree_branch_2;
@@ -1335,7 +1392,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
     induced_part_tree_branch_2.resize(part_num,nullptr);
     
     Node *node_1, *node_2; // branch nodes of the agile (parent) tree, that will be the ends of the joint branch after taxon removal
-    TerraceNeighbor *neiC1, *neiC2, *neiC_leaf;
+    TerraceNeighbor *neiC1, *nei1C;
     
     Node *node_leaf_main, *node_central_main;
     Node *node_leaf, *node_central;
@@ -1351,15 +1408,9 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
     node_2 = branch_nodes[1];
     branch_nodes.clear();
     
-    // the below two neis will be joint, but at the moment there is a central node between them
+    // one of the two branches that will be joint on the agile tree
     neiC1 = (TerraceNeighbor*) node_central_main->findNeighbor(node_1);
-    neiC2 = (TerraceNeighbor*) node_central_main->findNeighbor(node_2);
-    neiC_leaf = (TerraceNeighbor*) node_central_main->findNeighbor(node_leaf_main);
-    
-    cout<<"node_central_main="<<node_central_main->id<<endl;
-    cout<<"neiC1="<<neiC1->node->id<<endl;
-    cout<<"neiC2="<<neiC2->node->id<<endl;
-    cout<<"neiC_leaf="<<neiC_leaf->node->id<<endl;
+    nei1C = (TerraceNeighbor*) node_1->findNeighbor(node_central_main);
     
     // Below NeiVectors will store neibours from agile tree and top induced trees that need to be updated
     // Corresponding neibours will have their forward map equal to nei_low_12 on corresponding low induced subtree, i.e. I'm going to "fold" all nei's in the same direction
@@ -1373,9 +1424,6 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
     NeighborVec update_nei_aux, update_nei_top_aux;
     bool appear;
     
-    //cout<<endl<<"----------- BEFORE TAXON REMOVAL and CLEARING -----------"<<endl;
-    //printMapInfo();
-    //cout<<endl<<"----------------------------------------------------"<<endl;
     for(i=0; i<part_num; i++){
         //cout<<"-------------------------------"<<endl;
         //cout<<endl<<"Partition "<<i<<":"<<endl;
@@ -1404,7 +1452,21 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                 node_leaf = induced_trees[i]->findLeafName(taxon_name);
                 node_central = node_leaf->neighbors[0]->node;
                 
-                if(neiC1->link_neighbors[i]->id == neiC2->link_neighbors[i]->id){
+                
+                branch_nodes.clear();
+                FOR_NEIGHBOR(node_central, node_leaf, it){
+                    branch_nodes.push_back((*it)->node);
+                }
+                
+                induced_part_tree_branch_1[i] = branch_nodes[0];
+                induced_part_tree_branch_2[i] = branch_nodes[1];
+                
+                if(neiC1->link_neighbors[i]->node == branch_nodes[1] or nei1C->link_neighbors[i]->node == branch_nodes[1]){
+                    induced_part_tree_branch_1[i] = branch_nodes[1];
+                    induced_part_tree_branch_2[i] = branch_nodes[0];
+                }
+                
+                /*if(neiC1->link_neighbors[i]->id == neiC2->link_neighbors[i]->id){
                     induced_part_tree_branch_1[i] = neiC1->link_neighbors[i]->node;
                     induced_part_tree_branch_2[i] = ((TerraceNeighbor*)node_1->findNeighbor(node_central_main))->link_neighbors[i]->node;
                     
@@ -1419,9 +1481,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                 }else{
                     induced_part_tree_branch_1[i] = neiC1->link_neighbors[i]->node;
                     induced_part_tree_branch_2[i] = neiC2->link_neighbors[i]->node;
-                }
-                
-                //printMapInfo(i);
+                }*/
                 
                 //cout<<"induced_part_tree_branch_1[i] = "<<induced_part_tree_branch_1[i]->id<<endl;
                 //cout<<"induced_part_tree_branch_2[i] = "<<induced_part_tree_branch_2[i]->id<<endl;
@@ -1443,7 +1503,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                             ((TerraceNeighbor*)nei2->link_neighbors[j])->link_neighbors[i] = nullptr;
                             
                             
-                            // INFO: you do not want any of the 6 neibors that will be modified to appear in the list of neis to be updated, because these neis won't exist after removal and you'll get SEG_FAULT
+                            // INFO: you do not want any of the 6 neibours that will be modified to appear in the list of neis to be updated, because these neis won't exist after removal and you'll get SEG_FAULT
                             appear=false;
                             FOR_NEIGHBOR_DECLARE(node_central_main, nullptr, it1){
                                 if(nei1->link_neighbors[j] == (*it1)){
@@ -1483,7 +1543,8 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                     }
                 
                     if(!((TerraceNeighbor*)(*it))->link_neighbors_lowtop_back.empty()){
-                        // clearing forward maps from induced partition tree (parent) to common partition subtree
+                        
+                        //cout<<"clearing forward maps from induced partition tree (parent) to common partition subtree"<<endl;
                         for(j=0; j<((TerraceNeighbor*)(*it))->link_neighbors_lowtop_back.size(); j++){
                             ((TerraceNeighbor*)nei1->link_neighbors_lowtop_back[j])->link_neighbors[0] = nullptr;
                             ((TerraceNeighbor*)nei2->link_neighbors_lowtop_back[j])->link_neighbors[0] = nullptr;
@@ -1491,6 +1552,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                             // INFO: note, that for top partition trees we do not need to avoid adding 6 neis to the list, because they will still exist after taxon deletion. However, when you'll update, set all neis to nei_low_12 and nei_low_21 correctly to nei_low_21 and not to nei_low_12
                             update_nei_top_aux.push_back(nei1->link_neighbors_lowtop_back[j]);
                             update_nei_top_aux.push_back(nei2->link_neighbors_lowtop_back[j]);
+                            //cout<<"update_nei_top_aux.size()="<<update_nei_top_aux.size()<<endl;
                         }
                         
                         // clearing backward maps from common partition subtree to induced partition tree (parent)
@@ -1517,7 +1579,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                 // CHECK: again, this might by the same node... in case things are messed up
                 induced_part_tree_branch_1[i] = neiC1->link_neighbors[i]->node;
                 //induced_part_tree_branch_2[i] = neiC2->link_neighbors[i]->node;
-                induced_part_tree_branch_2[i] = ((TerraceNeighbor*)node_1->findNeighbor(node_central_main))->link_neighbors[i]->node;
+                induced_part_tree_branch_2[i] = nei1C->link_neighbors[i]->node;
                 
                 //cout<<"induced_part_tree_branch_1[i] = "<<induced_part_tree_branch_1[i]->id<<endl;
                 //cout<<"induced_part_tree_branch_2[i] = "<<induced_part_tree_branch_2[i]->id<<endl;
@@ -1526,7 +1588,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                  * INFO: For partitions, which do not have corresponding taxon, remove 6 possible backward neighbors corresponding to three branches, which will be removed/modified
                  */
                 nei1 = (TerraceNeighbor*)neiC1->link_neighbors[i];
-                nei2 = (TerraceNeighbor*)((TerraceNeighbor*)node_1->findNeighbor(node_central_main))->link_neighbors[i];
+                nei2 = (TerraceNeighbor*)nei1C->link_neighbors[i];
                 
                 for(j=nei1->link_neighbors.size()-1; j!=-1;j--){
                     for(h=0; h<node_central_main->neighbors.size();h++){
@@ -1572,11 +1634,6 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
     matrix->remove_taxon(taxon_name);
     taxa_num -= 1;
     
-    //cout<<endl<<"----------- AFTER TAXON REMOVAL and CLEARING + BEFORE UPDATE-----------"<<endl;
-    //printMapInfo();
-    //cout<<endl<<"----------------------------------------------------"<<endl;
-    
-    
     // RE-MAP with new UPDATE using vectors of "to be modified" and not the update_map function
     for(i=0; i<part_num; i++){
         //cout<<"Updating maps for partition "<<i<<":"<<endl;
@@ -1599,69 +1656,46 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
             ((TerraceNeighbor*)node_2->findNeighbor(node_1))->link_neighbors[i] = nei2;
             nei2->link_neighbors.push_back(node_2->findNeighbor(node_1));
             
-            cout<<"Agile tree for partition "<<i<<":"<<endl;
-            cout<<"nei1->link_neighbors.size()="<<nei1->link_neighbors.size()<<endl;
-            cout<<"nei2->link_neighbors.size()="<<nei2->link_neighbors.size()<<endl;
-            
-            
             // TOP induced partition trees
             if(!update_nei_top[i].empty()){
-                
+                //cout<<"TOP PART TREE: There are "<<update_nei_top[i].size()/2<<" branches ("<<update_nei_top[i].size()<<" neighbors) to be updated"<<endl;
                 for(j=0;j<update_nei_top[i].size()/2; j++){
-                    ((TerraceNeighbor*)update_nei_top[i][2*j])->link_neighbors[i] = nei1;
+                    ((TerraceNeighbor*)update_nei_top[i][2*j])->link_neighbors[0] = nei1;
                     nei1->link_neighbors_lowtop_back.push_back(update_nei_top[i][2*j]);
-                    ((TerraceNeighbor*)update_nei_top[i][2*j+1])->link_neighbors[i] = nei2;
+                    ((TerraceNeighbor*)update_nei_top[i][2*j+1])->link_neighbors[0] = nei2;
                     nei2->link_neighbors_lowtop_back.push_back(update_nei_top[i][2*j+1]);
                 }
             }
-         
-            cout<<"Induced partition pair "<<i<<":"<<endl;
-            cout<<"nei1->link_neighbors_lowtop_back.size()="<<nei1->link_neighbors_lowtop_back.size()<<endl;
-            cout<<"nei2->link_neighbors_lowtop_back.size()="<<nei2->link_neighbors_lowtop_back.size()<<endl;
-            
-            part_tree_pairs[i]->printMapInfo();
-            cout<<"----------------------------------------------------"<<endl;
+        }
+    }
+}
+
+void Terrace::remove_one_taxon_naive(string taxon_name, vector<Terrace*> part_tree_pairs){
+    //cout<<"-----------------------------------"<<endl<<"REMOVING TAXON: "<<taxon_name<<endl<<"-----------------------------------"<<endl;
+    
+    bool clean_induced_part_maps = true;
+    
+    for(int i=0; i<part_num; i++){
+        part_tree_pairs[i]->cleanAllLinkNeighboursAndTaxa(clean_induced_part_maps);
+        if(part_tree_pairs[i]->findLeafName(taxon_name)){
+            int id = part_tree_pairs[i]->matrix->findTaxonID(taxon_name);
+            part_tree_pairs[i]->matrix->pr_ab_matrix[id][0] = 0;
         }
     }
     
-    cout<<endl<<"----------- AFTER TAXON REMOVAL + UPDATE -----------"<<endl;
-    //printMapInfo();
-    printBackMapInfo();
-    cout<<endl<<"----------------------------------------------------"<<endl;
-    
-    
-    // RE-MAP after removing taxon
-    /*NodeVector part_taxa;
-    for(i=0; i<part_num; i++){
-        if(induced_trees[i]->leafNum>2){
-            part_taxa.clear();
-            matrix->getPartTaxa(i, this, induced_trees[i], part_taxa);
-            if(node_1->isLeaf()){
-                update_map(i, part_taxa, true, false, (TerraceNode*)node_2);
-            }else{
-                update_map(i, part_taxa, true, false, (TerraceNode*)node_1);
-                
-            }
-            if(part_tree_pairs[i]->findLeafName(taxon_name)){
-                part_taxa.clear();
-                part_tree_pairs[i]->matrix->getPartTaxa(0, part_tree_pairs[i], induced_trees[i], part_taxa);
-                node_leaf = part_tree_pairs[i]->findLeafName(taxon_name);
-                node_central = node_leaf->neighbors[0]->node;
-                part_tree_pairs[i]->update_map(0, part_taxa, false, true, (TerraceNode*)node_central);
-            }
-        }
-    }*/
-    
-    // For DEBUGGING:
-    /*bool clean_induced_part_maps = false;
-    for(i=0; i<part_num; i++){
-    part_tree_pairs[i]->cleanAllLinkNeighboursAndTaxa(clean_induced_part_maps);
-    }
     cleanAllLinkNeighboursAndTaxa(clean_induced_part_maps);
-    //relinkALL(part_tree_pairs);
-    linkTrees(true, false);
-    */
     
+    for(int i=0; i<part_num; i++){
+        if(induced_trees[i]->findLeafName(taxon_name)){
+            induced_trees[i]->remove_taxon(taxon_name);
+        }
+    }
+    
+    remove_taxon(taxon_name);
+    matrix->remove_taxon(taxon_name);
+    taxa_num -= 1;
+    
+    relinkALL(part_tree_pairs);
 }
 
 void Terrace::relinkALL(vector<Terrace*> part_tree_pairs){

@@ -130,10 +130,14 @@ public:
     void getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, NodeVector *node1_vec, NodeVector *node2_vec);
     
     /*
-     *  Insert a new taxon to the parent tree, update induced partition trees, update mapping
+     *  Insert a new taxon to the parent tree, update induced partition trees, update mapping (locally)
      */
-    
     void extendNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, vector<Terrace*> aux_terrace,vector<int> pr_ab_info);
+    
+    /*
+     *  Insert a new taxon to the parent tree, update induced partition trees, update mapping. The maps are not updated, but cleaned and then everything is relinked again from scratch
+     */
+    void extendNewTaxon_naive(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, vector<Terrace*> part_tree_pairs,vector<int> pr_ab_info);
     
     /*
      *  Clean all link neighbours and taxa on parent tree and on induced partition trees
@@ -155,9 +159,19 @@ public:
     
     /*
      *  Remove one taxon from the terrace tree, from induced partition trees, update the mapping
+     *  Here the update is local update: only involved branches and maps of trees are beeing updated.
      */
     
     void remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pairs);
+    
+    /*
+     *  Remove one taxon from the terrace tree, from induced partition trees, update the mapping.
+     *  Here the update corresponds to:
+     *  - remove taxon,
+     *  - clear all maps from agile (parent) tree and from low-top induced partition trees,
+     *  - relink all branches of all trees from scratch
+     */
+    void remove_one_taxon_naive(string taxon_name, vector<Terrace*> part_tree_pairs);
     
     /*
      *  Re-link
