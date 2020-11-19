@@ -1367,12 +1367,20 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
                     //    cout<<"... generated tree "<<terrace_trees_num<<endl;
                     //}
                     //printTree(cout, WT_BR_SCALE | WT_NEWLINE);
+                    int terrace_max_trees = 500000;
+                    if(terrace_trees_num > terrace_max_trees){
+                        cout<<"Considered terrace already contains more than "<<terrace_max_trees<<" trees.. Exiting..."<<endl;
+                        cout<<"---------------------------------------------------------"<<endl;
+                        cout<<"SUMMARY at the current step:"<<endl;
+                        cout<<"---------------------------------------------------------"<<endl;
+                        cout<<"Number of trees on terrace: "<<terrace_trees_num<<endl;
+                        cout<<"Number of intermediated trees visited: "<<intermediated_trees_num - terrace_trees_num<<endl;
+                        cout<<"Number of dead ends encountered: "<<dead_ends_num<<endl;
+                        cout<<"---------------------------------------------------------"<<endl;
+                        exit(0);
+                    }
                     
                     remove_one_taxon_naive(taxon_name,part_tree_pairs);
-                    // re-link
-                    //relinkALL(part_tree_pairs);
-                    
-                    
                 }
             }
         } else {
