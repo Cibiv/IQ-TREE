@@ -1016,6 +1016,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.u2c_nni5 = false;
     
     params.terrace_analysis = false;
+    params.terrace_out = true;
     params.pr_ab_matrix = nullptr;
     
 #ifdef USE_EIGEN3
@@ -1741,7 +1742,12 @@ void parseArg(int argc, char *argv[], Params &params) {
             
             if (strcmp(argv[cnt], "-terrace_analysis") == 0) {
                 params.terrace_analysis = true;
-                cout<<"Terrace anaylsis: TRUE"<<endl;
+                //cout<<"Terrace anaylsis: TRUE"<<endl;
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-terrace_out") == 0) {
+                params.terrace_out = false;
                 continue;
             }
             

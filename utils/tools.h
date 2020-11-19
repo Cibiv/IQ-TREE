@@ -1750,6 +1750,7 @@ public:
 
     bool terrace_analysis;
     const char *pr_ab_matrix;
+    bool terrace_out;
 
     /**********************************************/
     /**** variables for ultra-fast bootstrap ******/

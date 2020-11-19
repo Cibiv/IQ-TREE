@@ -69,6 +69,7 @@ public:
     
     // file to output all generated terrace trees
     string out_file;
+    bool terrace_out;
     
     /*
      *  Print terrace info: a representative tree, induced trees and presence-absence matrix

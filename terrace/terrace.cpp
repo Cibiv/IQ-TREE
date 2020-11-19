@@ -18,6 +18,7 @@ void Terrace::init(){
     intermediated_trees_num = 0;
     terrace_trees_num = 0;
     dead_ends_num = 0;
+    terrace_out = true;
     
 }
 
@@ -1354,22 +1355,24 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
                     remove_one_taxon(taxon_name,part_tree_pairs);
                     
                 } else {
-                    ofstream out;
-                    out.exceptions(ios::failbit | ios::badbit);
-                    out.open(out_file,std::ios_base::app);
-                    
+                    if(terrace_out){
+                        ofstream out;
+                        out.exceptions(ios::failbit | ios::badbit);
+                        out.open(out_file,std::ios_base::app);
+                        printTree(out, WT_BR_SCALE | WT_NEWLINE);
+                        out.close();
+                    }
                     terrace_trees_num+=1;
                     //if(terrace_trees_num % 1000 == 0){
                     //    cout<<"... generated tree "<<terrace_trees_num<<endl;
                     //}
                     //printTree(cout, WT_BR_SCALE | WT_NEWLINE);
-                    printTree(out, WT_BR_SCALE | WT_NEWLINE);
                     
                     remove_one_taxon_naive(taxon_name,part_tree_pairs);
                     // re-link
                     //relinkALL(part_tree_pairs);
                     
-                    out.close();
+                    
                 }
             }
         } else {

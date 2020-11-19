@@ -106,11 +106,14 @@ void runterraceanalysis(Params &params){
         cout<<endl<<"READY TO GENERATE TREES FROM A TERRACE"<<endl;
         cout<<endl<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
         //init_terrace->print_ALL_DATA(part_tree_pairs);
-        ofstream out;
-        out.exceptions(ios::failbit | ios::badbit);
-        out.open(init_terrace->out_file);
-        //out<<"Generated Terrace Trees:"<<endl;
-        out.close();
+        if(params.terrace_out){
+            ofstream out;
+            out.exceptions(ios::failbit | ios::badbit);
+            out.open(init_terrace->out_file);
+            out.close();
+        }else{
+            init_terrace->terrace_out = false;
+        }
         
         cout<<endl<<"Generating trees.."<<endl;
         bool progress_status = true;
@@ -131,8 +134,10 @@ void runterraceanalysis(Params &params){
         cout<<"Number of intermediated trees visited: "<<init_terrace->intermediated_trees_num - init_terrace->terrace_trees_num<<endl;
         cout<<"Number of dead ends encountered: "<<init_terrace->dead_ends_num<<endl;
         cout<<"---------------------------------------------------------"<<endl;
-        cout<<endl<<"Generated trees were written to: "<<endl<<init_terrace->out_file<<endl<<endl;
-        cout<<"---------------------------------------------------------"<<endl;
+        if(params.terrace_out){
+            cout<<endl<<"Generated trees were written to: "<<endl<<init_terrace->out_file<<endl<<endl;
+            cout<<"---------------------------------------------------------"<<endl;
+        }
         
         cout<<endl;
     } else {
