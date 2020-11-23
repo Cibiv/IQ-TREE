@@ -38,6 +38,8 @@ Terrace::Terrace(const char *infile_tree, bool is_rooted,const char *infile_matr
     getTaxa(taxa_nodes);
     matrix->reorderAccordingToTree(taxa_nodes);
     
+    renameTaxa();
+    
     get_part_trees();
     //printInfo();
 };
@@ -231,6 +233,7 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bo
             if((*it)){
                 if(node->name == (*it)->name){
                     node_part = (TerraceNode*)(*it);
+                    break;
                 }
             }
         }
@@ -363,13 +366,22 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
             //cout<<"part_vec[0]="<<part_vec[0]->node->id<<endl;
             //cout<<"part_vec[1]="<<part_vec[1]->node->id<<endl;
             TerraceNeighbor * nei_aux;
-            for(int i=0; i<part_vec.size(); i++){
-                for(int j=0; j<child_part_vec.size(); j++){
-                    if(part_vec[i]->node == child_part_vec[j]->node and part_vec[1-i]->node != child_part_vec[1-j]->node){
-                        nei_aux = part_vec[i];
-                        part_vec[i] = child_part_vec[1-j];
-                        child_part_vec[1-j] = nei_aux;
-                        break;
+            if(part_vec[0]->node == part_vec[1]->node){
+                nei_aux = part_vec[0];
+                part_vec[0]=child_part_vec[0];
+                child_part_vec[0]=nei_aux;
+                nei_aux=part_vec[1];
+                part_vec[1]=child_part_vec[1];
+                child_part_vec[1]=nei_aux;
+            }else{
+                for(int i=0; i<part_vec.size(); i++){
+                    for(int j=0; j<child_part_vec.size(); j++){
+                        if(part_vec[i]->node == child_part_vec[j]->node and part_vec[1-i]->node != child_part_vec[1-j]->node){
+                            nei_aux = part_vec[i];
+                            part_vec[i] = child_part_vec[1-j];
+                            child_part_vec[1-j] = nei_aux;
+                            break;
+                        }
                     }
                 }
             }
@@ -576,6 +588,10 @@ void Terrace::update_map(int part, NodeVector &part_taxa, bool back_branch_map, 
     //    printMapInfo(3);
     //}
     
+    //if(part==0){
+    //    printMapInfo();
+    //}
+    
     /*
      For insertion:
          1. You need some kind of preprocessing step to remove link_neighbours of branches, which were allowed for the inserted taxon.
@@ -663,6 +679,7 @@ void Terrace::update_map(int part, NodeVector &part_taxa, bool back_branch_map, 
                     if((*it)){
                         if(node->name == (*it)->name){
                             node_part = (TerraceNode*)(*it);
+                            break;
                         }
                     }
                 }
@@ -809,7 +826,8 @@ void Terrace::printBackMapInfo(){
     NodeVector node_1, node_2;
     TerraceNeighbor *nei12, *nei21;
     
-    for(i=0; i<part_num; i++){
+    i=71;
+    //for(i=0; i<part_num; i++){
         cout<<endl<<"---------------------------------------------"<<endl;
         cout<<endl<<"Partition "<<i<<":"<<endl;
         cout<<endl<<"---------------------------------------------"<<endl;
@@ -863,7 +881,7 @@ void Terrace::printBackMapInfo(){
                 }
             }
         }
-    }
+   // }
 }
 
 void Terrace::create_Top_Low_Part_Tree_Pairs(vector<Terrace*> &part_tree_pairs, Terrace *terrace){
@@ -1053,7 +1071,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     NodeVector part_taxa;
     
     int i,j;
-    
+
     for(i=0; i<part_num; i++){
         
         if(induced_trees[i]->leafNum>2){
@@ -1308,7 +1326,7 @@ void Terrace::extendNewTaxon_naive(string node_name, TerraceNode *node_1_branch,
 }
 
 void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_pairs, vector<string> *list_taxa_to_insert, int taxon_to_insert, bool *progress_status){
-    
+    time_t start_time;
     string taxon_name;
     taxon_name = list_taxa_to_insert->at(taxon_to_insert);
     //cout<<endl;
@@ -1377,6 +1395,8 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
                         cout<<"Number of intermediated trees visited: "<<intermediated_trees_num - terrace_trees_num<<endl;
                         cout<<"Number of dead ends encountered: "<<dead_ends_num<<endl;
                         cout<<"---------------------------------------------------------"<<endl;
+                        time(&start_time);
+                        cout << "Date and Time: " << ctime(&start_time);
                         exit(0);
                     }
                     
@@ -1774,4 +1794,30 @@ void Terrace::print_ALL_DATA(vector<Terrace*> part_tree_pairs){
     cout<<"================ END: PRINTING all INFO ================="<<endl<<endl;
     
     
+}
+
+void Terrace::renameTaxa(){
+    
+    getTaxaName(taxa_names_orgn);
+    
+    NodeVector taxa;
+    getTaxa(taxa);
+    
+    for(int i=0; i<taxa_num; i++){
+        stringstream ss;
+        ss << i;
+        string name = "sp" + ss.str();
+        for(NodeVector::iterator it = taxa.begin(); it!=taxa.end(); it++){
+            if((*it)->name == taxa_names_orgn[i]){
+                (*it)->name = name;
+                break;
+            }
+        }
+        for(int j=0; j<taxa_num; j++){
+            if(matrix->taxa_names[j] == taxa_names_orgn[i]){
+                matrix->taxa_names[j] = name;
+                break;
+            }
+        }
+    }
 }

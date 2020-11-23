@@ -53,6 +53,11 @@ public:
     int part_num;
     
     /*
+     * Original taxon names
+     */
+    StrVector taxa_names_orgn;
+    
+    /*
      *  Number of trees on terrace
      */
     int terrace_trees_num;
@@ -184,6 +189,11 @@ public:
      */
     
     void print_ALL_DATA(vector<Terrace*> part_tree_pairs);
+    
+    /*
+     *  Rename taxa on a tree and in presence-absence matrix
+     */
+    void renameTaxa();
 };
 
 #endif /* terrace_hpp */
