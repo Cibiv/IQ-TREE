@@ -1400,7 +1400,8 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
                         exit(0);
                     }
                     
-                    remove_one_taxon_naive(taxon_name,part_tree_pairs);
+                    //remove_one_taxon_naive(taxon_name,part_tree_pairs);
+                    remove_one_taxon(taxon_name,part_tree_pairs);
                 }
             }
         } else {
