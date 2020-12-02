@@ -6,9 +6,35 @@
 //
 
 #include "presenceabsencematrix.hpp"
+#include "alignment/superalignment.h"
 #include "tree/node.h"
 #include "tree/mtree.h"
 
+void PresenceAbsenceMatrix::get_from_alignment(Params &params){
+    int i, j;
+    
+    // Input is an alignment with partition info
+    SuperAlignment* alignment = new SuperAlignment(params);
+    IntVector pattern_0_1;
+    
+    taxa_num = alignment->getNSeq();
+    part_num = alignment->getNSite();
+    
+    for(i=0; i<taxa_num; i++){
+        pattern_0_1.clear();
+        for(j=0; j<part_num; j++){
+            if(alignment->taxa_index[i][j]==-1){
+                pattern_0_1.push_back(0);
+            }else{
+                pattern_0_1.push_back(1);
+            }
+        }
+        pr_ab_matrix.push_back(pattern_0_1);
+        taxa_names.push_back(alignment->getSeqName(i));
+    }
+
+    init();
+}
 
 void PresenceAbsenceMatrix::read_pr_ab_matrix(const char *infile){
     ifstream in;

@@ -28,6 +28,11 @@ public:
      *  initialization
      */
     void init();
+    
+    /*
+     *  Fill in presence-absence matrix from an input alignment
+     */
+    void get_from_alignment(Params &params);
 
     /*
      *  Reading a presence-absence matrix for supermatrix

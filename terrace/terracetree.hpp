@@ -88,6 +88,10 @@ public:
     
 };
 
+/**
+ * Get a tree topology as a string
+ */
 
+string getTreeTopologyString(MTree* tree);
 
 #endif /* terracetree_hpp */

@@ -1751,6 +1751,16 @@ public:
     bool terrace_analysis;
     const char *pr_ab_matrix;
     bool terrace_out;
+    
+    /** file with tree set to be tested, whether from the same terrace with the representative tree */
+    char *terrace_query_set;
+    
+    /*
+     *  Options to set different stopping rules for generation of terrace trees
+     */
+    
+    int terrace_stop_intermediate_num;
+    int terrace_stop_terrace_trees_num;
 
     /**********************************************/
     /**** variables for ultra-fast bootstrap ******/

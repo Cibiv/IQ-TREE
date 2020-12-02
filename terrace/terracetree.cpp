@@ -252,3 +252,9 @@ void TerraceTree::print_terrace_tree(bool draw){
     }
     
 }
+
+string getTreeTopologyString(MTree* tree){
+    stringstream tree_stream;
+    tree->printTree(tree_stream, WT_BR_LEN_ROUNDING + WT_SORT_TAXA);
+    return tree_stream.str();
+}

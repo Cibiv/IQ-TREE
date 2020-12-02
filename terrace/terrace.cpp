@@ -7,6 +7,7 @@
 
 #include "terrace.hpp"
 #include "terracenode.hpp"
+#include "tree/mtreeset.h"
 
 Terrace::Terrace(){};
 Terrace::~Terrace(){};
@@ -19,6 +20,9 @@ void Terrace::init(){
     terrace_trees_num = 0;
     dead_ends_num = 0;
     terrace_out = true;
+    
+    terrace_max_trees = 1000000;
+    intermediate_max_trees = 10000000;
     
 }
 
@@ -1260,6 +1264,17 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
         cout<<"... trees generated - "<<intermediated_trees_num<<"; intermediated - "<<intermediated_trees_num-terrace_trees_num<<"; terrace - "<<terrace_trees_num<<"; dead paths - "<<dead_ends_num<<endl;
     }
     
+    if(intermediated_trees_num - terrace_trees_num > intermediate_max_trees){
+        cout<<endl<<"WARNING: stopping condition is active! The total number of trees on the terrace is NOT yet computed!"<<endl;
+        cout<<"The number of considered intermediated trees is more than "<<intermediate_max_trees<<". Exiting generation process..."<<endl;
+        cout<<"printing summary at current step..."<<endl;
+        write_summary_generation();
+        time_t end_time;
+        time(&end_time);
+        cout << "Date and Time: " << ctime(&end_time);
+        exit(0);
+    }
+    
     
     // For DEBUGGING:
     /*bool clean_induced_part_maps = true;
@@ -1326,7 +1341,6 @@ void Terrace::extendNewTaxon_naive(string node_name, TerraceNode *node_1_branch,
 }
 
 void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_pairs, vector<string> *list_taxa_to_insert, int taxon_to_insert, bool *progress_status){
-    time_t start_time;
     string taxon_name;
     taxon_name = list_taxa_to_insert->at(taxon_to_insert);
     //cout<<endl;
@@ -1374,32 +1388,28 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
                     
                 } else {
                     if(terrace_out){
-                        ofstream out;
-                        out.exceptions(ios::failbit | ios::badbit);
-                        out.open(out_file,std::ios_base::app);
-                        printTree(out, WT_BR_SCALE | WT_NEWLINE);
-                        out.close();
+                        terrace_trees.push_back(getTreeTopologyString(this));
+                        //ofstream out;
+                        //out.exceptions(ios::failbit | ios::badbit);
+                        //out.open(out_file,std::ios_base::app);
+                        //printTree(out, WT_BR_SCALE | WT_NEWLINE);
+                        //out.close();
                     }
                     terrace_trees_num+=1;
                     //if(terrace_trees_num % 1000 == 0){
                     //    cout<<"... generated tree "<<terrace_trees_num<<endl;
                     //}
                     //printTree(cout, WT_BR_SCALE | WT_NEWLINE);
-                    int terrace_max_trees = 500000;
                     if(terrace_trees_num > terrace_max_trees){
-                        cout<<"Considered terrace already contains more than "<<terrace_max_trees<<" trees.. Exiting..."<<endl;
-                        cout<<"---------------------------------------------------------"<<endl;
-                        cout<<"SUMMARY at the current step:"<<endl;
-                        cout<<"---------------------------------------------------------"<<endl;
-                        cout<<"Number of trees on terrace: "<<terrace_trees_num<<endl;
-                        cout<<"Number of intermediated trees visited: "<<intermediated_trees_num - terrace_trees_num<<endl;
-                        cout<<"Number of dead ends encountered: "<<dead_ends_num<<endl;
-                        cout<<"---------------------------------------------------------"<<endl;
-                        time(&start_time);
-                        cout << "Date and Time: " << ctime(&start_time);
+                        cout<<endl<<"WARNING: stopping condition is active! The total number of trees on the terrace is NOT yet computed!"<<endl;
+                        cout<<"Considered terrace already contains more than "<<terrace_max_trees<<" trees."<<endl<<"Exiting generation process..."<<endl;
+                        cout<<"printing summary at current step..."<<endl;
+                        write_summary_generation();
+                        time_t end_time;
+                        time(&end_time);
+                        cout << "Date and Time: " << ctime(&end_time);
                         exit(0);
                     }
-                    
                     //remove_one_taxon_naive(taxon_name,part_tree_pairs);
                     remove_one_taxon(taxon_name,part_tree_pairs);
                 }
@@ -1793,8 +1803,7 @@ void Terrace::print_ALL_DATA(vector<Terrace*> part_tree_pairs){
     printMapInfo();
     printBackMapInfo();
     cout<<"================ END: PRINTING all INFO ================="<<endl<<endl;
-    
-    
+
 }
 
 void Terrace::renameTaxa(){
@@ -1807,7 +1816,7 @@ void Terrace::renameTaxa(){
     for(int i=0; i<taxa_num; i++){
         stringstream ss;
         ss << i;
-        string name = "sp" + ss.str();
+        string name = "t" + ss.str();
         for(NodeVector::iterator it = taxa.begin(); it!=taxa.end(); it++){
             if((*it)->name == taxa_names_orgn[i]){
                 (*it)->name = name;
@@ -1821,4 +1830,94 @@ void Terrace::renameTaxa(){
             }
         }
     }
+}
+
+bool Terrace::check_two_trees(MTree* query_tree){
+    TerraceTree tree;
+    tree.copyTree_byTaxonNames(query_tree, matrix->taxa_names);
+    Terrace *query_terrace = new Terrace(tree, matrix);
+    
+    vector<string> trees, taxa_names;
+    
+    for(int part=0; part<part_num; part++){
+        
+        trees.clear();
+        trees.push_back(getTreeTopologyString(induced_trees[part]));
+        //trees.push_back(getTreeTopologyString(induced_trees_query[part]));
+        
+        taxa_names.clear();
+        induced_trees[part]->getTaxaName(taxa_names);
+        
+        MTreeSet tree_set;
+        tree_set.init(trees,taxa_names,induced_trees[part]->rooted);
+        //tree_set[0]->printTree(cout,WT_SORT_TAXA|WT_BR_LEN_ROUNDING|WT_NEWLINE);
+        
+        MTreeSet tree_set_1;
+        trees.clear();
+        trees.push_back(getTreeTopologyString(query_terrace->induced_trees[part]));
+        tree_set_1.init(trees,taxa_names,query_terrace->induced_trees[part]->rooted);
+        //tree_set_1[0]->printTree(cout,WT_SORT_TAXA|WT_BR_LEN_ROUNDING|WT_NEWLINE);
+        
+        int *rfdist;
+        int n=1;
+        rfdist = new int [n*n];
+        memset(rfdist, 0, n*n* sizeof(int));
+        tree_set.computeRFDist(rfdist,&tree_set_1);
+        //cout<<"Partition "<<part+1<<": RF-distance between induced trees is "<<rfdist[0]<<endl;
+        
+        if(rfdist[0]!=0){
+            //cout<<"---------------------------------------------"<<endl;
+            //cout<<"A query tree does not belong to the terrace:"<<endl;
+            //tree->printTree(cout,WT_SORT_TAXA|WT_BR_LEN_ROUNDING|WT_NEWLINE);
+            
+            //cout<<"The first encountered pair of induced partition trees that do not match. Partition "<<part+1<<endl;
+            //tree_set[0]->printTree(cout,WT_SORT_TAXA|WT_BR_LEN_ROUNDING|WT_NEWLINE);
+            //tree_set_1[0]->printTree(cout,WT_SORT_TAXA|WT_BR_LEN_ROUNDING|WT_NEWLINE);
+            
+            delete [] rfdist;
+            tree_set.clear();
+            return false;
+        }
+        delete [] rfdist;
+        tree_set.clear();
+        
+    }
+    //cout<<"---------------------------------------------"<<endl;
+    //cout<<"A query tree is ON the terrace"<<endl;
+    
+    return true;
+}
+
+void Terrace::write_terrace_trees_to_file(){
+ 
+    time_t curr_time;
+    time(&curr_time);
+    cout << "Current Time: " << ctime(&curr_time);
+    cout<<"---------------------------------------------------------"<<endl;
+    
+    cout<<"Printing "<<terrace_trees_num<<" terrace trees to file "<<endl<<out_file<<"..."<<endl;
+    
+    ofstream out;
+    out.exceptions(ios::failbit | ios::badbit);
+    out.open(out_file,std::ios_base::app);
+    
+    for(int i=0; i<terrace_trees.size(); i++){
+        out<<terrace_trees[i]<<endl;
+    }
+    out.close();
+}
+
+void Terrace::write_summary_generation(){
+    
+    cout<<"---------------------------------------------------------"<<endl;
+    cout<<"SUMMARY:"<<endl;
+    cout<<"Number of trees on terrace: "<<terrace_trees_num<<endl;
+    cout<<"Number of intermediated trees visited: "<<intermediated_trees_num - terrace_trees_num<<endl;
+    cout<<"Number of dead ends encountered: "<<dead_ends_num<<endl;
+    cout<<"---------------------------------------------------------"<<endl;
+    if(terrace_out){
+        write_terrace_trees_to_file();
+        cout<<"---------------------------------------------------------"<<endl;
+    }
+    cout<<endl;
 }

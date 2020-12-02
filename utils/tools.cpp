@@ -1018,6 +1018,9 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.terrace_analysis = false;
     params.terrace_out = true;
     params.pr_ab_matrix = nullptr;
+    params.terrace_query_set = nullptr;
+    params.terrace_stop_intermediate_num = NULL;
+    params.terrace_stop_terrace_trees_num = NULL;
     
 #ifdef USE_EIGEN3
     params.matrix_exp_technique = MET_EIGEN3LIB_DECOMPOSITION;
@@ -1746,7 +1749,7 @@ void parseArg(int argc, char *argv[], Params &params) {
                 continue;
             }
             
-            if (strcmp(argv[cnt], "-terrace_out") == 0) {
+            if (strcmp(argv[cnt], "-t_no_output") == 0) {
                 params.terrace_out = false;
                 continue;
             }
@@ -1756,6 +1759,30 @@ void parseArg(int argc, char *argv[], Params &params) {
                 if (cnt >= argc)
                     throw "Use -pr_ab_matrix <pr_ab_matrix_file>";
                 params.pr_ab_matrix = argv[cnt];
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-terrace_query") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -terrace_query <terrace_query_set_file>";
+                params.terrace_query_set = argv[cnt];
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-t_stop_i") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -t_stop_i <number_of_intermediate_trees_to_stop>";
+                params.terrace_stop_intermediate_num = convert_int(argv[cnt]);
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-t_stop_t") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -t_stop_t <number_of_terrace_trees_to_stop>";
+                params.terrace_stop_terrace_trees_num = convert_int(argv[cnt]);
                 continue;
             }
             

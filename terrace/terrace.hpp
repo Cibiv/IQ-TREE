@@ -48,6 +48,7 @@ public:
     
     vector<TerraceTree*> induced_trees;
     PresenceAbsenceMatrix *matrix;
+    StrVector terrace_trees;
     
     int taxa_num;
     int part_num;
@@ -75,6 +76,10 @@ public:
     // file to output all generated terrace trees
     string out_file;
     bool terrace_out;
+    
+    // Stopping rules
+    int terrace_max_trees;
+    int intermediate_max_trees;
     
     /*
      *  Print terrace info: a representative tree, induced trees and presence-absence matrix
@@ -187,13 +192,27 @@ public:
     /*
      * Print initial tree, print TOP and LOW induced trees
      */
-    
     void print_ALL_DATA(vector<Terrace*> part_tree_pairs);
     
     /*
      *  Rename taxa on a tree and in presence-absence matrix
      */
     void renameTaxa();
+    
+    /*
+     *  Check if the query tree has the same set of induced partition trees
+     */
+    bool check_two_trees(MTree* query_tree);
+    
+    /*
+     *  Write all generated trees to file
+     */
+    void write_terrace_trees_to_file();
+    
+    /*
+     *  Write summary of generating trees from a terrace
+     */
+    void write_summary_generation();
 };
 
 #endif /* terrace_hpp */
