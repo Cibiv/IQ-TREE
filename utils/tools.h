@@ -1750,7 +1750,7 @@ public:
 
     bool terrace_analysis;
     const char *pr_ab_matrix;
-    bool terrace_out;
+    bool print_terrace_trees;
     
     /** file with tree set to be tested, whether from the same terrace with the representative tree */
     char *terrace_query_set;

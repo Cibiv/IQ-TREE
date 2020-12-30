@@ -77,16 +77,26 @@ void PresenceAbsenceMatrix::read_pr_ab_matrix(istream &in){
 };
 
 void PresenceAbsenceMatrix::print_pr_ab_matrix(){
-    
+    int sum = 0, i, j;
+    IntVector part_sum;
+    part_sum.resize(part_num,0);
     cout<<"Presence-absence matrix:"<<endl;
-    for(int i=0; i<taxa_num; i++){
+    for(i=0; i<taxa_num; i++){
+        sum=0;
         cout<<taxa_names[i]<<" ";
-        for(int j=0; j<part_num; j++){
+        for(j=0; j<part_num; j++){
             cout<<pr_ab_matrix[i][j]<<" ";
+            sum+=pr_ab_matrix[i][j];
+            part_sum[j]+=pr_ab_matrix[i][j];
         }
-        cout<<endl;
+        cout<<"| "<<sum<<endl;
     }
-    cout<<endl;
+    cout<<"--------------------"<<endl;
+    cout<<"Partition coverage: ";
+    for(j=0; j<part_num; j++){
+        cout<<part_sum[j]<<" ";
+    }
+    cout<<endl<<endl;
 };
 
 
@@ -304,7 +314,7 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
     
     // TODO!!!!
     // starting tree is the most important stuff
-    // one again think about the best choice
+    // once again think about the best choice
     // - the one with the largest overlap or the largest?
     // - include or not to include unique taxa on the initial tree?
     
@@ -331,6 +341,11 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
             if(taxon_cov[j]==1 && pr_ab_matrix[j][i]==1){
                 uniq_taxa[i]+=1;
             }
+        }
+        if(part_cov[i]+uniq_taxa[i] == taxa_num){
+            cout<<endl<<"INFO: "<<endl;
+            cout<<"At least one partition covers all taxa."<<endl<<"There are only trivial terraces (contain just 1 tree) for this dataset. Great!"<<endl<<endl;
+            exit(0);
         }
     }
     
@@ -377,8 +392,8 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
     // collecting taxon names from partition with the largest subtree excluding unique taxa
     cout<<"Partition "<<part_max+1<<" is chosen for the initial tree."<<endl;
     for(j=0; j<taxa_num; j++){
-        //if(pr_ab_matrix[j][part_max]==1 && taxon_cov[j]>1){
-        if(pr_ab_matrix[j][part_max]==1){
+        //if(pr_ab_matrix[j][part_max]==1 && taxon_cov[j]>1){ // collecting only non-unique taxa
+        if(pr_ab_matrix[j][part_max]==1){ // collecting all taxa from the chosen partition also unique
             taxa_names_sub.push_back(taxa_names[j]);
         } else {
             // ordering other taxa by the number of partitions they are covered by
@@ -413,8 +428,6 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
                 //    cout<<" "<<cov_within_cat[j][k];
                 //}
                 //cout<<endl;
-                
-                
             }
             
             // REORDER taxa within each coverage category
@@ -431,23 +444,32 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
         }
     }
     
-    for(i=ordered_taxa_ids.size()-1; i>-1; i--){
-        if(!ordered_taxa_ids[i].empty()){
-            //cout<<"Taxa with "<<i<<" gene coverage: "<<endl;
-            for(j=0; j<ordered_taxa_ids[i].size(); j++){
-                //cout<<" "<<j<<": "<<ordered_taxa_by_coverage[i][j]<<endl;
-                list_taxa_to_insert.push_back(taxa_names[ordered_taxa_ids[i][j]]);
+    int taxon_order_type = 1;
+    if(taxon_order_type == 1){
+        // ===================================================================
+        // TAXON ORDER 1: first by coverage, then by partition order
+        // ===================================================================
+        for(i=ordered_taxa_ids.size()-1; i>-1; i--){
+            if(!ordered_taxa_ids[i].empty()){
+                //cout<<"Taxa with "<<i<<" gene coverage: "<<endl;
+                for(j=0; j<ordered_taxa_ids[i].size(); j++){
+                    //cout<<" "<<j<<": "<<ordered_taxa_by_coverage[i][j]<<endl;
+                    list_taxa_to_insert.push_back(taxa_names[ordered_taxa_ids[i][j]]);
+                }
+                //cout<<endl;
             }
-            //cout<<endl;
         }
+    } else if(taxon_order_type == 2){
+        // =================================================================================
+        // TAXON ORDER 2: first by partition order, then by coverage, then by partition
+        // =================================================================================
+        
     }
     
     cout<<endl<<"FINAL taxon order:"<<endl;
     for(j=0; j<list_taxa_to_insert.size(); j++){
         cout<<j<<": "<<list_taxa_to_insert[j]<<endl;
     }
-    
-    //cout<<endl<<"=================================================="<<endl;
 }
 
 

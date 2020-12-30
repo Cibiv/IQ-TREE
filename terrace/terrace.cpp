@@ -8,6 +8,7 @@
 #include "terrace.hpp"
 #include "terracenode.hpp"
 #include "tree/mtreeset.h"
+#include "utils/timeutil.h"
 
 Terrace::Terrace(){};
 Terrace::~Terrace(){};
@@ -42,7 +43,7 @@ Terrace::Terrace(const char *infile_tree, bool is_rooted,const char *infile_matr
     getTaxa(taxa_nodes);
     matrix->reorderAccordingToTree(taxa_nodes);
     
-    renameTaxa();
+    //renameTaxa();
     
     get_part_trees();
     //printInfo();
@@ -1266,12 +1267,9 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     
     if(intermediated_trees_num - terrace_trees_num > intermediate_max_trees){
         cout<<endl<<"WARNING: stopping condition is active! The total number of trees on the terrace is NOT yet computed!"<<endl;
-        cout<<"The number of considered intermediated trees is more than "<<intermediate_max_trees<<". Exiting generation process..."<<endl;
-        cout<<"printing summary at current step..."<<endl;
+        cout<<"The number of considered intermediated trees already reached "<<intermediate_max_trees<<". Exiting generation process..."<<endl;
+        cout<<"Printing summary at current step..."<<endl;
         write_summary_generation();
-        time_t end_time;
-        time(&end_time);
-        cout << "Date and Time: " << ctime(&end_time);
         exit(0);
     }
     
@@ -1400,10 +1398,10 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
                     //    cout<<"... generated tree "<<terrace_trees_num<<endl;
                     //}
                     //printTree(cout, WT_BR_SCALE | WT_NEWLINE);
-                    if(terrace_trees_num > terrace_max_trees){
+                    if(terrace_trees_num == terrace_max_trees){
                         cout<<endl<<"WARNING: stopping condition is active! The total number of trees on the terrace is NOT yet computed!"<<endl;
-                        cout<<"Considered terrace already contains more than "<<terrace_max_trees<<" trees."<<endl<<"Exiting generation process..."<<endl;
-                        cout<<"printing summary at current step..."<<endl;
+                        cout<<"Considered terrace already contains "<<terrace_max_trees<<" trees."<<endl<<"Exiting generation process..."<<endl;
+                        cout<<"Printing summary at current step..."<<endl;
                         write_summary_generation();
                         time_t end_time;
                         time(&end_time);
@@ -1890,9 +1888,9 @@ bool Terrace::check_two_trees(MTree* query_tree){
 
 void Terrace::write_terrace_trees_to_file(){
  
-    time_t curr_time;
-    time(&curr_time);
-    cout << "Current Time: " << ctime(&curr_time);
+    cout<<"Wall-clock time used so far: "<<getRealTime()-Params::getInstance().start_real_time<<" seconds ("<<convert_time(getRealTime()-Params::getInstance().start_real_time)<<")"<<endl;
+    cout<<"CPU time used on generation of terrace trees: "
+    << getCPUTime()-Params::getInstance().startCPUTime << " seconds (" << convert_time(getCPUTime()-Params::getInstance().startCPUTime) << ")" << endl;
     cout<<"---------------------------------------------------------"<<endl;
     
     cout<<"Printing "<<terrace_trees_num<<" terrace trees to file "<<endl<<out_file<<"..."<<endl;
@@ -1908,6 +1906,8 @@ void Terrace::write_terrace_trees_to_file(){
 }
 
 void Terrace::write_summary_generation(){
+
+    Params::getInstance().run_time = (getCPUTime() - Params::getInstance().startCPUTime);
     
     cout<<"---------------------------------------------------------"<<endl;
     cout<<"SUMMARY:"<<endl;
@@ -1915,9 +1915,13 @@ void Terrace::write_summary_generation(){
     cout<<"Number of intermediated trees visited: "<<intermediated_trees_num - terrace_trees_num<<endl;
     cout<<"Number of dead ends encountered: "<<dead_ends_num<<endl;
     cout<<"---------------------------------------------------------"<<endl;
+    
     if(terrace_out){
         write_terrace_trees_to_file();
         cout<<"---------------------------------------------------------"<<endl;
     }
+    cout<<"Total wall-clock time used: "<<getRealTime()-Params::getInstance().start_real_time<<" seconds ("<<convert_time(getRealTime()-Params::getInstance().start_real_time)<<")"<<endl;
+    cout<<"Total CPU time used: "
+    << getCPUTime()-Params::getInstance().startCPUTime << " seconds (" << convert_time(getCPUTime()-Params::getInstance().startCPUTime) << ")" << endl;
     cout<<endl;
 }

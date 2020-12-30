@@ -1016,7 +1016,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.u2c_nni5 = false;
     
     params.terrace_analysis = false;
-    params.terrace_out = true;
+    params.print_terrace_trees = false;
     params.pr_ab_matrix = nullptr;
     params.terrace_query_set = nullptr;
     params.terrace_stop_intermediate_num = NULL;
@@ -1749,8 +1749,8 @@ void parseArg(int argc, char *argv[], Params &params) {
                 continue;
             }
             
-            if (strcmp(argv[cnt], "-t_no_output") == 0) {
-                params.terrace_out = false;
+            if (strcmp(argv[cnt], "-t_print") == 0) {
+                params.print_terrace_trees = true;
                 continue;
             }
             

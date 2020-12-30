@@ -12,9 +12,13 @@
 #include "terrace/presenceabsencematrix.hpp"
 #include "tree/mtreeset.h"
 #include "alignment/superalignment.h"
+#include "utils/timeutil.h"
 
 
 void runterraceanalysis(Params &params){
+    
+    params.startCPUTime = getCPUTime();
+    params.start_real_time = getRealTime();
     
     /*
      *  This is an actual terrace:
@@ -33,7 +37,20 @@ void runterraceanalysis(Params &params){
     } else if(params.user_file && params.pr_ab_matrix){
         Terrace *terrace_0 = new Terrace(params.user_file,params.is_rooted,params.pr_ab_matrix);
         terrace = terrace_0;
+    } else {
+        cout<<"ERROR: to start terrace analysis input a tree and either a presence-absence matrix or alignment with partition info!"<<endl;
+        exit(0);
     }
+    
+    /*terrace->out_file = params.out_prefix;
+    terrace->out_file += ".terrace_info";
+    
+    ofstream out_terrace_info;
+    out_terrace_info.exceptions(ios::failbit | ios::badbit);
+    out_terrace_info.open(terrace->out_file);
+    
+    out_terrace_info.close();*/
+    
     
     if(params.terrace_query_set){
         run_terrace_check(terrace,params);
@@ -48,19 +65,15 @@ void runterraceanalysis(Params &params){
          *  - induced tree - a common subtree between "initial to be expanded main tree" and high level induced tree
          */
     
-        // CONSIDERED TERRACE (to generate the trees from)
-        //Terrace *terrace = new Terrace(params.user_file,params.is_rooted,params.pr_ab_matrix);
-        terrace->printInfo();
-        //terrace->linkTrees(true,true);
-        //terrace->printMapInfo();
-        //terrace-> printBackMapInfo();
+        //terrace->printInfo();
+        terrace->matrix->print_pr_ab_matrix();
     
         // INITIAL TREE (idealy should be the largest subtree without unique species, a subtree of some induced partition tree)
         vector<string> taxa_names_sub;
         // Get a list of taxa to be inserted.
         vector<string> list_taxa_to_insert;
         terrace->matrix->getINFO_init_tree_taxon_order(taxa_names_sub,list_taxa_to_insert);
-    
+        
         // INITIAL TREE is the largest partition tree. If the above function is used, this one should not be used
         /*int init_part = 0;
         for(i=0; i<terrace->taxa_num; i++){
@@ -122,7 +135,7 @@ void runterraceanalysis(Params &params){
     
     
         //init_terrace->print_ALL_DATA(part_tree_pairs);
-        if(params.terrace_out){
+        if(params.print_terrace_trees){
             ofstream out;
             out.exceptions(ios::failbit | ios::badbit);
             out.open(init_terrace->out_file);
@@ -141,6 +154,19 @@ void runterraceanalysis(Params &params){
         init_terrace->write_summary_generation();
     }
     
+    /*params.run_time = (getCPUTime() - params.startCPUTime);
+    cout << endl;
+    cout << "Total number of iterations: " << iqtree.stop_rule.getCurIt() << endl;
+    //    cout << "Total number of partial likelihood vector computations: " << iqtree.num_partial_lh_computations << endl;
+    cout << "CPU time used for tree search: " << search_cpu_time
+    << " sec (" << convert_time(search_cpu_time) << ")" << endl;
+    cout << "Wall-clock time used for tree search: " << search_real_time
+    << " sec (" << convert_time(search_real_time) << ")" << endl;
+    cout << "Total CPU time used: " << (double) params.run_time << " sec ("
+    << convert_time((double) params.run_time) << ")" << endl;
+    cout << "Total wall-clock time used: "
+    << getRealTime() - params.start_real_time << " sec ("
+    << convert_time(getRealTime() - params.start_real_time) << ")" << endl;*/
 };
 
 void run_terrace_check(Terrace *terrace,Params &params){
