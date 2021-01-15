@@ -183,7 +183,7 @@ void run_terrace_check(Terrace *terrace,Params &params){
         }
     }
     
-    if(!trees_on.empty()){
+    if(!trees_on.empty() and !trees_off.empty()){
         string out_file_on = params.out_prefix;
         out_file_on += ".on_terrace";
         
