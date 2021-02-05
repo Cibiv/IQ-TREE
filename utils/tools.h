@@ -1761,6 +1761,7 @@ public:
     
     int terrace_stop_intermediate_num;
     int terrace_stop_terrace_trees_num;
+    double terrace_stop_time;
 
     /**********************************************/
     /**** variables for ultra-fast bootstrap ******/

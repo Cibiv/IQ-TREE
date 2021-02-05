@@ -38,8 +38,7 @@ void runterraceanalysis(Params &params){
         Terrace *terrace_0 = new Terrace(params.user_file,params.is_rooted,params.pr_ab_matrix);
         terrace = terrace_0;
     } else {
-        cout<<"ERROR: to start terrace analysis input a tree and either a presence-absence matrix or alignment with partition info!"<<endl;
-        exit(0);
+        throw "ERROR: to start terrace analysis input a tree and either a presence-absence matrix or alignment with partition info!";
     }
     
     /*terrace->out_file = params.out_prefix;
@@ -103,6 +102,10 @@ void runterraceanalysis(Params &params){
             init_terrace->terrace_max_trees = params.terrace_stop_terrace_trees_num;
         }
         
+        if(params.terrace_stop_time > 0){
+            init_terrace->seconds_max = params.terrace_stop_time*3600;
+        }
+        
         init_terrace->linkTrees(true, false); // branch_back_map, taxon_back_map; in this case you only want to map branches
 
         vector<Terrace*> part_tree_pairs;
@@ -153,20 +156,7 @@ void runterraceanalysis(Params &params){
 
         init_terrace->write_summary_generation();
     }
-    
-    /*params.run_time = (getCPUTime() - params.startCPUTime);
-    cout << endl;
-    cout << "Total number of iterations: " << iqtree.stop_rule.getCurIt() << endl;
-    //    cout << "Total number of partial likelihood vector computations: " << iqtree.num_partial_lh_computations << endl;
-    cout << "CPU time used for tree search: " << search_cpu_time
-    << " sec (" << convert_time(search_cpu_time) << ")" << endl;
-    cout << "Wall-clock time used for tree search: " << search_real_time
-    << " sec (" << convert_time(search_real_time) << ")" << endl;
-    cout << "Total CPU time used: " << (double) params.run_time << " sec ("
-    << convert_time((double) params.run_time) << ")" << endl;
-    cout << "Total wall-clock time used: "
-    << getRealTime() - params.start_real_time << " sec ("
-    << convert_time(getRealTime() - params.start_real_time) << ")" << endl;*/
+
 };
 
 void run_terrace_check(Terrace *terrace,Params &params){

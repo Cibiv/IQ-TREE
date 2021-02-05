@@ -35,7 +35,7 @@ void TerraceTree::copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names)
     
     int i,j, sum = 0;
     int taxa_num = taxon_names.size();
-    bool check;
+    //bool check;
     
     string taxa_set = "";
     NodeVector taxa_nodes;
@@ -47,12 +47,12 @@ void TerraceTree::copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names)
     tree->getTaxa(taxa_nodes);
     
     for(j=0; j<taxa_nodes.size(); j++){
-        check = false;
+        //check = false;
         for(i=0; i<taxa_num; i++){
             if(taxa_nodes[j]->name == taxon_names[i]){
                 check_int[taxa_nodes[j]->id]=1;
                 sum+=1;
-                check = true;
+                //check = true;
                 break;
             }
         }
@@ -173,45 +173,38 @@ void TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_branch, T
 void TerraceTree::remove_taxon(string taxon_name){
     
     // WARNING: I think it does not remove taxon correctly and some neighbours appear to be present as Neighbors instead of TerraceNeighbours
-    // TODO: check and rewrite, if necessary
-    // Node *taxon_node = findLeafName(taxon_name);
 
     StrVector taxa;
     taxa.push_back(taxon_name);
+  
+    TerraceNode *node = (TerraceNode*) findLeafName(taxon_name);
+    TerraceNeighbor* nei = (TerraceNeighbor*)node->neighbors[0];
     
-    if(leafNum>2){
-        // TODO: Do you actually need to clear anything?
-        TerraceNode *node = (TerraceNode*) findLeafName(taxon_name);
-        TerraceNeighbor* nei = (TerraceNeighbor*)node->neighbors[0];
-        ((TerraceNeighbor*)nei->node->findNeighbor(node))->link_neighbors.clear();
+    //nei->delete_ptr_members();
+    //((TerraceNeighbor*)nei->node->findNeighbor(node))->delete_ptr_members();
+    
+    nei->link_neighbors.clear();
+    nei->link_neighbors_lowtop_back.clear();
+    FOR_NEIGHBOR_DECLARE(nei->node,NULL, it){
+        ((TerraceNeighbor*)(*it))->link_neighbors.clear();
+        ((TerraceNeighbor*)(*it))->link_neighbors_lowtop_back.clear();
+    }
 
-        FOR_NEIGHBOR_IT(nei->node, NULL, it){
-            //((TerraceNeighbor*)(*it))->link_neighbors.clear();
-            ((TerraceNeighbor*)(*it)->node->findNeighbor(nei->node))->link_neighbors.clear();
-        }
-        
+    if(leafNum>2){
         removeTaxa(taxa);
-        
         initializeTree();
-        
     } else {
         if(leafNum==2){
             //cout<<"two-taxon tree, remove one taxon"<<endl;
 
-            NeighborVec::reverse_iterator it;
-            for (it = root->neighbors[0]->node->neighbors.rbegin(); it != root->neighbors[0]->node->neighbors.rend(); it++)
-                delete (*it);
-            root->neighbors[0]->node->neighbors.clear();
-            
             if(root->name == taxon_name){
                 TerraceNode * new_root = (TerraceNode*) root->neighbors[0]->node;
-                
-                for (it = root->neighbors.rbegin(); it != root->neighbors.rend(); it++)
-                    delete (*it);
-                root->neighbors.clear();
-                
                 delete root;
                 
+                // Free pointers for the remaining node:
+                new_root->deleteNode();
+                
+                // Set new root
                 root = new_root;
                 leafNum = 1;
                 nodeNum = 1;
@@ -220,9 +213,8 @@ void TerraceTree::remove_taxon(string taxon_name){
             }else{
                 delete root->neighbors[0]->node;
                 
-                for (it = root->neighbors.rbegin(); it != root->neighbors.rend(); it++)
-                    delete (*it);
-                root->neighbors.clear();
+                // Free pointers for the remaining node:
+                root->deleteNode();
                 
                 leafNum = 1;
                 nodeNum = 1;
@@ -230,6 +222,7 @@ void TerraceTree::remove_taxon(string taxon_name){
                 root->id = 0;
             }
         }else if(leafNum==1){
+            delete root;
             root = nullptr;
             leafNum = 0;
             nodeNum = 0;

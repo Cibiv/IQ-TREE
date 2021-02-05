@@ -62,6 +62,8 @@ public:
      */
     void printInfo(Node *dad);
     
+    void delete_ptr_members();
+    
 };
 
 /**
@@ -117,7 +119,7 @@ public:
      */
     virtual void deleteNode();
     
-    ~TerraceNode();
+    virtual ~TerraceNode();
     
     /*
      * For each node, save

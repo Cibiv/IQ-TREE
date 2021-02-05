@@ -80,6 +80,7 @@ public:
     // Stopping rules
     int terrace_max_trees;
     int intermediate_max_trees;
+    int seconds_max;
     
     /*
      *  Print terrace info: a representative tree, induced trees and presence-absence matrix
@@ -213,6 +214,11 @@ public:
      *  Write summary of generating trees from a terrace
      */
     void write_summary_generation();
+    
+    /*
+     *  Write warning depending on the activated stopping rule
+     */
+    void write_warning_stop(int type);
 };
 
 #endif /* terrace_hpp */

@@ -24,6 +24,7 @@ void Terrace::init(){
     
     terrace_max_trees = 1000000;
     intermediate_max_trees = 10000000;
+    seconds_max = 604800; // the default value is 7 days
     
 }
 
@@ -334,7 +335,7 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bo
                 }
             }
             
-            // WARNING: I think, it should never rich this point, because at least one neighbour shuold have a corresponding branch on partition tree.
+            // WARNING: I think, it should never rich this point, because at least one neighbour should have a corresponding branch on partition tree.
             cout<<"ERROR: hey, the assumption was, that the code should never come here..."<<endl;
         }
         return;
@@ -510,7 +511,7 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
         // Get maps for empty branches
         // the question is if your dad already has the details about all empty branches/taxa below ????? do not touch yet dad's empty branches, they should be considered at a later stage.
         // I think, in this situation you only need to map current branch, because node cannot have empty branches and taxa from its two children
-        // again, i'm sure if the direction of neighbors is important or not...
+        // again, i'm not sure if the direction of neighbors is important or not...
         nei->link_neighbors[part] = child_part_vec[0];
         dad_nei->link_neighbors[part] = child_part_vec[1];
 
@@ -891,8 +892,6 @@ void Terrace::printBackMapInfo(){
 
 void Terrace::create_Top_Low_Part_Tree_Pairs(vector<Terrace*> &part_tree_pairs, Terrace *terrace){
     
-    // TODO: cases with less than 2 taxa in common!
-    
     int i=0, j=0;
     NodeVector aux_taxon_nodes;
     vector<TerraceTree*> aux_induced_part_trees;
@@ -987,8 +986,6 @@ void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace
                         node2_vec->push_back((TerraceNode*)link_dad_nei->link_neighbors[j]->node);
                     }
                 } else {
-                    // TODO: check this part of the code on appropriate examples
-                    
                     //cout<<"All branches are allowed for this tree. Push them back"<<endl;
                     NodeVector branch_end_1, branch_end_2;
                     Neighbor* aux_nei;
@@ -1005,7 +1002,7 @@ void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace
                 }
             } else if(induced_trees[i]->leafNum>2){ // otherwise, there is no constraint
                 
-                // TODO: The way to keep track of allowed branches is not optimal, too many unnessary savings and clearings. Optimize at the next step. Also the intersection is O(n^2).
+                // TODO: The way to keep track of allowed branches is not optimal, too many unnessary savings and clearings. Optimize in the next step. Also the intersection is O(n^2).
                 //nei1_vec->clear();
                 //nei2_vec->clear();
                 intersection.clear();
@@ -1050,16 +1047,6 @@ void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace
             }
         }
     }
-    
-    /*if(!branch_ids.empty()){
-        // get neighbours for branch with id branch_ids[i]
-        for(i=0; i<branch_ids.size(); i++){
-            
-        }
-    }*/
-    
-    //cout<<endl<<"**********************************************"<<endl<<endl;
-    
 }
 
 void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, vector<Terrace*> part_tree_pairs,vector<int> pr_ab_info){
@@ -1266,11 +1253,12 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     }
     
     if(intermediated_trees_num - terrace_trees_num > intermediate_max_trees){
-        cout<<endl<<"WARNING: stopping condition is active! The total number of trees on the terrace is NOT yet computed!"<<endl;
-        cout<<"The number of considered intermediated trees already reached "<<intermediate_max_trees<<". Exiting generation process..."<<endl;
-        cout<<"Printing summary at current step..."<<endl;
-        write_summary_generation();
-        exit(0);
+        write_warning_stop(1);
+    }
+    
+    double time= getCPUTime()-Params::getInstance().startCPUTime;
+    if(time > seconds_max){
+        write_warning_stop(3);
     }
     
     
@@ -1399,14 +1387,7 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
                     //}
                     //printTree(cout, WT_BR_SCALE | WT_NEWLINE);
                     if(terrace_trees_num == terrace_max_trees){
-                        cout<<endl<<"WARNING: stopping condition is active! The total number of trees on the terrace is NOT yet computed!"<<endl;
-                        cout<<"Considered terrace already contains "<<terrace_max_trees<<" trees."<<endl<<"Exiting generation process..."<<endl;
-                        cout<<"Printing summary at current step..."<<endl;
-                        write_summary_generation();
-                        time_t end_time;
-                        time(&end_time);
-                        cout << "Date and Time: " << ctime(&end_time);
-                        exit(0);
+                        write_warning_stop(2);
                     }
                     //remove_one_taxon_naive(taxon_name,part_tree_pairs);
                     remove_one_taxon(taxon_name,part_tree_pairs);
@@ -1924,4 +1905,50 @@ void Terrace::write_summary_generation(){
     cout<<"Total CPU time used: "
     << getCPUTime()-Params::getInstance().startCPUTime << " seconds (" << convert_time(getCPUTime()-Params::getInstance().startCPUTime) << ")" << endl;
     cout<<endl;
+}
+
+
+void Terrace::write_warning_stop(int type){
+    
+    cout<<endl<<"=========================================="<<endl;
+    cout<<"WARNING: stopping condition is active!"<<endl;
+    cout<<"The total number of trees on the terrace is NOT yet computed!"<<endl;
+    cout<<"Check summary at the current step. You can change the stopping rule via corresponding option (see below)."<<endl;
+    cout<<"=========================================="<<endl;
+    
+    switch (type) {
+        case 1:
+            cout<<"Type of stopping rule: number of visited intermediate trees"<<endl;
+            cout<<"Current setting: stop if the number of visited intermediate trees reached "<<intermediate_max_trees<<endl;
+            cout<<"To change the value use -t_stop_i <number_of_intermediate_trees_to_stop>"<<endl;
+            cout<<"------------------------------------------"<<endl;
+            cout<<"The number of considered intermediated trees already reached "<<intermediate_max_trees<<". Exiting generation process..."<<endl;
+            break;
+        case 2:
+            cout<<"Type of stopping rule: terrace size"<<endl;
+            cout<<"Current setting: stop if the number of trees on the terrace reached "<<terrace_max_trees<<endl;
+            cout<<"To change the value use -t_stop_t <number_of_terrace_trees_to_stop>"<<endl;
+            cout<<"------------------------------------------"<<endl;
+            cout<<"Considered terrace already contains "<<terrace_max_trees<<" trees."<<endl<<"Exiting generation process..."<<endl;
+            break;
+            
+        case 3:
+            cout<<"Type of stopping rule: CPU time used"<<endl;
+            cout<<"Current setting: stop if the CPU time used is larger than "<<seconds_max<<endl;
+            cout<<"To change the value use -t_stop_h <number_of_hours_to_stop>"<<endl;
+            cout<<"------------------------------------------"<<endl;
+            cout<<"Total CPU time is already larger than "<<seconds_max<<" trees."<<endl<<"Exiting generation process..."<<endl;
+            break;
+            
+        default:
+            break;
+    }
+    
+    cout<<"Printing summary at current step..."<<endl;
+    write_summary_generation();
+    time_t end_time;
+    time(&end_time);
+    cout << "Date and Time: " << ctime(&end_time);
+    exit(0);
+        
 }
