@@ -454,6 +454,11 @@ public:
             @param excludeSplits do not collect branches in here
      */
     void generateNNIBraches(vector<Node*> &nodes, vector<Node*> &nodes2, SplitGraph* excludeSplits = NULL, Node *node = NULL, Node *dad = NULL);
+    
+    /**
+            generate and output all one-NNI neighbours
+     */
+    //void gen_all_nni_trees();
 
     /**
             get all descending branches below the node

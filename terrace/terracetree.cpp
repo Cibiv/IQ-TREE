@@ -177,18 +177,18 @@ void TerraceTree::remove_taxon(string taxon_name){
     StrVector taxa;
     taxa.push_back(taxon_name);
   
-    TerraceNode *node = (TerraceNode*) findLeafName(taxon_name);
-    TerraceNeighbor* nei = (TerraceNeighbor*)node->neighbors[0];
+    //TerraceNode *node = (TerraceNode*) findLeafName(taxon_name);
+    //TerraceNeighbor* nei = (TerraceNeighbor*)node->neighbors[0];
     
     //nei->delete_ptr_members();
     //((TerraceNeighbor*)nei->node->findNeighbor(node))->delete_ptr_members();
     
-    nei->link_neighbors.clear();
-    nei->link_neighbors_lowtop_back.clear();
-    FOR_NEIGHBOR_DECLARE(nei->node,NULL, it){
-        ((TerraceNeighbor*)(*it))->link_neighbors.clear();
-        ((TerraceNeighbor*)(*it))->link_neighbors_lowtop_back.clear();
-    }
+    //nei->link_neighbors.clear();
+    //nei->link_neighbors_lowtop_back.clear();
+    //FOR_NEIGHBOR_DECLARE(nei->node,NULL, it){
+    //    ((TerraceNeighbor*)(*it))->link_neighbors.clear();
+    //    ((TerraceNeighbor*)(*it))->link_neighbors_lowtop_back.clear();
+    //}
 
     if(leafNum>2){
         removeTaxa(taxa);

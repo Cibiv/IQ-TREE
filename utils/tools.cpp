@@ -917,7 +917,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 	params.upper_bound = false;
 	params.upper_bound_NNI = false;
 	params.upper_bound_frac = 0.0;
-
+    
     params.gbo_replicates = 0;
 	params.ufboot_epsilon = 0.5;
     params.check_gbo_sample_size = 0;
@@ -1022,6 +1022,8 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.terrace_stop_intermediate_num = NULL;
     params.terrace_stop_terrace_trees_num = NULL;
     params.terrace_stop_time = NULL;
+    
+    params.gen_all_NNI = false;
     
 #ifdef USE_EIGEN3
     params.matrix_exp_technique = MET_EIGEN3LIB_DECOMPOSITION;
@@ -1801,6 +1803,11 @@ void parseArg(int argc, char *argv[], Params &params) {
                 if(params.terrace_stop_time<=0){
                     throw "Invalid value! Use -t_stop_h <h> with h>0";
                 }
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-gen_all_nni") == 0) {
+                params.gen_all_NNI = true;
                 continue;
             }
             

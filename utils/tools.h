@@ -1734,6 +1734,11 @@ public:
 		eco_weighted - indicates whether to treat the food web as weighted or not weighted
 	*/
 	bool eco_weighted;
+    
+    /*
+        generate all NNI neighbours for the input tree and output them
+     */
+    bool gen_all_NNI;
 
     /**********************************************/
     /****** variables for upper bound tests *******/

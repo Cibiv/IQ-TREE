@@ -2560,3 +2560,17 @@ void MTree::getPreOrderBranches(NodeVector &nodes, NodeVector &nodes2, Node *nod
 //    FOR_NEIGHBOR_IT(node, dad, it) 
 //        getPreOrderBranches(nodes, nodes2, (*it)->node, node);
 }
+
+
+/*void MTree::gen_all_nni_trees(){
+    
+    NodeVector nodes1, nodes2;
+    
+    generateNNIBraches(nodes1,nodes2);
+    
+    for(int i=0; i<nodes1.size();i++){
+        
+        Node
+        
+    }
+}*/
