@@ -53,6 +53,8 @@ void runterraceanalysis(Params &params){
     
     if(params.terrace_query_set){
         run_terrace_check(terrace,params);
+    }else if(params.print_induced_trees){
+        terrace->printInfo();
     }else{
         /*
          *  Create an auxiliary terrace:

@@ -1184,12 +1184,14 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     for(i=0; i<part_num; i++){
         if(induced_trees[i]->leafNum>2){
             if(induced_trees[i]->findLeafName(node_name)){
+                //cout<<"Partition:"<<i<<"- larger than 2 - leaf occurs"<<endl;
                 // if a taxon was inserted to the induced partition tree, update
                 part_taxa.clear();
                 matrix->getPartTaxa(i, this, induced_trees[i], part_taxa);
                 update_map(i,part_taxa, true, false, center_node);
 
             }else{
+                //cout<<"Partition:"<<i<<"- larger than 2 - leaf does not occur"<<endl;
                 
                 // if a taxon does not occur on the induced partition tree
                 nei_part_1 = (TerraceNeighbor*)induced_part_tree_branch_1[i]->findNeighbor(induced_part_tree_branch_2[i]);
@@ -1241,6 +1243,9 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 }*/
             }
         }
+        /*else{
+            cout<<"Partition:"<<i<<"- less than 2"<<endl;
+        }*/
     }
     
     

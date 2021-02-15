@@ -2547,8 +2547,9 @@ int main(int argc, char *argv[]) {
 	} else if (Params::getInstance().user_file && Params::getInstance().eco_dag_file) { /**ECOpd analysis*/
 		processECOpd(Params::getInstance());
     } else if (Params::getInstance().gen_all_NNI){
-        MTree tree(Params::getInstance().user_file, Params::getInstance().is_rooted);
-        //tree.gen_all_nni_trees();
+        PhyloTree *tree = new PhyloTree();
+        tree->readTree(Params::getInstance().user_file, Params::getInstance().is_rooted);
+        tree->gen_all_nni_trees();
     } else if (Params::getInstance().terrace_analysis) { /**Terrace analysis*/
         cout<<"Starting terrace analysis..."<<endl;
         runterraceanalysis(Params::getInstance());

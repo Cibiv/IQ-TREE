@@ -1449,6 +1449,12 @@ public:
             @param clearLH decides whether or not the partial likelihood should be cleared
      */
     virtual void doNNI(NNIMove &move, bool clearLH = true);
+    
+    /**
+            Do an NNI: should only be used for topology change without any info about likelihoods
+            @param move reference to an NNI move object containing information about the move
+     */
+    void doNNI_simple(NNIMove &move);
 
     /**
      * [DEPRECATED]
@@ -1472,6 +1478,11 @@ public:
      *   @param nnimove the NNI move currently in consideration
      */
     virtual void changeNNIBrans(NNIMove nnimove);
+    
+    /**
+        generate all one-nni neighbouring trees
+     */
+    void gen_all_nni_trees();
 
     /****************************************************************************
             Stepwise addition (greedy) by maximum likelihood
