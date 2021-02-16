@@ -39,6 +39,8 @@ public:
     TerraceNeighbor(Node *anode, double alength, int aid) : Neighbor(anode, alength, aid) {
     }
     
+    ~TerraceNeighbor();
+    
     // TODECIDE: for simplicity you might want to have just vector of nodes, oder?
     
     /**

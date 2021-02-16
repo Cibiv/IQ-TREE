@@ -59,9 +59,12 @@ void TerraceNode::deleteNode(){
     empty_branches.clear();
 }
 
-TerraceNode::~TerraceNode()
-{
+TerraceNode::~TerraceNode(){
     deleteNode();
+}
+
+TerraceNeighbor::~TerraceNeighbor(){
+    delete_ptr_members();
 }
 
 void TerraceNeighbor::delete_ptr_members(){

@@ -11,7 +11,14 @@
 #include "utils/timeutil.h"
 
 Terrace::Terrace(){};
-Terrace::~Terrace(){};
+Terrace::~Terrace(){
+    for(auto it=induced_trees.begin(); it<induced_trees.end();it++){
+        delete (*it);
+    }
+    induced_trees.clear();
+    
+    delete matrix;
+};
 
 void Terrace::init(){
     
@@ -1339,7 +1346,6 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
     //cout<<"GENERATE_TERRACE_TREES | TAXON "<<taxon_name<<endl;
     //cout<<"*******************************************************"<<endl;
     
-    
     if(progress_status){
         NodeVector node1_vec_branch, node2_vec_branch;
         
@@ -1652,6 +1658,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
         }
     }
 
+    //cout<<"Removing the taxon from agile tree...."<<endl;
     remove_taxon(taxon_name);
     
     ((TerraceNeighbor*)node_1->findNeighbor(node_2))->link_neighbors.resize(part_num,nullptr);
@@ -1660,6 +1667,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
     matrix->remove_taxon(taxon_name);
     taxa_num -= 1;
     
+    //cout<<"Updating maps for partition trees...."<<endl;
     // RE-MAP with new UPDATE using vectors of "to be modified" and not the update_map function
     for(i=0; i<part_num; i++){
         //cout<<"Updating maps for partition "<<i<<":"<<endl;

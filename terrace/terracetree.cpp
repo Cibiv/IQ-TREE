@@ -9,7 +9,11 @@
 #include "terracenode.hpp"
 
 TerraceTree::TerraceTree(): MTree(){};
-TerraceTree::~TerraceTree(){};
+TerraceTree::~TerraceTree(){
+    if (root != NULL)
+        freeNode();
+    root = NULL;
+};
 
 
 void TerraceTree::readTree(const char *infile, bool &is_rooted){
@@ -177,19 +181,17 @@ void TerraceTree::remove_taxon(string taxon_name){
     StrVector taxa;
     taxa.push_back(taxon_name);
   
-    //TerraceNode *node = (TerraceNode*) findLeafName(taxon_name);
-    //TerraceNeighbor* nei = (TerraceNeighbor*)node->neighbors[0];
-    
-    //nei->delete_ptr_members();
-    //((TerraceNeighbor*)nei->node->findNeighbor(node))->delete_ptr_members();
-    
-    //nei->link_neighbors.clear();
-    //nei->link_neighbors_lowtop_back.clear();
-    //FOR_NEIGHBOR_DECLARE(nei->node,NULL, it){
-    //    ((TerraceNeighbor*)(*it))->link_neighbors.clear();
-    //    ((TerraceNeighbor*)(*it))->link_neighbors_lowtop_back.clear();
-    //}
+    if(leafNum>=2){
+        TerraceNode *node = (TerraceNode*) findLeafName(taxon_name);
+        TerraceNeighbor* nei = (TerraceNeighbor*)node->neighbors[0];
 
+        // nei is a central node (or a second leaf in a 2-taxon tree), the branch will be joined, therefore, the link_neis should be deleted (only the pointers, not objects).
+        FOR_NEIGHBOR_DECLARE(nei->node,NULL, it){
+            ((TerraceNeighbor*)(*it))->delete_ptr_members();
+            ((TerraceNeighbor*)(*it)->node->findNeighbor(nei->node))->delete_ptr_members();
+        }
+    }
+        
     if(leafNum>2){
         removeTaxa(taxa);
         initializeTree();
