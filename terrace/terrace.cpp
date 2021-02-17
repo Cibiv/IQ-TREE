@@ -1166,7 +1166,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
         }
     }
     
-    // WARNING: I think, for corresponding branch, where a taxon has to be inserted, you need to set link_neighbors for all partitions to nullptr
+    // DONE: I think, for corresponding branch, where a taxon has to be inserted, you need to set link_neighbors for all partitions to nullptr
     ((TerraceNeighbor*)node_1_branch->findNeighbor(node_2_branch))->link_neighbors.clear();
     ((TerraceNeighbor*)node_2_branch->findNeighbor(node_1_branch))->link_neighbors.clear();
     
@@ -1188,6 +1188,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
         ((TerraceNeighbor*)(*it))->link_neighbors.resize(part_num,nullptr);
     }
     
+    cout<<"Reached update part"<<endl;
     for(i=0; i<part_num; i++){
         if(induced_trees[i]->leafNum>2){
             if(induced_trees[i]->findLeafName(node_name)){
@@ -1198,7 +1199,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 update_map(i,part_taxa, true, false, center_node);
 
             }else{
-                //cout<<"Partition:"<<i<<"- larger than 2 - leaf does not occur"<<endl;
+                cout<<"Partition:"<<i<<"- larger than 2 - leaf does not occur"<<endl;
                 
                 // if a taxon does not occur on the induced partition tree
                 nei_part_1 = (TerraceNeighbor*)induced_part_tree_branch_1[i]->findNeighbor(induced_part_tree_branch_2[i]);
