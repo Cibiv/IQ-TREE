@@ -1199,13 +1199,13 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 update_map(i,part_taxa, true, false, center_node);
 
             }else{
-                cout<<"Partition:"<<i<<"- larger than 2 - leaf does not occur"<<endl;
+                //cout<<"Partition:"<<i<<"- larger than 2 - leaf does not occur"<<endl;
                 
-                // if a taxon does not occur on the induced partition tree
+                //cout<<"if a taxon does not occur on the induced partition tree"<<endl;
                 nei_part_1 = (TerraceNeighbor*)induced_part_tree_branch_1[i]->findNeighbor(induced_part_tree_branch_2[i]);
                 nei_part_2 = (TerraceNeighbor*)induced_part_tree_branch_2[i]->findNeighbor(induced_part_tree_branch_1[i]);
                 
-                // First branch: one part of the devided branch
+                cout<<"First branch: one part of the devided branch"<<endl;
                 nei_aux = (TerraceNeighbor*)node_1_branch->findNeighbor(center_node);
                 nei_aux->link_neighbors[i] = nei_part_1;
                 nei_part_1->link_neighbors.push_back(nei_aux);
