@@ -168,11 +168,16 @@ Neighbor *Node::findNeighbor(Node *node) {
 	int size = neighbors.size();
     for (int i = 0; i < size; i++)
         if (neighbors[i]->node == node) return neighbors[i];
+	
     /*
     for (NeighborVec::iterator it = neighbors.begin(); it != neighbors.end(); it ++)
             if ((*it)->node == node)
                     return (*it);*/
-    cout << "ERROR : Could not find neighbors of node " << node->id << endl;
+	cout<<"Searching for:"<<node->name<<" "<<node->id<<endl;
+	for (int i = 0; i < size; i++){
+	cout<<neighbors[i]->node->name<<" "<<neighbors[i]->node->id<<"| ";
+	}
+    cout << "ERROR : Could not find neighbors of node " << node->id <<", nei_size="<<size<< endl;
     ASSERT(0);
     return NULL;
 }

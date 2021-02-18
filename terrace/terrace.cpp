@@ -1188,7 +1188,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
         ((TerraceNeighbor*)(*it))->link_neighbors.resize(part_num,nullptr);
     }
     
-    cout<<"Reached update part"<<endl;
+    //cout<<"Reached update part"<<endl;
     for(i=0; i<part_num; i++){
         if(induced_trees[i]->leafNum>2){
             if(induced_trees[i]->findLeafName(node_name)){
@@ -1205,7 +1205,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 nei_part_1 = (TerraceNeighbor*)induced_part_tree_branch_1[i]->findNeighbor(induced_part_tree_branch_2[i]);
                 nei_part_2 = (TerraceNeighbor*)induced_part_tree_branch_2[i]->findNeighbor(induced_part_tree_branch_1[i]);
                 
-                cout<<"First branch: one part of the devided branch"<<endl;
+                //cout<<"First branch: one part of the devided branch"<<endl;
                 nei_aux = (TerraceNeighbor*)node_1_branch->findNeighbor(center_node);
                 nei_aux->link_neighbors[i] = nei_part_1;
                 nei_part_1->link_neighbors.push_back(nei_aux);
@@ -1214,7 +1214,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 nei_aux->link_neighbors[i] = nei_part_2;
                 nei_part_2->link_neighbors.push_back(nei_aux);
                 
-                // Second branch: another part of the devided branch
+                //cout<<"Second branch: another part of the devided branch"<<endl;
                 nei_aux = (TerraceNeighbor*)center_node->findNeighbor(node_2_branch);
                 nei_aux->link_neighbors[i] = nei_part_1;
                 nei_part_1->link_neighbors.push_back(nei_aux);
@@ -1223,12 +1223,12 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 nei_aux->link_neighbors[i] = nei_part_2;
                 nei_part_2->link_neighbors.push_back(nei_aux);
                 
-                // Third branch: incident to a newly inserted taxon
-                
+                //cout<<"Third branch: incident to a newly inserted taxon: center->leaf"<<endl;
                 nei_aux = (TerraceNeighbor*)center_node->findNeighbor(leaf_node);
                 nei_aux->link_neighbors[i] = nei_part_1;
                 nei_part_1->link_neighbors.push_back(nei_aux);
-                
+		
+                //cout<<"Third branch: incident to a newly inserted taxon: leaf->center"<<endl;
                 nei_aux = (TerraceNeighbor*)leaf_node->findNeighbor(center_node);
                 nei_aux->link_neighbors[i] = nei_part_2;
                 nei_part_2->link_neighbors.push_back(nei_aux);
