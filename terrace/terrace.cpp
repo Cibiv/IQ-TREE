@@ -1176,18 +1176,32 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     taxa_num += 1;
     matrix->extend_by_new_taxa(node_name, pr_ab_info);
     
-    TerraceNode* leaf_node = (TerraceNode*) findLeafName(node_name);
-    TerraceNode* center_node = (TerraceNode*) leaf_node->neighbors[0]->node;
-    TerraceNeighbor *center_node_nei;
-    TerraceNeighbor *nei_aux;
+    //assert(findLeafName(node_name) && "ERROR: Newly inserted leaf is not found! Insertion failed.");
     
+    TerraceNode* leaf_node = (TerraceNode*) findLeafName(node_name);
+    //cout<<"LEAF NAME_1:"<<leaf_node->name<<endl;
+    TerraceNode* center_node = (TerraceNode*) leaf_node->neighbors[0]->node;
+    
+    //assert(center_node->findNeighbor(leaf_node));
+    //cout<<"LEAF NAME_2:"<<leaf_node->name<<endl;
+    //assert(leaf_node->name==node_name && "ERROR: Leaf name is incorrect.");
+
+	if(!center_node->isNeighbor(leaf_node) or !leaf_node->isNeighbor(center_node) or !leaf_node->isLeaf()){
+		cout<<"Right after assignment:"<<endl;
+		cout<<"LEAF:"<<leaf_node<<"|"<<leaf_node->id<<"|"<<leaf_node->name<<endl;
+		cout<<"CENTER:"<<center_node<<"|"<<center_node->id<<"|"<<center_node->name<<endl;
+}
+
+    
+    TerraceNeighbor *center_node_nei;
+    TerraceNeighbor *nei_aux;  
     // INFO: since you are introducing new branches, make sure the link_neighbor vector is initialised for them
     FOR_NEIGHBOR_IT(center_node, NULL, it){
         center_node_nei=(TerraceNeighbor*)(*it)->node->findNeighbor(center_node);
         center_node_nei->link_neighbors.resize(part_num,nullptr);
         ((TerraceNeighbor*)(*it))->link_neighbors.resize(part_num,nullptr);
     }
-    
+
     //cout<<"Reached update part"<<endl;
     for(i=0; i<part_num; i++){
         if(induced_trees[i]->leafNum>2){

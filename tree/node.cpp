@@ -173,11 +173,11 @@ Neighbor *Node::findNeighbor(Node *node) {
     for (NeighborVec::iterator it = neighbors.begin(); it != neighbors.end(); it ++)
             if ((*it)->node == node)
                     return (*it);*/
-	cout<<"Searching for:"<<node->name<<" "<<node->id<<endl;
 	for (int i = 0; i < size; i++){
 	cout<<neighbors[i]->node->name<<" "<<neighbors[i]->node->id<<"| ";
 	}
     cout << "ERROR : Could not find neighbors of node " << node->id <<", nei_size="<<size<< endl;
+    cout<<"Searching for:"<<node->id<<" "<<node->name<<endl;
     ASSERT(0);
     return NULL;
 }
