@@ -76,6 +76,7 @@ public:
     // file to output all generated terrace trees
     string out_file;
     bool terrace_out;
+    int trees_out_lim;
     
     // Stopping rules
     int terrace_max_trees;

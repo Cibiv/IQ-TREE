@@ -104,6 +104,7 @@ void runterraceanalysis(Params &params){
         if(params.terrace_stop_time > 0){
             init_terrace->seconds_max = params.terrace_stop_time*3600;
         }
+        init_terrace->trees_out_lim = params.terrace_print_lim;
         
         init_terrace->linkTrees(true, false); // branch_back_map, taxon_back_map; in this case you only want to map branches
 

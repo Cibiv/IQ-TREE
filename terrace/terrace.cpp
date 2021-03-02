@@ -28,6 +28,7 @@ void Terrace::init(){
     terrace_trees_num = 0;
     dead_ends_num = 0;
     terrace_out = true;
+    trees_out_lim = 0;
     
     terrace_max_trees = 1000000;
     intermediate_max_trees = 10000000;
@@ -1436,12 +1437,14 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_
                 
             } else {
                 if(terrace_out){
+                    if(trees_out_lim==0 or terrace_trees.size()<trees_out_lim){
                     terrace_trees.push_back(getTreeTopologyString(this));
                     //ofstream out;
                     //out.exceptions(ios::failbit | ios::badbit);
                     //out.open(out_file,std::ios_base::app);
                     //printTree(out, WT_BR_SCALE | WT_NEWLINE);
                     //out.close();
+                    }
                 }
                 terrace_trees_num+=1;
                 //if(terrace_trees_num % 1000 == 0){
@@ -1938,18 +1941,17 @@ void Terrace::write_terrace_trees_to_file(){
     
     cout<<"Printing "<<terrace_trees_num<<" terrace trees to file "<<endl<<out_file<<"..."<<endl;
         
-    int lim = Params::getInstance().terrace_print_lim;
-    if(lim==0 or lim > terrace_trees_num){
-        lim = terrace_trees_num;
+    if(trees_out_lim==0 or trees_out_lim > terrace_trees_num){
+        trees_out_lim = terrace_trees_num;
     } else {
-        cout<<"WARNING: The number of generated trees from the terrace ("<<terrace_trees_num<<") is larger than the output treshold ("<<lim<<" trees). Only "<<lim<<" trees will be written to the file."<<endl;
+        cout<<"WARNING: The number of generated trees from the terrace ("<<terrace_trees_num<<") is larger than the output treshold ("<<trees_out_lim<<" trees). Only "<<trees_out_lim<<" trees will be written to the file."<<endl;
     }
     
     ofstream out;
     out.exceptions(ios::failbit | ios::badbit);
     out.open(out_file,std::ios_base::app);
         
-    for(int i=0; i<lim-1; i++){
+    for(int i=0; i<trees_out_lim-1; i++){
         out<<terrace_trees[i]<<endl;
     }
     out.close();
