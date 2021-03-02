@@ -1937,15 +1937,23 @@ void Terrace::write_terrace_trees_to_file(){
     cout<<"---------------------------------------------------------"<<endl;
     
     cout<<"Printing "<<terrace_trees_num<<" terrace trees to file "<<endl<<out_file<<"..."<<endl;
+        
+    int lim = Params::getInstance().terrace_print_lim;
+    if(lim==0 or lim > terrace_trees_num){
+        lim = terrace_trees_num;
+    } else {
+        cout<<"WARNING: The number of generated trees from the terrace ("<<terrace_trees_num<<") is larger than the output treshold ("<<lim<<" trees). Only "<<lim<<" trees will be written to the file."<<endl;
+    }
     
     ofstream out;
     out.exceptions(ios::failbit | ios::badbit);
     out.open(out_file,std::ios_base::app);
-    
-    for(int i=0; i<terrace_trees.size(); i++){
+        
+    for(int i=0; i<lim-1; i++){
         out<<terrace_trees[i]<<endl;
     }
     out.close();
+
 }
 
 void Terrace::write_summary_generation(){

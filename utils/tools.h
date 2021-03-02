@@ -1768,6 +1768,10 @@ public:
     int terrace_stop_intermediate_num;
     int terrace_stop_terrace_trees_num;
     double terrace_stop_time;
+    /**
+        number of terrace trees to be output to the file: default 100K
+     */
+    int terrace_print_lim;
 
     /**********************************************/
     /**** variables for ultra-fast bootstrap ******/

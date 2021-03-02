@@ -1020,9 +1020,10 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.print_induced_trees = false;
     params.pr_ab_matrix = nullptr;
     params.terrace_query_set = nullptr;
-    params.terrace_stop_intermediate_num = NULL;
-    params.terrace_stop_terrace_trees_num = NULL;
-    params.terrace_stop_time = NULL;
+    params.terrace_stop_intermediate_num = 0;
+    params.terrace_stop_terrace_trees_num = 0;
+    params.terrace_stop_time = 0.0;
+    params.terrace_print_lim = 0;
     
     params.gen_all_NNI = false;
     
@@ -1757,6 +1758,19 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.print_terrace_trees = true;
                 continue;
             }
+            
+            if (strcmp(argv[cnt], "-t_print_lim") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -t_print_lim <num_of_trees_to_be_output>";
+                params.terrace_print_lim = convert_int(argv[cnt]);
+                if(params.terrace_print_lim<=0){
+                    throw "Invalid value! Use -t_print_lim <trees_num> with trees_num>0";
+                }
+                continue;
+            }
+            
+            
             
             if (strcmp(argv[cnt], "-t_print_induced") == 0) {
                 params.print_induced_trees = true;
