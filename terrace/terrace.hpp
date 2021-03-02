@@ -167,7 +167,7 @@ public:
      *  The main function to generate trees by recursive taxon insertion
      */
     
-    void generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_pairs, vector<string> *list_taxa_to_insert, int taxon_to_insert, bool *progress_status);
+    void generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_pairs, vector<string> *list_taxa_to_insert, int taxon_to_insert);
     
     /*
      *  Remove one taxon from the terrace tree, from induced partition trees, update the mapping

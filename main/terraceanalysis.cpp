@@ -32,11 +32,9 @@ void runterraceanalysis(Params &params){
         matrix->get_from_alignment(params);
         TerraceTree tree;
         tree.readTree(params.user_file, params.is_rooted);
-        Terrace *terrace_0 = new Terrace(tree,matrix);
-        terrace = terrace_0;
+        terrace = new Terrace(tree,matrix);
     } else if(params.user_file && params.pr_ab_matrix){
-        Terrace *terrace_0 = new Terrace(params.user_file,params.is_rooted,params.pr_ab_matrix);
-        terrace = terrace_0;
+        terrace = new Terrace(params.user_file,params.is_rooted,params.pr_ab_matrix);
     } else {
         throw "ERROR: to start terrace analysis input a tree and either a presence-absence matrix or alignment with partition info!";
     }
@@ -103,7 +101,6 @@ void runterraceanalysis(Params &params){
         if(params.terrace_stop_terrace_trees_num > 0){
             init_terrace->terrace_max_trees = params.terrace_stop_terrace_trees_num;
         }
-        
         if(params.terrace_stop_time > 0){
             init_terrace->seconds_max = params.terrace_stop_time*3600;
         }
@@ -150,9 +147,7 @@ void runterraceanalysis(Params &params){
         }
         
         cout<<endl<<"Generating terrace trees.."<<endl;
-        bool progress_status = true;
-        init_terrace->generateTerraceTrees(terrace, part_tree_pairs, &list_taxa_to_insert, 0, &progress_status);
-        
+        init_terrace->generateTerraceTrees(terrace, part_tree_pairs, &list_taxa_to_insert, 0);
         cout<<endl<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
         cout<<endl<<"Done!"<<endl<<endl;
 
