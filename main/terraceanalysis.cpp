@@ -159,17 +159,36 @@ void runterraceanalysis(Params &params){
 
 void run_terrace_check(Terrace *terrace,Params &params){
     
-    int i;
-    
-    MTreeSet tree_set_query(params.terrace_query_set, params.is_rooted, params.tree_burnin, params.tree_max_count);
+    int i, count = 0;
     vector<MTree*> trees_on, trees_off;
+    
+    /*MTreeSet tree_set_query(params.terrace_query_set, params.is_rooted, params.tree_burnin, params.tree_max_count);
     for(i=0; i<tree_set_query.size(); i++){
         if(terrace->check_two_trees(tree_set_query[i])){
             trees_on.push_back(tree_set_query[i]);
         }else{
             trees_off.push_back(tree_set_query[i]);
         }
+    }*/
+    
+    // Alternative
+    ifstream *in = new ifstream;
+    in->open(params.terrace_query_set);
+    while (!in->eof() && count < params.tree_max_count) {
+        count++;
+        cout<<"Checking query tree "<<count<<"..."<<endl;
+        MTree *tree = new MTree();
+        tree->readTree(*in, params.is_rooted);
+        if(terrace->check_two_trees(tree)){
+            trees_on.push_back(tree);
+        }else{
+            trees_off.push_back(tree);
+        }
+        delete tree;
+        
     }
+    in->close();
+    delete in;
     
     if(!trees_on.empty() and !trees_off.empty()){
         string out_file_on = params.out_prefix;
@@ -180,7 +199,7 @@ void run_terrace_check(Terrace *terrace,Params &params){
         out_on.open(out_file_on);
         
         for(i=0; i<trees_on.size(); i++){
-            tree_set_query[i]->printTree(out_on,WT_BR_SCALE | WT_NEWLINE);
+            trees_on[i]->printTree(out_on,WT_BR_SCALE | WT_NEWLINE);
         }
         
         out_on.close();
@@ -195,7 +214,7 @@ void run_terrace_check(Terrace *terrace,Params &params){
         out_off.open(out_file_off);
         
         for(i=0; i<trees_off.size(); i++){
-            tree_set_query[i]->printTree(out_off,WT_BR_SCALE | WT_NEWLINE);
+            trees_off[i]->printTree(out_off,WT_BR_SCALE | WT_NEWLINE);
         }
         
         out_off.close();
@@ -203,10 +222,10 @@ void run_terrace_check(Terrace *terrace,Params &params){
     
     cout<<endl<<"----------------------------------------------------------------------------"<<endl;
     cout<<"Done."<<endl;
-    cout<<"Checked "<<tree_set_query.size()<<" trees:"<<endl;
-    if(trees_on.size() == tree_set_query.size()){
+    cout<<"Checked "<<count<<" trees:"<<endl;
+    if(trees_on.size() == count){
         cout<<"- all trees belong to the same terrace"<<endl;
-    }else if(trees_off.size() == tree_set_query.size()){
+    }else if(trees_off.size() == count){
         cout<<"- none of the trees belongs to considered terrace"<<endl;
     }else{
         cout<<" - "<<trees_on.size()<<" trees belong to considered terrace"<<endl;

@@ -1951,7 +1951,7 @@ void Terrace::write_terrace_trees_to_file(){
     out.exceptions(ios::failbit | ios::badbit);
     out.open(out_file,std::ios_base::app);
         
-    for(int i=0; i<trees_out_lim-1; i++){
+    for(int i=0; i<trees_out_lim; i++){
         out<<terrace_trees[i]<<endl;
     }
     out.close();
