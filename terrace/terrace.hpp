@@ -75,6 +75,7 @@ public:
     
     // file to output all generated terrace trees
     string out_file;
+    ofstream out;
     bool terrace_out;
     int trees_out_lim;
     

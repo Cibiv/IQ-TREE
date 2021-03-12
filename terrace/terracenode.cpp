@@ -55,7 +55,6 @@ void TerraceNode::deleteNode(){
     //for(Node* node : empty_taxa)
     //    delete node;
     empty_taxa.clear();
-        
     empty_branches.clear();
 }
 

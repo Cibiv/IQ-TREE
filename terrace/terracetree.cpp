@@ -25,11 +25,15 @@ void TerraceTree::readTree(istream &in, bool &is_rooted) {
 }
 
 Node* TerraceTree::newNode(int node_id, const char* node_name) {
-    return (Node*) (new TerraceNode(node_id, node_name));
+    Node* node = (Node*) (new (std::nothrow) TerraceNode(node_id, node_name));
+    assert(node && "ERROR: cannot allocate memory... Exiting...");
+    return node;
 }
 
 Node* TerraceTree::newNode(int node_id, int node_name) {
-    return (Node*) (new TerraceNode(node_id, node_name));
+    Node* node = (Node*) (new (std::nothrow) TerraceNode(node_id, node_name));
+    assert(node && "ERROR: cannot allocate memory... Exiting...");
+    return node;
 }
 
 
@@ -134,7 +138,7 @@ void TerraceTree::cleanAllLinkINFO(bool clean_induced_part_maps, TerraceNode *no
     
 }
 
-void TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch){
+TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch){
     
     TerraceNode *node_1, *node_2;
     
@@ -170,6 +174,8 @@ void TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_branch, T
     //assert(node_1->name == node_name);
     
     //drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
+    
+    return node_1;
     
 }
 

@@ -10,6 +10,9 @@
 #include "tree/node.h"
 #include "tree/mtree.h"
 
+PresenceAbsenceMatrix::PresenceAbsenceMatrix(){};
+PresenceAbsenceMatrix::~PresenceAbsenceMatrix(){};
+
 void PresenceAbsenceMatrix::get_from_alignment(Params &params){
     int i, j;
     

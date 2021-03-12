@@ -17,6 +17,9 @@ class PresenceAbsenceMatrix {
     
 public:
     
+    PresenceAbsenceMatrix();
+    ~PresenceAbsenceMatrix();
+    
     vector<IntVector> pr_ab_matrix;
     vector<string> taxa_names;
     

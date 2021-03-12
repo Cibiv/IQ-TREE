@@ -74,7 +74,7 @@ public:
     /**
      *  Insert a new taxon on given branch 
      */
-    void insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch);
+    TerraceNode* insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch);
     
     /**
      *  Remove one taxon
