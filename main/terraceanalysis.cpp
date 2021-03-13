@@ -181,12 +181,13 @@ void run_terrace_check(Terrace *terrace,Params &params){
     in->open(params.terrace_query_set);
     while (!in->eof() && count < params.tree_max_count) {
         count++;
-        cout<<"Checking query tree "<<count<<"..."<<endl;
         MTree *tree = new MTree();
         tree->readTree(*in, params.is_rooted);
         if(terrace->check_two_trees(tree)){
+            cout<<"Checking query tree "<<count<<"..."<<"on the terrace."<<endl;
             trees_on.push_back(tree);
         }else{
+            cout<<"Checking query tree "<<count<<"..."<<"NOT on the terrace!"<<endl;
             trees_off.push_back(tree);
         }
         delete tree;

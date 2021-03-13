@@ -1249,15 +1249,15 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     //if(!findLeafName(node_name)){
     //    cout<<"ERROR: did not find the leaf node!"<<endl;
     //}
-	if(!center_node->isNeighbor(leaf_node) or !leaf_node->isNeighbor(center_node) or !leaf_node->isLeaf()){
+	/*if(!center_node->isNeighbor(leaf_node) or !leaf_node->isNeighbor(center_node) or !leaf_node->isLeaf()){
         printTaxa(cout);
 		cout<<"Right after assignment:"<<endl;
 		cout<<"LEAF:"<<leaf_node<<"|"<<leaf_node->id<<"|"<<leaf_node->name<<endl;
 		cout<<"CENTER:"<<center_node<<"|"<<center_node->id<<"|"<<center_node->name<<endl;
-    }
+    }*/
     
     TerraceNeighbor *center_node_nei;
-    TerraceNeighbor *nei_aux;
+    //TerraceNeighbor *nei_aux;
     // INFO: since you are introducing new branches, make sure the link_neighbor vector is initialised for them
     FOR_NEIGHBOR_IT(center_node, NULL, it){
         center_node_nei=(TerraceNeighbor*)(*it)->node->findNeighbor(center_node);
@@ -1283,7 +1283,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 nei_part_1 = (TerraceNeighbor*)induced_part_tree_branch_1[i]->findNeighbor(induced_part_tree_branch_2[i]);
                 nei_part_2 = (TerraceNeighbor*)induced_part_tree_branch_2[i]->findNeighbor(induced_part_tree_branch_1[i]);
                 
-                //cout<<"First branch: one part of the devided branch"<<endl;
+                /*//cout<<"First branch: one part of the devided branch"<<endl;
                 nei_aux = (TerraceNeighbor*)node_1_branch->findNeighbor(center_node);
                 nei_aux->link_neighbors[i] = nei_part_1;
                 nei_part_1->link_neighbors.push_back(nei_aux);
@@ -1309,10 +1309,10 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 //cout<<"Third branch: incident to a newly inserted taxon: leaf->center"<<endl;
                 nei_aux = (TerraceNeighbor*)leaf_node->findNeighbor(center_node);
                 nei_aux->link_neighbors[i] = nei_part_2;
-                nei_part_2->link_neighbors.push_back(nei_aux);
+                nei_part_2->link_neighbors.push_back(nei_aux);*/
                 
             
-                /*assert(center_node->neighbors.size()==3 && "ERROR: The central node does not have 3 neighbours! Case leafNum>2 & findLeafName(node_name) = false.");
+                //assert(center_node->neighbors.size()==3 && "ERROR: The central node does not have 3 neighbours! Case leafNum>2 & findLeafName(node_name) = false.");
                 FOR_NEIGHBOR_IT(center_node, NULL, it){
                     
                     center_node_nei=(TerraceNeighbor*)(*it)->node->findNeighbor(center_node);
@@ -1324,7 +1324,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                     // forward map
                     center_node_nei->link_neighbors[i] = nei_part_1;
                     ((TerraceNeighbor*)(*it))->link_neighbors[i]=nei_part_2;
-                }*/
+                }
             }
         }
         /*else{
