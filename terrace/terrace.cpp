@@ -110,7 +110,7 @@ Terrace::Terrace(TerraceTree tree, PresenceAbsenceMatrix *m, vector<TerraceTree*
     getTaxa(taxa_nodes);
     //printTree(cout);
     
-    matrix->reorderAccordingToTree(taxa_nodes);
+    //matrix->reorderAccordingToTree(taxa_nodes);
     //matrix->print_pr_ab_matrix();
     
     set_part_trees(input_induced_trees);

@@ -10,7 +10,11 @@
 #include "tree/node.h"
 #include "tree/mtree.h"
 
-PresenceAbsenceMatrix::PresenceAbsenceMatrix(){};
+PresenceAbsenceMatrix::PresenceAbsenceMatrix(){
+    taxa_num = 0;
+    part_num = 0;
+    init();
+};
 PresenceAbsenceMatrix::~PresenceAbsenceMatrix(){};
 
 void PresenceAbsenceMatrix::get_from_alignment(Params &params){
@@ -37,6 +41,8 @@ void PresenceAbsenceMatrix::get_from_alignment(Params &params){
     }
 
     init();
+    
+    delete alignment;
 }
 
 void PresenceAbsenceMatrix::read_pr_ab_matrix(const char *infile){
@@ -124,7 +130,7 @@ void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree,
     NodeVector taxa_nodes;
     tree->getTaxa(taxa_nodes);
     
-    part_taxa.resize(taxa_num);
+    //part_taxa.resize(taxa_num);
     
     //if(!flag_reorderAccordingToTree){
     //    reorderAccordingToTree(taxa_nodes);
@@ -140,7 +146,8 @@ void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree,
             node = part_tree->findLeafName((*it)->name);
             //cout<<"PREPARING PART_TAXA: part = "<<part<<"|leaf_id = "<<(*it)->id<<"|leaf_name = "<<(*it)->name<<endl;
             assert(node && "ERROR: The leaf is not found on partition tree!");
-            part_taxa[taxon_matrix_id]=node;
+            //part_taxa[taxon_matrix_id]=node;
+            part_taxa.push_back(node);
         }
     }
     
