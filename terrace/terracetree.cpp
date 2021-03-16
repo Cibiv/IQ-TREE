@@ -141,25 +141,33 @@ TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_b
     leafNum += 1;
     nodeNum += 1;
     
-    node_2 = (TerraceNode*)(newNode(nodeNum));
-    nodeNum += 1;
+    if(node_1_branch && node_2_branch){
+        node_2 = (TerraceNode*)(newNode(nodeNum));
+        nodeNum += 1;
+        
+        int br_id = branchNum;
+        branchNum += 1;
+        
+        node_1->addNeighbor(node_2, 0.0, br_id);
+        node_2->addNeighbor(node_1, 0.0, br_id);
+        
+        br_id = node_1_branch->findNeighbor(node_2_branch)->id;
+        node_1_branch->updateNeighbor(node_2_branch, node_2, 0.0);
+        node_1_branch->findNeighbor(node_2)->id = br_id;
+        node_2->addNeighbor(node_1_branch, 0.0, br_id);
+        
+        br_id = branchNum;
+        node_2_branch->updateNeighbor(node_1_branch, node_2, 0.0);
+        node_2_branch->findNeighbor(node_2)->id = br_id;
+        
+        node_2->addNeighbor(node_2_branch, 0.0, br_id);
     
-    int br_id = branchNum;
-    branchNum += 1;
-    
-    node_1->addNeighbor(node_2, 0.0, br_id);
-    node_2->addNeighbor(node_1, 0.0, br_id);
-    
-    br_id = node_1_branch->findNeighbor(node_2_branch)->id;
-    node_1_branch->updateNeighbor(node_2_branch, node_2, 0.0);
-    node_1_branch->findNeighbor(node_2)->id = br_id;
-    node_2->addNeighbor(node_1_branch, 0.0, br_id);
-    
-    br_id = branchNum;
-    node_2_branch->updateNeighbor(node_1_branch, node_2, 0.0);
-    node_2_branch->findNeighbor(node_2)->id = br_id;
-    
-    node_2->addNeighbor(node_2_branch, 0.0, br_id);
+    } else if(leafNum == 2){
+        root->addNeighbor(node_1, 0.0,0);
+        node_1->addNeighbor(root, 0.0,0);
+    } else {
+        root = node_1;
+    }
     
     initializeTree();
     
@@ -167,9 +175,9 @@ TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_b
     
     //drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
     
-    /*if(update_leafNode){
+    if(update_leafNode){
         leafNodes[node_name]=node_1;
-    }*/
+    }
     return node_1;
     
 }
@@ -232,10 +240,10 @@ void TerraceTree::remove_taxon(string taxon_name,bool update_leafNode){
         }
     }
     
-    /*if(update_leafNode){
+    if(update_leafNode){
         leafNodes[taxon_name]=nullptr;
         leafNodes.erase(taxon_name);
-    }*/
+    }
 
 }
 
@@ -262,5 +270,12 @@ string getTreeTopologyString(MTree* tree){
 void TerraceTree::fillLeafNodes(NodeVector taxa_nodes){
     for(auto& it: taxa_nodes){
         leafNodes[(*it).name]=it;
+    }
+    
+    if(false){
+        cout<<"-----------------------"<<endl;
+        for(auto& entry: leafNodes){
+            cout<<entry.first<<"->"<<entry.second->name<<endl;
+        }
     }
 };

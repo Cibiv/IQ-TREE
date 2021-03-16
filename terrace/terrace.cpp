@@ -104,6 +104,10 @@ Terrace::Terrace(TerraceTree tree, PresenceAbsenceMatrix *m, vector<TerraceTree*
     set_part_trees(input_induced_trees);
     //printInfo();
     
+    NodeVector taxa_nodes;
+    getTaxa(taxa_nodes);
+    fillLeafNodes(taxa_nodes);
+    
 }
 
 void Terrace::get_part_trees(){
@@ -153,11 +157,11 @@ void Terrace::get_part_trees(){
             induced_tree->nodeNum = 1;
         }
         
-        /*if(induced_tree->leafNum>0){
+        if(induced_tree->leafNum>0){
             NodeVector taxa_nodes;
             induced_tree->getTaxa(taxa_nodes);
             induced_tree->fillLeafNodes(taxa_nodes);
-        }*/
+        }
         
         induced_trees.push_back(induced_tree);
     }
@@ -199,7 +203,7 @@ void Terrace::linkTrees(bool back_branch_map, bool back_taxon_map){
     for(int part=0; part<part_num; part++){
         if(induced_trees[part]->leafNum>2){
             part_taxa.clear();
-            matrix->getPartTaxa(part, this, induced_trees[part], part_taxa);
+            //matrix->getPartTaxa(part, this, induced_trees[part], part_taxa);
             //clearEmptyBranchAndTaxaINFO();
             linkTree(part, part_taxa, back_branch_map, back_taxon_map);
         }
@@ -234,21 +238,19 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bo
     }
     if (node->isLeaf()) {
         ASSERT(dad);
-        // DONE: FIXED. BUG: I think this is the case. again issue with the node ids. Find another way of getting node->id. Check if this is actually what causes problem
-        //TerraceNode *node_part = (TerraceNode*)part_taxa[node->id]; //part_taxa[] is a node on PARTITION tree
+        
         TerraceNode *node_part = nullptr;
-        for(NodeVector::iterator it=part_taxa.begin(); it<part_taxa.end(); it++){
+        /*for(NodeVector::iterator it=part_taxa.begin(); it<part_taxa.end(); it++){
             if((*it)){
                 if(node->name == (*it)->name){
                     node_part = (TerraceNode*)(*it);
                     break;
                 }
             }
-        }
-        
-        /*if(induced_trees[part]->leafNodes.find(node->name)!=induced_trees[part]->leafNodes.end()){
-            node_part=(TerraceNode*)induced_trees[part]->leafNodes[node->name];
         }*/
+        if(induced_trees[part]->leafNodes.find(node->name)!=induced_trees[part]->leafNodes.end()){
+            node_part=(TerraceNode*)induced_trees[part]->leafNodes[node->name];
+        }
         
         if (node_part) {
             TerraceNode *dad_part = (TerraceNode*)node_part->neighbors[0]->node;
@@ -478,11 +480,6 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
     // child_part_vec[0]=child_part_vec[1]
     // part_vec[0]=part_vec[1]
     // this is due to the fact, that all branches have a link_neighbors and the direction in which the branch "folds" is not certain
-    //cout<<"DEBUGGING:"<<endl;
-    //cout<<"child_part_vec[0]="<<child_part_vec[0]->node->id<<endl;
-    //cout<<"child_part_vec[1]="<<child_part_vec[1]->node->id<<endl;
-    //cout<<"part_vec[0]="<<part_vec[0]->node->id<<endl;
-    //cout<<"part_vec[1]="<<part_vec[1]->node->id<<endl;
     
     if(child_part_vec[0]==child_part_vec[1]){
         //cout<<"My weird case II..."<<endl;
@@ -535,22 +532,6 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
 }
 
 void Terrace::update_map(int part, NodeVector &part_taxa, bool back_branch_map, bool back_taxon_map, TerraceNode *node, TerraceNode *dad){
-    
-    //if(!dad){
-    //    cout<<"++++++++++++ PARTITION "<<part<<"++++++++++++"<<endl;
-    //    printMapInfo(3);
-    //}
-    
-    //if(part==0){
-    //    printMapInfo();
-    //}
-    
-    /*
-     For insertion:
-         1. You need some kind of preprocessing step to remove link_neighbours of branches, which were allowed for the inserted taxon.
-         2. Then call this function recursively.
-         3. What shall we do with a drunken sailor early in the morning?:) take into account cases when the inserted taxon is 1st or 2nd for some partition.
-     */
     
     if (node->isLeaf()){
         if(!dad){
@@ -615,17 +596,17 @@ void Terrace::update_map(int part, NodeVector &part_taxa, bool back_branch_map, 
                 ASSERT(dad);
                 TerraceNode *node_part = nullptr;
             
-                for(NodeVector::iterator it=part_taxa.begin(); it<part_taxa.end(); it++){
+                /*for(NodeVector::iterator it=part_taxa.begin(); it<part_taxa.end(); it++){
                     if((*it)){
                         if(node->name == (*it)->name){
                             node_part = (TerraceNode*)(*it);
                             break;
                         }
                     }
-                }
-                /*if(induced_trees[part]->leafNodes.find(node->name)!=induced_trees[part]->leafNodes.end()){
-                    node_part=(TerraceNode*)induced_trees[part]->leafNodes[node->name];
                 }*/
+                if(induced_trees[part]->leafNodes.find(node->name)!=induced_trees[part]->leafNodes.end()){
+                    node_part=(TerraceNode*)induced_trees[part]->leafNodes[node->name];
+                }
             
                 if (node_part) {
                     TerraceNode *dad_part = (TerraceNode*)node_part->neighbors[0]->node;
@@ -1010,9 +991,8 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
             nei_part_1 = (TerraceNeighbor*)induced_part_tree_branch_1[i]->findNeighbor(induced_part_tree_branch_2[i]);
             nei_part_2 = (TerraceNeighbor*)induced_part_tree_branch_2[i]->findNeighbor(induced_part_tree_branch_1[i]);
         
-            //if(part_tree_pairs[i]->findLeafName(node_name)){
-            if(part_tree_pairs[i]->matrix->findTaxonID(node_name)!=-1){
-            //if(part_tree_pairs[i]->leafNodes.find(node_name)!=part_tree_pairs[i]->leafNodes.end()){
+            //if(part_tree_pairs[i]->matrix->findTaxonID(node_name)!=-1){
+            if(part_tree_pairs[i]->leafNodes.find(node_name)!=part_tree_pairs[i]->leafNodes.end()){
                 
                 // --------------- CLEARING MAPS FROM AGILE TREE TO COMMON PART SUBTREES and BACK --------------------------------------------------------------------------
                 // STEP 1: clearing pointers for all branches that mapped to the involved branch on induced partition tree (clearing forward maps)
@@ -1045,7 +1025,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
 
                 // --------------- UPDATE MAPs LOCALLY for TOP LEVEL INDUCED PART TREES ------------------------------------------------------------------------------------------
                 part_taxa.clear();
-                part_tree_pairs[i]->matrix->getPartTaxa(0, part_tree_pairs[i], part_tree_pairs[i]->induced_trees[0], part_taxa);
+                //part_tree_pairs[i]->matrix->getPartTaxa(0, part_tree_pairs[i], part_tree_pairs[i]->induced_trees[0], part_taxa);
                 TerraceNode *central_node_part = (TerraceNode*) part_tree_pairs[i]->findLeafName(node_name)->neighbors[0]->node;
                 part_tree_pairs[i]->update_map(0,part_taxa, false, true,central_node_part);
                 
@@ -1062,9 +1042,8 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                     }
                 }
             }
-        } else
-            //if(part_tree_pairs[i]->leafNodes.find(node_name)!=part_tree_pairs[i]->leafNodes.end()){
-            if(part_tree_pairs[i]->matrix->findTaxonID(node_name)!=-1){
+        } else if(part_tree_pairs[i]->leafNodes.find(node_name)!=part_tree_pairs[i]->leafNodes.end()){
+            //if(part_tree_pairs[i]->matrix->findTaxonID(node_name)!=-1){
             //if(part_tree_pairs[i]->findLeafName(node_name)){
             
             part_tree_pairs[i]->matrix->pr_ab_matrix[part_tree_pairs[i]->matrix->findTaxonID(node_name)][0]=1;
@@ -1078,21 +1057,11 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 // Partitions with less than 3 taxa were not linked before. When you insert 3rd taxon, you should map them
                 NodeVector part_taxa;
                 part_taxa.clear();
-                part_tree_pairs[i]->matrix->getPartTaxa(0, part_tree_pairs[i], part_tree_pairs[i]->induced_trees[0], part_taxa);
+                //part_tree_pairs[i]->matrix->getPartTaxa(0, part_tree_pairs[i], part_tree_pairs[i]->induced_trees[0], part_taxa);
                 part_tree_pairs[i]->linkTree(0, part_taxa, false, true);
                 
-            } else if(induced_trees[i]->leafNum == 1){
-                TerraceNode* node_new = (TerraceNode*)induced_trees[i]->newNode(1, node_name.c_str());
-                induced_trees[i]->root->addNeighbor(node_new, 0.0,0);
-                node_new->addNeighbor(induced_trees[i]->root, 0.0,0);
-                induced_trees[i]->leafNum += 1;
-                induced_trees[i]->nodeNum += 1;
-                induced_trees[i]->initializeTree();
-                
             } else {
-                induced_trees[i]->root = (TerraceNode*)induced_trees[i]->newNode(0, node_name.c_str());
-                induced_trees[i]->leafNum = 1;
-                induced_trees[i]->nodeNum = 1;
+                leaf_node = induced_trees[i]->insertNewTaxon(node_name, nullptr, nullptr,true);
             }
         }
     }
@@ -1125,11 +1094,12 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     for(i=0; i<part_num; i++){
         if(induced_trees[i]->leafNum>2){
             //if(induced_trees[i]->findLeafName(node_name)){
-            if(part_tree_pairs[i]->matrix->findTaxonID(node_name)!=-1){
+            //if(part_tree_pairs[i]->matrix->findTaxonID(node_name)!=-1){
+            if(part_tree_pairs[i]->leafNodes.find(node_name)!=part_tree_pairs[i]->leafNodes.end()){
                 //cout<<"Partition:"<<i<<"- larger than 2 - leaf occurs"<<endl;
                 // if a taxon was inserted to the induced partition tree, update
                 part_taxa.clear();
-                matrix->getPartTaxa(i, this, induced_trees[i], part_taxa);
+                //matrix->getPartTaxa(i, this, induced_trees[i], part_taxa);
                 update_map(i,part_taxa, true, false, center_node);
 
             }else{
@@ -1231,7 +1201,8 @@ void Terrace::extendNewTaxon_naive(string node_name, TerraceNode *node_1_branch,
     
     for(i=0; i<part_num; i++){
         //if(part_tree_pairs[i]->findLeafName(node_name)){
-        if(part_tree_pairs[i]->matrix->findTaxonID(node_name)!=-1){
+        //if(part_tree_pairs[i]->matrix->findTaxonID(node_name)!=-1){
+        if(part_tree_pairs[i]->leafNodes.find(node_name)!=part_tree_pairs[i]->leafNodes.end()){
             if(induced_trees[i]->leafNum>2){
                 nei_part_1 = nei_1->link_neighbors[i];
                 nei_part_2 = nei_2->link_neighbors[i];
@@ -1398,7 +1369,8 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
          */
         
         //if(part_tree_pairs[i]->findLeafName(taxon_name)){
-        if(part_tree_pairs[i]->matrix->findTaxonID(taxon_name)!=-1){
+        //if(part_tree_pairs[i]->matrix->findTaxonID(taxon_name)!=-1){
+        if(part_tree_pairs[i]->leafNodes.find(taxon_name)!=part_tree_pairs[i]->leafNodes.end()){
             //cout<<"- with Leaf"<<endl;
             
             int id = part_tree_pairs[i]->matrix->findTaxonID(taxon_name);
@@ -1575,7 +1547,8 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
     for(i=0; i<part_num; i++){
         if(induced_trees[i]->leafNum>1){
             //if(induced_trees[i]->findLeafName(taxon_name)){
-            if(part_tree_pairs[i]->matrix->findTaxonID(taxon_name)!=-1){
+            //if(part_tree_pairs[i]->matrix->findTaxonID(taxon_name)!=-1){
+            if(part_tree_pairs[i]->leafNodes.find(taxon_name)!=part_tree_pairs[i]->leafNodes.end()){
                 induced_trees[i]->remove_taxon(taxon_name,true);
             }
         } else if(induced_trees[i]->root){
@@ -1649,7 +1622,8 @@ void Terrace::remove_one_taxon_naive(string taxon_name, vector<Terrace*> part_tr
     
     for(int i=0; i<part_num; i++){
         //if(induced_trees[i]->findLeafName(taxon_name)){
-        if(part_tree_pairs[i]->matrix->findTaxonID(taxon_name)!=-1){
+        //if(part_tree_pairs[i]->matrix->findTaxonID(taxon_name)!=-1){
+        if(part_tree_pairs[i]->leafNodes.find(taxon_name)!=part_tree_pairs[i]->leafNodes.end()){
             induced_trees[i]->remove_taxon(taxon_name,true);
         }
     }
