@@ -267,7 +267,11 @@ string getTreeTopologyString(MTree* tree){
     return tree_stream.str();
 }
 
-void TerraceTree::fillLeafNodes(NodeVector taxa_nodes){
+void TerraceTree::fillLeafNodes(){
+    
+    NodeVector taxa_nodes;
+    getTaxa(taxa_nodes);
+    
     for(auto& it: taxa_nodes){
         leafNodes[(*it).name]=it;
     }

@@ -76,6 +76,8 @@ Terrace::Terrace(TerraceTree tree, PresenceAbsenceMatrix *m){
     //matrix->print_pr_ab_matrix();
     get_part_trees();
     //printInfo();
+    
+    fillLeafNodes();
 }
 
 Terrace::Terrace(TerraceTree tree, PresenceAbsenceMatrix *m, vector<TerraceTree*> input_induced_trees){
@@ -103,11 +105,8 @@ Terrace::Terrace(TerraceTree tree, PresenceAbsenceMatrix *m, vector<TerraceTree*
     
     set_part_trees(input_induced_trees);
     //printInfo();
-    
-    NodeVector taxa_nodes;
-    getTaxa(taxa_nodes);
-    fillLeafNodes(taxa_nodes);
-    
+
+    fillLeafNodes();
 }
 
 void Terrace::get_part_trees(){
@@ -158,13 +157,12 @@ void Terrace::get_part_trees(){
         }
         
         if(induced_tree->leafNum>0){
-            NodeVector taxa_nodes;
-            induced_tree->getTaxa(taxa_nodes);
-            induced_tree->fillLeafNodes(taxa_nodes);
+            induced_tree->fillLeafNodes();
         }
         
         induced_trees.push_back(induced_tree);
     }
+    
 }
 
 void Terrace::set_part_trees(vector<TerraceTree*> input_induced_trees){
@@ -877,8 +875,11 @@ void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace
     this->getBranches(branch_end_1, branch_end_2);
     
     for(i=0;i<aux_terrace.size();i++){
-        node = (TerraceNode*) aux_terrace[i]->findLeafName(taxon_name);
-        if(node){
+        //node = (TerraceNode*) aux_terrace[i]->findLeafName(taxon_name);
+        //if(node){
+        if(aux_terrace[i]->leafNodes.find(taxon_name)!=aux_terrace[i]->leafNodes.end()){
+            node=(TerraceNode*) aux_terrace[i]->leafNodes[taxon_name];
+            
             assert(node->isLeaf());
             
             if(induced_trees[i]->leafNum>2){
@@ -1029,7 +1030,8 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 // --------------- UPDATE MAPs LOCALLY for TOP LEVEL INDUCED PART TREES ------------------------------------------------------------------------------------------
                 //part_taxa.clear();
                 //part_tree_pairs[i]->matrix->getPartTaxa(0, part_tree_pairs[i], part_tree_pairs[i]->induced_trees[0], part_taxa);
-                TerraceNode *central_node_part = (TerraceNode*) part_tree_pairs[i]->findLeafName(node_name)->neighbors[0]->node;
+                //TerraceNode *central_node_part = (TerraceNode*) part_tree_pairs[i]->findLeafName(node_name)->neighbors[0]->node;
+                TerraceNode *central_node_part = (TerraceNode*) part_tree_pairs[i]->leafNodes[node_name]->neighbors[0]->node;
                 part_tree_pairs[i]->update_map(0,part_taxa, false, true,central_node_part);
                 
             } else {
@@ -1074,7 +1076,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     
     //cleanAllLinkNeighboursAndTaxa();
     
-    leaf_node = insertNewTaxon(node_name,node_1_branch,node_2_branch);
+    leaf_node = insertNewTaxon(node_name,node_1_branch,node_2_branch,true);
     taxa_num += 1;
     //matrix->extend_by_new_taxa(node_name, pr_ab_info);
     
@@ -1237,7 +1239,7 @@ void Terrace::extendNewTaxon_naive(string node_name, TerraceNode *node_1_branch,
     }
     
     cleanAllLinkNeighboursAndTaxa(true);
-    leaf_node = insertNewTaxon(node_name, node_1_branch, node_2_branch);
+    leaf_node = insertNewTaxon(node_name, node_1_branch, node_2_branch,true);
     matrix->extend_by_new_taxa(node_name, pr_ab_info);
     taxa_num += 1;
     
@@ -1330,7 +1332,8 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
     NodeVector branch_nodes;
     TerraceNeighbor *nei1, *nei2, *nei_aux;
     
-    node_leaf_main = findLeafName(taxon_name);
+    //node_leaf_main = findLeafName(taxon_name);
+    node_leaf_main = leafNodes[taxon_name];
     node_central_main = node_leaf_main->neighbors[0]->node;
     FOR_NEIGHBOR_DECLARE(node_central_main, node_leaf_main, it){
         branch_nodes.push_back((*it)->node);
@@ -1562,7 +1565,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
     }
 
     //cout<<"Removing the taxon from agile tree...."<<endl;
-    remove_taxon(taxon_name);
+    remove_taxon(taxon_name,true);
     
     ((TerraceNeighbor*)node_1->findNeighbor(node_2))->link_neighbors.resize(part_num,nullptr);
     ((TerraceNeighbor*)node_2->findNeighbor(node_1))->link_neighbors.resize(part_num,nullptr);
@@ -1631,7 +1634,7 @@ void Terrace::remove_one_taxon_naive(string taxon_name, vector<Terrace*> part_tr
         }
     }
     
-    remove_taxon(taxon_name);
+    remove_taxon(taxon_name,true);
     matrix->remove_taxon(taxon_name);
     taxa_num -= 1;
     

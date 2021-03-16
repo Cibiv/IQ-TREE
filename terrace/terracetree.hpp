@@ -35,7 +35,7 @@ public:
      map taxon name to pointer to node
      */
     unordered_map<string, Node*> leafNodes;
-    void fillLeafNodes(NodeVector taxa_nodes);
+    void fillLeafNodes();
     
     /**
      read the tree from the input file in newick format
