@@ -806,7 +806,7 @@ void Terrace::create_Top_Low_Part_Tree_Pairs(vector<Terrace*> &part_tree_pairs, 
     bool back_branch_map = false, back_taxon_map = true;
     
     for(i=0; i<terrace->part_num; i++){
-        parts.clear();
+        /*parts.clear();
         parts.push_back(i);
         aux_taxon_nodes.clear();
         
@@ -841,9 +841,12 @@ void Terrace::create_Top_Low_Part_Tree_Pairs(vector<Terrace*> &part_tree_pairs, 
         //terrace->induced_trees[i]->printTree(cout,WT_BR_LEN_ROUNDING + WT_NEWLINE);
         //cout<<endl;
         
+        */
+        
         aux_induced_part_trees.clear();
         aux_induced_part_trees.push_back(induced_trees[i]);
-        Terrace *aux_terrace = new Terrace(*(terrace->induced_trees[i]), aux_submatrix, aux_induced_part_trees);
+        //Terrace *aux_terrace = new Terrace(*(terrace->induced_trees[i]), aux_submatrix, aux_induced_part_trees);
+        Terrace *aux_terrace = new Terrace(*(terrace->induced_trees[i]), nullptr, aux_induced_part_trees);
         aux_terrace->linkTrees(back_branch_map, back_taxon_map);
         //aux_terrace->printMapInfo();
         //aux_terrace->printBackMapInfo();
@@ -1021,10 +1024,10 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
 
                 // --------------- INSERT A TAXON ON COMMON PARTITION SUBTREE ----------------------------------------------------------------------------------------------------
                 leaf_node = induced_trees[i]->insertNewTaxon(node_name, (TerraceNode*) induced_part_tree_branch_1[i], (TerraceNode*) induced_part_tree_branch_2[i],true);
-                part_tree_pairs[i]->matrix->pr_ab_matrix[part_tree_pairs[i]->matrix->findTaxonID(node_name)][0]=1;
+                //part_tree_pairs[i]->matrix->pr_ab_matrix[part_tree_pairs[i]->matrix->findTaxonID(node_name)][0]=1;
 
                 // --------------- UPDATE MAPs LOCALLY for TOP LEVEL INDUCED PART TREES ------------------------------------------------------------------------------------------
-                part_taxa.clear();
+                //part_taxa.clear();
                 //part_tree_pairs[i]->matrix->getPartTaxa(0, part_tree_pairs[i], part_tree_pairs[i]->induced_trees[0], part_taxa);
                 TerraceNode *central_node_part = (TerraceNode*) part_tree_pairs[i]->findLeafName(node_name)->neighbors[0]->node;
                 part_tree_pairs[i]->update_map(0,part_taxa, false, true,central_node_part);
@@ -1046,7 +1049,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
             //if(part_tree_pairs[i]->matrix->findTaxonID(node_name)!=-1){
             //if(part_tree_pairs[i]->findLeafName(node_name)){
             
-            part_tree_pairs[i]->matrix->pr_ab_matrix[part_tree_pairs[i]->matrix->findTaxonID(node_name)][0]=1;
+            //part_tree_pairs[i]->matrix->pr_ab_matrix[part_tree_pairs[i]->matrix->findTaxonID(node_name)][0]=1;
             
             if(induced_trees[i]->leafNum == 2){
                 assert(induced_trees[i]->root->isLeaf() && "ERROR: in extendNewTaxon: root is not a leaf... something is wrong");
@@ -1056,7 +1059,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 
                 // Partitions with less than 3 taxa were not linked before. When you insert 3rd taxon, you should map them
                 NodeVector part_taxa;
-                part_taxa.clear();
+                //part_taxa.clear();
                 //part_tree_pairs[i]->matrix->getPartTaxa(0, part_tree_pairs[i], part_tree_pairs[i]->induced_trees[0], part_taxa);
                 part_tree_pairs[i]->linkTree(0, part_taxa, false, true);
                 
@@ -1073,7 +1076,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     
     leaf_node = insertNewTaxon(node_name,node_1_branch,node_2_branch);
     taxa_num += 1;
-    matrix->extend_by_new_taxa(node_name, pr_ab_info);
+    //matrix->extend_by_new_taxa(node_name, pr_ab_info);
     
     //assert(findLeafName(node_name) && "ERROR: Newly inserted leaf is not found! Insertion failed.");
     
@@ -1098,7 +1101,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
             if(part_tree_pairs[i]->leafNodes.find(node_name)!=part_tree_pairs[i]->leafNodes.end()){
                 //cout<<"Partition:"<<i<<"- larger than 2 - leaf occurs"<<endl;
                 // if a taxon was inserted to the induced partition tree, update
-                part_taxa.clear();
+                //part_taxa.clear();
                 //matrix->getPartTaxa(i, this, induced_trees[i], part_taxa);
                 update_map(i,part_taxa, true, false, center_node);
 
@@ -1373,8 +1376,8 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
         if(part_tree_pairs[i]->leafNodes.find(taxon_name)!=part_tree_pairs[i]->leafNodes.end()){
             //cout<<"- with Leaf"<<endl;
             
-            int id = part_tree_pairs[i]->matrix->findTaxonID(taxon_name);
-            part_tree_pairs[i]->matrix->pr_ab_matrix[id][0] = 0;
+            //int id = part_tree_pairs[i]->matrix->findTaxonID(taxon_name);
+            //part_tree_pairs[i]->matrix->pr_ab_matrix[id][0] = 0;
             
             if(induced_trees[i]->leafNum>2){
                 
@@ -1564,7 +1567,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
     ((TerraceNeighbor*)node_1->findNeighbor(node_2))->link_neighbors.resize(part_num,nullptr);
     ((TerraceNeighbor*)node_2->findNeighbor(node_1))->link_neighbors.resize(part_num,nullptr);
     
-    matrix->remove_taxon(taxon_name);
+    //matrix->remove_taxon(taxon_name);
     taxa_num -= 1;
     
     //cout<<"Updating maps for partition trees...."<<endl;
