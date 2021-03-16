@@ -9,6 +9,7 @@
 #define terracetree_hpp
 
 #include <stdio.h>
+#include <unordered_map>
 #include "tree/mtree.h"
 #include "terracenode.hpp"
 
@@ -29,6 +30,12 @@ public:
      destructor
      */
     ~TerraceTree();
+    
+    /**
+     map taxon name to pointer to node
+     */
+    unordered_map<string, Node*> leafNodes;
+    void fillLeafNodes(NodeVector taxa_nodes);
     
     /**
      read the tree from the input file in newick format
@@ -74,12 +81,12 @@ public:
     /**
      *  Insert a new taxon on given branch 
      */
-    TerraceNode* insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch);
+    TerraceNode* insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, bool update_leafNode = false);
     
     /**
      *  Remove one taxon
      */
-    void remove_taxon(string taxon_name);
+    void remove_taxon(string taxon_name,bool update_leafNode = false);
     
     /**
      *  print a tree, but taking into account that it can be empty, with one or two taxa or many taxa

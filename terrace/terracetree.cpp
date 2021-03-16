@@ -138,7 +138,7 @@ void TerraceTree::cleanAllLinkINFO(bool clean_induced_part_maps, TerraceNode *no
     
 }
 
-TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch){
+TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, bool update_leafNode){
     
     TerraceNode *node_1, *node_2;
     
@@ -175,11 +175,14 @@ TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_b
     
     //drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
     
+    /*if(update_leafNode){
+        leafNodes[node_name]=node_1;
+    }*/
     return node_1;
     
 }
 
-void TerraceTree::remove_taxon(string taxon_name){
+void TerraceTree::remove_taxon(string taxon_name,bool update_leafNode){
     
     // WARNING: I think it does not remove taxon correctly and some neighbours appear to be present as Neighbors instead of TerraceNeighbours
 
@@ -236,6 +239,11 @@ void TerraceTree::remove_taxon(string taxon_name){
             branchNum = 0;
         }
     }
+    
+    /*if(update_leafNode){
+        leafNodes[taxon_name]=nullptr;
+        leafNodes.erase(taxon_name);
+    }*/
 
 }
 
@@ -258,3 +266,9 @@ string getTreeTopologyString(MTree* tree){
     tree->printTree(tree_stream, WT_BR_LEN_ROUNDING + WT_SORT_TAXA);
     return tree_stream.str();
 }
+
+void TerraceTree::fillLeafNodes(NodeVector taxa_nodes){
+    for(auto& it: taxa_nodes){
+        leafNodes[(*it).name]=it;
+    }
+};
