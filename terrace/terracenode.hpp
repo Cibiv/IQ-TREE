@@ -133,16 +133,9 @@ public:
     /* WARNING: there is no appropriate way to get the correct neighbors from the branch id or just the nodes. You need to pay attention to the direction!
      * Solution: get a pair of nodes, where first is always a dad and the other one is node
      */
-    vector<int> empty_branches;
-    
+   
     NeighborVec empty_br_node_nei;
     NeighborVec empty_br_dad_nei;
-    
-    /*
-     * The taxa nodes are the taxa to be yet inserted. The nodes belong to the tree being mapped to induced partition trees (either a parent tree or top level induced tree)
-     */
-    NodeVector empty_taxa;
-    
     
 };
 

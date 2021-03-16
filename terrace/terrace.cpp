@@ -274,17 +274,8 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bo
         } else {
             
             // the empty branches are needed for a map from parent to partition
-            //dad->empty_branches.push_back(nei->id);
             dad->empty_br_dad_nei.push_back(dad_nei);
             dad->empty_br_node_nei.push_back(nei);
-            
-            // INFO: The actual taxon maps are not needed, but they are convenient for the check, but at the current state with local updates, will be incorrect
-            /*if(back_taxon_map){
-                // the empty taxa are needed for a map from induced partition tree to "common" induced partition tree
-                // when you know the link_neighbor, you have to map all empty taxa to that neighbor
-                dad->empty_taxa.push_back(node);
-                //cout<<"INFO CHECK: the length of the empty leaves: dad("<<dad->id<<") = "<<dad->empty_taxa.size()<<endl;
-            }*/
         }
         return;
     }
@@ -296,9 +287,8 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bo
     }
     
     if (!dad) {
-        // Check, if the final dad has empty_branches and empty_taxa and map them to branch, which is available.
+        // Check, if the final dad has empty_branches and map them to branch, which is available.
         // Note, that if there are some empty branches/taxa, there will be exactly one branch available for mapping.
-        //if(node->empty_taxa.size()>0 or node->empty_branches.size()>0){
         if(!node->empty_br_node_nei.empty()){
             //cout<<"I got here! Partition: "<<part<<"| Node->id:"<<node->id<<endl;
             FOR_NEIGHBOR_DECLARE(node, NULL, it) {
@@ -319,21 +309,8 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bo
                             node_nei_part->link_neighbors_lowtop_back.push_back(node->empty_br_node_nei[i]);
                             dad_nei_part->link_neighbors_lowtop_back.push_back(node->empty_br_dad_nei[i]);
                         }
-                        
                     }
-                    
-                    /*if(back_taxon_map){
-                        //cout<<endl<<"INFO CHECK (in IF!dad): node="<<node->id<<" | empty taxa:"<<endl;
-                        for(i=0; i<node->empty_taxa.size(); i++){
-                            //cout<<" "<<node->empty_taxa[i]->id<<",";
-                            node_nei_part->taxa_to_insert.push_back(node->empty_taxa[i]);
-                            dad_nei_part->taxa_to_insert.push_back(node->empty_taxa[i]);
-                        }
-                        //cout<<endl;
-                        node->empty_taxa.clear();
-                    }*/
                         
-                    //node->empty_branches.clear();
                     node->empty_br_node_nei.clear();
                     node->empty_br_dad_nei.clear();
                     
@@ -410,48 +387,22 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
     // QUESTION: if you start mapping the dad, you might encounter situations, when a dad does not know yet, that there are some empty branches.
     // So at the moment you need only empty branches of node and the dad will be mapped at the final state (i.e. final node - the start of the tree traversal)
     
-    //int node_empty_branch_size = node->empty_branches.size();
-    //int node_empty_taxa_size = node->empty_taxa.size();
-    
     if (part_vec.empty()){
         int i=0;
         //cout<<"CASE 0: CHILDREN DO NOT HAVE IMAGE"<<endl<<endl;
         if(!node->empty_br_dad_nei.empty()){
             for(i=0; i<node->empty_br_dad_nei.size(); i++){
-                //dad->empty_branches.push_back(node->empty_branches[i]);
                 dad->empty_br_dad_nei.push_back(node->empty_br_dad_nei[i]);
                 dad->empty_br_node_nei.push_back(node->empty_br_node_nei[i]);
             }
-            //node->empty_branches.clear();
             node->empty_br_node_nei.clear();
             node->empty_br_dad_nei.clear();
         }
         
         // since below node the subtrees are empty, add also current branch to an empty list of the dad
-        //dad->empty_branches.push_back(nei->id);
         dad->empty_br_dad_nei.push_back(dad_nei);
         dad->empty_br_node_nei.push_back(nei);
-        
-        /*if(back_taxon_map){
-            if(node_empty_taxa_size>0){
-                cout<<"INFO CHECK (in two children nodes are empty): passing empty taxa to dad="<<dad->id<<" :"<<endl;
-                if(dad->empty_taxa.size()>0){
-                    cout<<"currently list of empty taxa for dad:";
-                    for(i=0; i<dad->empty_taxa.size(); i++){
-                        cout<<" "<<dad->empty_taxa[i]->id;
-                    }
-                    cout<<endl;
-                }
-         
-                
-                for(i=0; i<node_empty_taxa_size; i++){
-                    //cout<<" "<<node->empty_taxa[i]->id;
-                    dad->empty_taxa.push_back(node->empty_taxa[i]);
-                }
-                //cout<<endl;
-                node->empty_taxa.clear();
-            }
-        }*/
+
         return;
     }
     
@@ -492,18 +443,8 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
                 }
                 
             }
-            //node->empty_branches.clear();
             node->empty_br_node_nei.clear();
             node->empty_br_dad_nei.clear();
-            
-            /*if(back_taxon_map){
-                //cout<<"Passing empty taxa to partition branches:"<<endl;
-                for(i=0; i<node_empty_taxa_size; i++){
-                    child_part_vec[0]->taxa_to_insert.push_back(node->empty_taxa[i]);
-                    part_vec[0]->taxa_to_insert.push_back(node->empty_taxa[i]);
-                }
-                node->empty_taxa.clear();
-            }*/
         }
         return;
     }
@@ -627,9 +568,8 @@ void Terrace::update_map(int part, NodeVector &part_taxa, bool back_branch_map, 
             update_map(part, part_taxa, back_branch_map, back_taxon_map, (TerraceNode*) (*it)->node, (TerraceNode*) node);
         }
         
-        // Check, if the final dad has empty_branches and empty_taxa and map them to branch, which is available.
+        // Check, if the final dad has empty_branches and map them to branch, which is available.
         // Note, that if there are some empty branches/taxa, there will be exactly one branch available for mapping.
-        //if(node->empty_taxa.size()>0 or node->empty_branches.size()>0){
         if(!node->empty_br_node_nei.empty()){
             //cout<<"I got here! Partition: "<<part<<"| Node->id:"<<node->id<<endl;
             FOR_NEIGHBOR_DECLARE(node, NULL, it) {
@@ -652,18 +592,6 @@ void Terrace::update_map(int part, NodeVector &part_taxa, bool back_branch_map, 
                         }
                     }
                     
-                    /*if(back_taxon_map){
-                        //cout<<endl<<"INFO CHECK (in IF!dad): node="<<node->id<<" | empty taxa:"<<endl;
-                        for(i=0; i<node->empty_taxa.size(); i++){
-                            //cout<<" "<<node->empty_taxa[i]->id<<",";
-                            node_nei_part->taxa_to_insert.push_back(node->empty_taxa[i]);
-                            dad_nei_part->taxa_to_insert.push_back(node->empty_taxa[i]);
-                        }
-                        //cout<<endl;
-                        node->empty_taxa.clear();
-                    }*/
-                    
-                    //node->empty_branches.clear();
                     node->empty_br_node_nei.clear();
                     node->empty_br_dad_nei.clear();
                     
@@ -722,16 +650,8 @@ void Terrace::update_map(int part, NodeVector &part_taxa, bool back_branch_map, 
                     
                 } else {
                     // the empty branches are needed for a map from parent to partition
-                    //dad->empty_branches.push_back(nei->id);
                     dad->empty_br_dad_nei.push_back(dad_nei);
                     dad->empty_br_node_nei.push_back(nei);
-                    
-                    /*if(back_taxon_map){
-                        // the empty taxa are needed for a map from induced partition tree to "common" induced partition tree
-                        // when you know the link_neighbor, you have to map all empty taxa to that neighbor
-                        dad->empty_taxa.push_back(node);
-                        //cout<<"INFO CHECK: the length of the empty leaves: dad("<<dad->id<<") = "<<dad->empty_taxa.size()<<endl;
-                    }*/
                 }
                 return;
             }
@@ -876,10 +796,7 @@ void Terrace::printBackMapInfo(){
                         cout<<"("<<nei12->link_neighbors[k]->node->id<<")"<<endl;
                     }
                 }
-                //cout<<endl<<"+ taxa:"<<endl;
-                //for(k=0; k<nei12->taxa_to_insert.size();k++){
-                //    cout<<" - "<<k<<":"<<nei12->taxa_to_insert[k]->name<<" ("<<nei12->taxa_to_insert[k]->id<<")"<<endl;
-                //}
+
                 cout<<"+ link_neighbors_lowtop_back:"<<endl;
                 if(!nei12->link_neighbors_lowtop_back.empty()){
                     for(k=0; k<nei12->link_neighbors_lowtop_back.size();k++){
@@ -1764,12 +1681,7 @@ void Terrace::clearEmptyBranchAndTaxaINFO(TerraceNode *node, TerraceNode *dad){
         ASSERT(node);
     }
     
-    if(node->empty_taxa.size()>0){
-        node->empty_taxa.clear();
-    }
-    
     if(node->empty_br_node_nei.size()>0){
-        //node->empty_branches.clear();
         node->empty_br_node_nei.clear();
         node->empty_br_dad_nei.clear();
     }

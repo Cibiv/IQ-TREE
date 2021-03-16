@@ -106,11 +106,7 @@ void TerraceTree::cleanAllLinkINFO(bool clean_induced_part_maps, TerraceNode *no
                             ((TerraceNeighbor*)nei->link_neighbors[part])->link_neighbors_lowtop_back.clear();
                             ((TerraceNeighbor*)dad_nei->link_neighbors[part])->link_neighbors_lowtop_back.clear();
                         }
-                        
-                        /*if(((TerraceNeighbor*)nei->link_neighbors[part])->taxa_to_insert.size()>0){
-                         ((TerraceNeighbor*)nei->link_neighbors[part])->taxa_to_insert.clear();
-                         ((TerraceNeighbor*)dad_nei->link_neighbors[part])->taxa_to_insert.clear();
-                         }*/
+                    
                     }
                 }
             }
@@ -120,14 +116,10 @@ void TerraceTree::cleanAllLinkINFO(bool clean_induced_part_maps, TerraceNode *no
             dad_nei->link_neighbors.clear();
             
         }
-        
-        //node->empty_taxa.clear();
-        //node->empty_branches.clear();
+
         node->empty_br_dad_nei.clear();
         node->empty_br_node_nei.clear();
         
-        //dad->empty_taxa.clear();
-        //dad->empty_branches.clear();
         dad->empty_br_dad_nei.clear();
         dad->empty_br_node_nei.clear();
     }
