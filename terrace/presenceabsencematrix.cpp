@@ -359,10 +359,10 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
         }
     }
     
-    // order partitions by taxon coverage
+    // order partitions by taxon coverage | addition: if partitions have the same number of taxa, order them by the overlap with partitions with larger number of taxa
     vector<int> ordered_partitions;
     int id;
-    ordered_partitions.push_back(0);
+    /*ordered_partitions.push_back(0);
     
     bool inserted;
     for(i=1; i<part_num; i++){
@@ -379,6 +379,23 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
         if(!inserted){
             ordered_partitions.push_back(i);
         }
+    }
+     */
+    
+    vector<IntVector> new_order;
+    IntVector aux;
+    i=0;
+    for(auto it: part_cov){
+        aux.clear();
+        aux.push_back(i);
+        aux.push_back(it);
+        new_order.push_back(aux);
+        i++;
+    }
+    // ADDITIONAL ORDER: refining order within partitions with the same coverage according to their overlap with partitions of higher order
+    reordering(new_order, new_order.begin(), new_order.end(), part_cov);
+    for(auto v: new_order){
+        ordered_partitions.push_back(v[0]);
     }
     
     //cout<<"Partition with maximum coverage based on non-spesific taxa is "<<ordered_partitions[0]<<" with "<<part_cov[ordered_partitions[0]]<<" taxa."<<endl;
@@ -554,13 +571,317 @@ void PresenceAbsenceMatrix::percent_missing(){
     missing_percent=(total-a)/total*100.0;
 }
 
+void PresenceAbsenceMatrix::orderPartByOverlap(IntVector &ordered_partitions,IntVector &part_cov){
+    
+    int i;
+    int cov = part_cov[ordered_partitions[0]];
+    
+    IntVector group;
+    int upper_lim=0;
+    
+    for(i=0;i<part_num; i++){
+        if(part_cov[ordered_partitions[i]]==cov){
+            group.push_back(i);
+        }else{
+            // refine within the group of the same cov
+            if(group.size()>1){
+                // at the moment, there is no higher partition, check overlap between partitions
+                if(upper_lim==0){
+                    if(group.size()>2){
+                        cout<<"BEFORE: ordered_partitions: ";
+                        for(int l=0; l<part_num; l++){
+                            cout<<" "<<ordered_partitions[l];
+                        }
+                        cout<<endl;
+                        
+                        orderPartByOverlap_within(upper_lim, ordered_partitions, group, part_cov);
+                        
+                        cout<<"AFTER: ordered_partitions: ";
+                        for(int l=0; l<part_num; l++){
+                            cout<<" "<<ordered_partitions[l];
+                        }
+                        cout<<endl;
+                    }
+                }else{
+                    // there are partitions before considered group
+                    orderPartByOverlap_preceding(upper_lim, ordered_partitions, group, part_cov);
+                }
+            }
+            
+            // update value for next group
+            if(i!=part_num-1){
+                cov=part_cov[ordered_partitions[i+1]];
+                upper_lim=i+1;
+            }
+        }
+    }
+}
+
+void PresenceAbsenceMatrix::orderPartByOverlap_within(int upper_lim, IntVector &ordered_partitions, IntVector &group, IntVector &part_cov){
+
+    int j, k, val;
+    bool inserted;
+    
+    vector<IntVector> overlap;
+    IntVector aux, new_order;
+    aux.resize(group.size(),0);
+    for(j=0; j<group.size(); j++){
+        overlap.push_back(aux);
+    }
+    
+    for(j=0; j<group.size()-1; j++){
+        for(k=j+1; k<group.size(); k++){
+            
+            val=0;
+            for(int t=0; t<taxa_num; t++){
+                if(pr_ab_matrix[t][group[j]]==pr_ab_matrix[t][group[k]] && pr_ab_matrix[t][group[j]]==1){
+                    val=val+1;
+                    if(val==part_cov[group[j]] or val==part_cov[group[k]]){
+                        break;
+                    }
+                }
+            }
+            overlap[j][k]=val;
+            overlap[k][j]=val;
+        }
+    }
+    cout<<"------------"<<endl;
+    for(j=0; j<group.size(); j++){
+        cout<<group[j];
+        for(k=0; k<group.size(); k++){
+            cout<<" "<<overlap[j][k];
+        }
+        cout<<endl;
+    }
+    cout<<"------------"<<endl;
+    for(j=0; j<group.size(); j++){
+        sort(overlap[j].begin(), overlap[j].end(),greater<int>());
+    }
+    cout<<"------------"<<endl;
+    for(j=0; j<group.size(); j++){
+        cout<<group[j];
+        for(k=0; k<group.size(); k++){
+            cout<<" "<<overlap[j][k];
+        }
+        cout<<endl;
+    }
+    cout<<"------------"<<endl;
+    
+    cout<<"NEW ORDER"<<endl;
+    new_order.push_back(0);
+    inserted=false;
+    for(j=1; j<group.size(); j++){
+        inserted=false;
+        for(k=0; k<new_order.size();k++){
+            if(overlap[j][0]>=overlap[new_order[k]][0]){
+                new_order.insert(new_order.begin()+k,j);
+                inserted=true;
+                break;
+            }
+        }
+        if(!inserted){
+            new_order.push_back(j);
+        }
+    }
+    
+    int id=upper_lim;
+    for(j=0;j<new_order.size();j++){
+        ordered_partitions[id]=group[new_order[j]];
+        id++;
+    }
+    
+    if(group.size()>2){
+        IntVector group_sub;
+        upper_lim=upper_lim+1;
+        for(j=1;j<new_order.size();j++){
+            group_sub.push_back(new_order[j]);
+        }
+        orderPartByOverlap_preceding(upper_lim, ordered_partitions, group_sub, part_cov);
+    }
+    
+};
 
 
+void PresenceAbsenceMatrix::orderPartByOverlap_preceding(int upper_lim, IntVector &ordered_partitions, IntVector &group, IntVector &part_cov){
+    
+    int i,j,k, t,val;
+    vector<IntVector> overlap;
+    IntVector aux;
+    aux.resize(upper_lim,0);
+    for(i=0;i<group.size();i++){
+        overlap.push_back(aux);
+        for(j=0;j<upper_lim; j++){
+            val=0;
+            for(t=0; t<taxa_num; t++){
+                if(pr_ab_matrix[t][ordered_partitions[j]]==pr_ab_matrix[t][group[i]] && pr_ab_matrix[t][group[i]]==1){
+                    val=val+1;
+                    if(val==part_cov[group[i]] or val==part_cov[ordered_partitions[j]]){
+                        break;
+                    }
+                }
+            }
+            overlap[i][j]=val;
+        }
+        //sort(overlap[i].begin(), overlap[i].end(),greater<int>()); // there is no need to sort, because you need to follow the order of preceding partitions
+    }
+    
+    cout<<"------------"<<endl;
+    cout<<"preceding"<<endl;
+    cout<<"------------"<<endl;
+    for(j=0; j<group.size(); j++){
+        cout<<group[j];
+        for(k=0; k<upper_lim; k++){
+            cout<<" "<<overlap[j][k];
+        }
+        cout<<endl;
+    }
+    cout<<"------------"<<endl;
+    
+    IntVector new_order;
+    new_order.push_back(0);
+    bool inserted=false;
+    for(j=1; j<group.size(); j++){
+        inserted=false;
+        for(k=0; k<new_order.size();k++){
+            if(overlap[j][0]>=overlap[new_order[k]][0]){
+                new_order.insert(new_order.begin()+k,j);
+                inserted=true;
+                break;
+            }
+        }
+        if(!inserted){
+            new_order.push_back(j);
+        }
+    }
+    
+    //sort(arr, arr + n, greater<int>());
+
+    int id=upper_lim;
+    for(j=0;j<new_order.size();j++){
+        ordered_partitions[id]=group[new_order[j]];
+        id++;
+    }
+    
+}
 
 
+void PresenceAbsenceMatrix::getPartOverlap(int part, IntVector &group, IntVector &part_cov, IntVector &overlap){
+    
+    int i,id,t,val;
+    
+    for(i=0;i<group.size();i++){
+        val=0;
+        id=group[i];
+        for(t=0; t<taxa_num; t++){
+            if(pr_ab_matrix[t][id]==1){
+                if(pr_ab_matrix[t][part]==pr_ab_matrix[t][id]){
+                    val++;
+                    if(val==part_cov[part] or val==part_cov[id]){
+                        break;
+                    }
+                }
+                
+            }
+        }
+        overlap.push_back(val);
+    }
+};
 
+int PresenceAbsenceMatrix::get2PartOverlap(int part_1, int part_2, int max_overlap){
+    int val=0, t;
+    
+    for(t=0; t<taxa_num; t++){
+        if(pr_ab_matrix[t][part_2]==1){
+            if(pr_ab_matrix[t][part_1]==pr_ab_matrix[t][part_2]){
+                val++;
+                if(val==max_overlap or val==max_overlap){
+                    break;
+                }
+            }
+        }
+    }
+    
+    return val;
+}
 
-
-
-
-
+void PresenceAbsenceMatrix::reordering(vector<IntVector> &new_order, vector<IntVector>::iterator it_b, vector<IntVector>::iterator it_e, IntVector &part_cov,int i){
+  
+    //cout<<"======================================="<<"\n";
+    //puts("REORDERING:");
+    vector<IntVector>::iterator it;
+    /*for(it=it_b;it!=it_e; it++){
+        cout<<(*it)[0]<<"|"<<(*it)[1]<<"\n";
+    }
+    cout<<"======================================="<<"\n";*/
+    vector<IntVector>::iterator it_end = it_e;
+    int j=1,k=0;
+    sort(it_b, it_e, [j](vector<int> a,  vector<int> b){return a[j] > b[j];});
+    it_b = adjacent_find(it_b, it_e,[j](vector<int> a,  vector<int> b){return a[j] == b[j];});
+    
+    
+    while(it_b != it_end){
+        //cout<<"--------------------------------------"<<"\n";
+        int val = (*it_b)[j];
+        it_e = it_b;
+        while((*it_e)[j]==val && it_e!=it_end-1){
+            it_e++;
+        }
+        if(it_e==it_end-1 && (*it_e)[j]==val){
+            it_e++;
+        }
+        
+        int dist=distance(new_order.begin(),it_b);
+        //cout<<"dist:="<<dist<<" | i:="<<i<<"\n";
+        //cout<<"--------------------------------------"<<"\n";
+        if(i<dist or (i>dist && i<=part_num)){
+            /*cout<<"Case I/II: decision on overlap with preceding/following partitions"<<"\n";
+            cout<<"overlap based on i:="<<i<<"|partition_"<<new_order[i][0]<<"\n";
+            cout<<"--------------------------------------"<<"\n";
+            puts("Considered group:");
+            for(it=it_b;it!=it_e; it++){
+                cout<<(*it)[0]<<"|"<<(*it)[1]<<"\n";
+            }*/
+            for(it=it_b; it!=it_e; it++){
+                (*it)[1]=get2PartOverlap(new_order[i][0],(*it)[0],min(part_cov[new_order[i][0]],part_cov[(*it)[0]]));
+            }
+            /*puts("New info:");
+            for(it=it_b;it!=it_e; it++){
+                cout<<(*it)[0]<<"|"<<(*it)[1]<<"\n";
+            }*/
+            reordering(new_order, it_b, it_e, part_cov,i+1);
+        }else if(i==dist){
+            if(distance(it_b,it_e)>2){
+                //cout<<"Case III: decision on within group overlap"<<"\n";
+                // get_max_overlap_within_group
+                
+                
+                
+                
+            }else if(it_e!=new_order.end()){
+                //cout<<"Case II: decision on overlap with following partition"<<"\n";
+                // switch to following partitions
+                k=distance(new_order.begin(),it_e);
+                /*cout<<"overlap based on k:="<<k<<"|partition_"<<new_order[k][0]<<"\n";
+                cout<<"--------------------------------------"<<"\n";
+                puts("Considered group:");
+                for(it=it_b;it!=it_e; it++){
+                    cout<<(*it)[0]<<"|"<<(*it)[1]<<"\n";
+                }*/
+                for(it=it_b; it!=it_e; it++){
+                    (*it)[1]=get2PartOverlap(new_order[k][0],(*it)[0],min(part_cov[new_order[k][0]],part_cov[(*it)[0]]));
+                }
+                /*puts("New info:");
+                for(it=it_b;it!=it_e; it++){
+                    cout<<(*it)[0]<<"|"<<(*it)[1]<<"\n";
+                }*/
+                reordering(new_order, it_b, it_e, part_cov,j+1);
+            }
+        }
+        if(distance(it_e,it_end)>1){
+            it_b = adjacent_find(it_e, it_end,[j](vector<int> a,  vector<int> b){return a[j] == b[j];});;
+        }else{
+            it_b = it_end;
+        }
+    }
+        
+};

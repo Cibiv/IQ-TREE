@@ -94,6 +94,32 @@ public:
     void getINFO_init_tree_taxon_order(vector<string> &taxa_names_sub, vector<string> &list_taxa_to_insert);
     
     /*
+     *  Order partitions by their overlap
+     */
+    void orderPartByOverlap(IntVector &ordered_partitions,IntVector &part_cov);
+    
+    /*
+     *  Order partitions by their overlap within the group
+     */
+    void orderPartByOverlap_within(int upper_lim, IntVector &ordered_partitions, IntVector &group, IntVector &part_cov);
+    
+    /*
+     *  Order partitions by their overlap with respect to preceding partitions
+     */
+    void orderPartByOverlap_preceding(int upper_lim, IntVector &ordered_partitions, IntVector &group, IntVector &part_cov);
+    
+    /*
+     *  Get pairwise taxon overlap between partition part and all other partitions in a group
+     */
+    void getPartOverlap(int part, IntVector &group, IntVector &part_cov, IntVector &overlap);
+    int get2PartOverlap(int part_1, int part_2, int max_overlap);
+    
+    void reordering(vector<IntVector> &new_order, vector<IntVector>::iterator it_b, vector<IntVector>::iterator it_e, IntVector &part_cov, int i=0);
+    /*
+     *  Order partitions based on the overlap with one preceding partition. (If a subgroup has the same overlap with the considered partition, analyse overlap with the next partition, till all preceding partitions)
+     */
+    
+    /*
      *  Order taxa by their coverage
      */
     

@@ -146,7 +146,7 @@ TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_b
         nodeNum += 1;
         
         int br_id = branchNum;
-        branchNum += 1;
+        branchNum += 2;
         
         node_1->addNeighbor(node_2, 0.0, br_id);
         node_2->addNeighbor(node_1, 0.0, br_id);
@@ -156,7 +156,7 @@ TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_b
         node_1_branch->findNeighbor(node_2)->id = br_id;
         node_2->addNeighbor(node_1_branch, 0.0, br_id);
         
-        br_id = branchNum;
+        br_id = branchNum-1;
         node_2_branch->updateNeighbor(node_1_branch, node_2, 0.0);
         node_2_branch->findNeighbor(node_2)->id = br_id;
         
@@ -169,7 +169,7 @@ TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_b
         root = node_1;
     }
     
-    initializeTree();
+    //initializeTree();
     
     //assert(node_1->name == node_name);
     

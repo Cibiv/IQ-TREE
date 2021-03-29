@@ -73,6 +73,9 @@ void runterraceanalysis(Params &params){
         vector<string> list_taxa_to_insert;
         terrace->matrix->getINFO_init_tree_taxon_order(taxa_names_sub,list_taxa_to_insert);
         
+        // SANITY:
+        //list_taxa_to_insert.clear();
+        
         // INITIAL TREE is the largest partition tree. If the above function is used, this one should not be used
         /*int init_part = 0;
         for(i=0; i<terrace->taxa_num; i++){
@@ -90,6 +93,7 @@ void runterraceanalysis(Params &params){
         TerraceTree tree_init;
         tree_init.copyTree_byTaxonNames(terrace,taxa_names_sub);
         //tree_init.drawTree(cout, WT_BR_SCALE | WT_TAXON_ID | WT_NEWLINE);
+        cout<<"INITIAL TERRACE"<<endl;
         Terrace *init_terrace = new Terrace(tree_init, submatrix);
 
         init_terrace->out_file = params.out_prefix;
