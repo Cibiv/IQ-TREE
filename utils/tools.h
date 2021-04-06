@@ -1772,6 +1772,11 @@ public:
         number of terrace trees to be output to the file: default 100K
      */
     int terrace_print_lim;
+    
+    /**
+        flag: only order pr_ab_matrix
+     */
+    bool matrix_order;
 
     /**********************************************/
     /**** variables for ultra-fast bootstrap ******/

@@ -361,8 +361,10 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
     
     // order partitions by taxon coverage | addition: if partitions have the same number of taxa, order them by the overlap with partitions with larger number of taxa
     vector<int> ordered_partitions;
+    
+    // BEGIN: ORDER TYPE 1 ====================================================================
     int id;
-    /*ordered_partitions.push_back(0);
+    ordered_partitions.push_back(0);
     
     bool inserted;
     for(i=1; i<part_num; i++){
@@ -380,12 +382,14 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
             ordered_partitions.push_back(i);
         }
     }
-     */
+     
+    // END: ORDER TYPE 1 ====================================================================
     
-    vector<IntVector> new_order;
+    // BEGIN: ORDER TYPE 2 ====================================================================
+    /*vector<IntVector> new_order;
     IntVector aux;
     i=0;
-    for(auto it: part_cov){
+    for(const auto& it: part_cov){
         aux.clear();
         aux.push_back(i);
         aux.push_back(it);
@@ -394,9 +398,11 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
     }
     // ADDITIONAL ORDER: refining order within partitions with the same coverage according to their overlap with partitions of higher order
     reordering(new_order, new_order.begin(), new_order.end(), part_cov);
-    for(auto v: new_order){
+    for(const auto& v: new_order){
         ordered_partitions.push_back(v[0]);
     }
+    */
+    // END: ORDER TYPE 2 ====================================================================
     
     //cout<<"Partition with maximum coverage based on non-spesific taxa is "<<ordered_partitions[0]<<" with "<<part_cov[ordered_partitions[0]]<<" taxa."<<endl;
     
@@ -493,12 +499,11 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
         
     }
     
-    cout<<endl<<"FINAL taxon order:"<<endl;
+    /*cout<<endl<<"FINAL taxon order:"<<endl;
     for(j=0; j<list_taxa_to_insert.size(); j++){
         cout<<j<<": "<<list_taxa_to_insert[j]<<endl;
-    }
+    }*/
 }
-
 
 void PresenceAbsenceMatrix::orderTaxaByCoverage(vector<int> &taxon_ids, vector<IntVector> &coverage_info, IntVector &ordered_taxa){
     
@@ -761,7 +766,6 @@ void PresenceAbsenceMatrix::orderPartByOverlap_preceding(int upper_lim, IntVecto
         ordered_partitions[id]=group[new_order[j]];
         id++;
     }
-    
 }
 
 
@@ -884,4 +888,46 @@ void PresenceAbsenceMatrix::reordering(vector<IntVector> &new_order, vector<IntV
         }
     }
         
+};
+
+
+void PresenceAbsenceMatrix::getPartOverlapComplete(){
+    assert(part_num!=0 && "ERROR: assertion part_num!=0 failed in getPartOverlapComplete()..");
+    assert(taxa_num!=0 && "ERROR: assertion taxa_num!=0 failed in getPartOverlapComplete()..");
+    
+    overlap_matrix.resize(part_num);
+    for(auto &v: overlap_matrix){
+        v.resize(part_num,0);
+    }
+    int i{0}, j{0};
+    for(; i<part_num-1; i++){
+        for(j=i+1; j<part_num; j++){
+            overlap_matrix[i][j]=get2PartOverlap(i, j, part_num);
+            overlap_matrix[j][i]=overlap_matrix[i][j];
+        }
+    }
+};
+
+void PresenceAbsenceMatrix::print_overlap_matrix(){
+    assert(overlap_matrix.size()==part_num && "ERROR: assertion overlap_matrix.size()==part_num failed in print_overlap_matrix()..");
+    cout<<"\n"<<"Printing matrix of partition overlap:"<<"\n";
+    int i{0};
+    /*cout<<" ";
+    for(;i<part_num;i++){
+        cout<<" "<<i;
+    }
+    cout<<"\n";*/
+    i=0;
+    for(const auto& v: overlap_matrix){
+        IntVector sum;
+        sum.resize(part_num,0);
+        cout<<"Part "<<i+1<<":";
+        for(const auto& u: v){
+            sum[i]+=u;
+            cout<<" "<<u;
+        }
+        cout<<" | "<<sum[i]<<"\n";
+        i++;
+    }
+    cout<<"\n";
 };

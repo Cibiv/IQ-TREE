@@ -183,28 +183,60 @@ TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_b
 }
 
 void TerraceTree::remove_taxon(string taxon_name,bool update_leafNode){
-    
-    // WARNING: I think it does not remove taxon correctly and some neighbours appear to be present as Neighbors instead of TerraceNeighbours
 
     StrVector taxa;
     taxa.push_back(taxon_name);
-  
+
     if(leafNum>=2){
-        TerraceNode *node = (TerraceNode*) findLeafName(taxon_name);
+        TerraceNode *node;
+        if(update_leafNode){
+            node = (TerraceNode*) leafNodes[taxon_name];
+        }else{
+            node = (TerraceNode*) findLeafName(taxon_name);
+        }
         TerraceNeighbor* nei = (TerraceNeighbor*)node->neighbors[0];
 
         // nei is a central node (or a second leaf in a 2-taxon tree), the branch will be joined, therefore, the link_neis should be deleted (only the pointers, not objects).
+        
         FOR_NEIGHBOR_DECLARE(nei->node,NULL, it){
             ((TerraceNeighbor*)(*it))->delete_ptr_members();
             ((TerraceNeighbor*)(*it)->node->findNeighbor(nei->node))->delete_ptr_members();
         }
-    }
         
-    if(leafNum>2){
-        removeTaxa(taxa);
-        initializeTree();
-    } else {
-        if(leafNum==2){
+        if(leafNum>2){
+            
+            //    removeTaxa(taxa);
+            //    initializeTree();
+            
+            Node *othernodes[2] = { nullptr, nullptr };
+            int br_id=nei->id;
+            FOR_NEIGHBOR(nei->node,node, it){
+                if (othernodes[0] == nullptr)
+                    othernodes[0] = (*it)->node;
+                else if (othernodes[1] == nullptr)
+                    othernodes[1] = (*it)->node;
+                
+                if((*it)->id<br_id){
+                    br_id=(*it)->id;
+                }
+            }
+            othernodes[0]->updateNeighbor(nei->node, othernodes[1], 0.0);
+            othernodes[1]->updateNeighbor(nei->node, othernodes[0], 0.0);
+            
+            othernodes[0]->findNeighbor(othernodes[1])->id = br_id;
+            othernodes[1]->findNeighbor(othernodes[0])->id = br_id;
+            
+            delete nei->node;
+            delete node;
+            
+            branchNum -=2;
+            leafNum -= 1;
+            nodeNum -=2;
+            
+            //initializeTree(); // ???? why fail without this initialization???
+            
+        } else {
+            //if(leafNum==2){
             //cout<<"two-taxon tree, remove one taxon"<<endl;
 
             if(root->name == taxon_name){
@@ -216,28 +248,26 @@ void TerraceTree::remove_taxon(string taxon_name,bool update_leafNode){
                 
                 // Set new root
                 root = new_root;
-                leafNum = 1;
-                nodeNum = 1;
-                branchNum = 0;
-                root->id = 0;
+                
             }else{
                 delete root->neighbors[0]->node;
                 
                 // Free pointers for the remaining node:
                 root->deleteNode();
-                
-                leafNum = 1;
-                nodeNum = 1;
-                branchNum = 0;
-                root->id = 0;
             }
-        }else if(leafNum==1){
+            
+            leafNum = 1;
+            nodeNum = 1;
+            branchNum = 0;
+            root->id = 0;
+        }
+
+    } else if(leafNum==1){
             delete root;
             root = nullptr;
             leafNum = 0;
             nodeNum = 0;
             branchNum = 0;
-        }
     }
     
     if(update_leafNode){
@@ -272,13 +302,13 @@ void TerraceTree::fillLeafNodes(){
     NodeVector taxa_nodes;
     getTaxa(taxa_nodes);
     
-    for(auto& it: taxa_nodes){
+    for(const auto& it: taxa_nodes){
         leafNodes[(*it).name]=it;
     }
     
     if(false){
         cout<<"-----------------------"<<endl;
-        for(auto& entry: leafNodes){
+        for(const auto& entry: leafNodes){
             cout<<entry.first<<"->"<<entry.second->name<<endl;
         }
     }

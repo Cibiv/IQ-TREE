@@ -1024,6 +1024,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.terrace_stop_terrace_trees_num = 0;
     params.terrace_stop_time = 0.0;
     params.terrace_print_lim = 0;
+    params.matrix_order = false;
     
     params.gen_all_NNI = false;
     
@@ -1823,6 +1824,11 @@ void parseArg(int argc, char *argv[], Params &params) {
                 if(params.terrace_stop_time<=0){
                     throw "Invalid value! Use -t_stop_h <h> with h>0";
                 }
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-reorder_m_only") == 0) {
+                params.matrix_order = true;
                 continue;
             }
             

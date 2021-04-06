@@ -169,7 +169,12 @@ public:
      *  The main function to generate trees by recursive taxon insertion
      */
     
-    void generateTerraceTrees(Terrace *terrace, vector<Terrace*> part_tree_pairs, vector<string> *list_taxa_to_insert, int taxon_to_insert);
+    void generateTerraceTrees(Terrace *terrace, vector<Terrace*> &part_tree_pairs, vector<string> &list_taxa_to_insert, int taxon_to_insert = -1,vector<string> *ordered_taxa_to_insert = nullptr);
+    
+    /*
+     *  Get next taxon to be inserted - a taxon with the least number of allowed branches
+     */
+    string getNextTaxon(vector<Terrace*> &part_tree_pairs, vector<string> *ordered_taxa_to_insert,NodeVector &node1_vec_main, NodeVector &node2_vec_main);
     
     /*
      *  Remove one taxon from the terrace tree, from induced partition trees, update the mapping

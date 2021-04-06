@@ -23,6 +23,8 @@ public:
     vector<IntVector> pr_ab_matrix;
     vector<string> taxa_names;
     
+    vector<IntVector> overlap_matrix;
+    
     int taxa_num;
     int part_num;
     double missing_percent;
@@ -130,6 +132,12 @@ public:
      */
     
     void percent_missing();
+    
+    /*
+     * Compute overlap between partitions
+     */
+    void getPartOverlapComplete();
+    void print_overlap_matrix();
 };
 
 vector<IntVector> getSubMatrix(vector<IntVector> pr_ab_complete, vector<string> taxa_names, MTree* tree);

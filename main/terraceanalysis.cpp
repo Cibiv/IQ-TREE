@@ -20,6 +20,30 @@ void runterraceanalysis(Params &params){
     params.startCPUTime = getCPUTime();
     params.start_real_time = getRealTime();
     
+    
+    if(params.matrix_order){
+        cout<<"Reordering presence-absence matrix..\n\n";
+        PresenceAbsenceMatrix *matrix = new PresenceAbsenceMatrix();
+        if(params.partition_file && params.aln_file){
+            matrix->get_from_alignment(params);
+        }else{
+            assert(params.pr_ab_matrix && "ERROR: no input presence-absence matrix!");
+            matrix->read_pr_ab_matrix(params.pr_ab_matrix);
+        }
+        matrix->print_pr_ab_matrix();
+        matrix->getPartOverlapComplete();
+        matrix->print_overlap_matrix();
+        
+        cout<<"Total wall-clock time used: "<<getRealTime()-Params::getInstance().start_real_time<<" seconds ("<<convert_time(getRealTime()-Params::getInstance().start_real_time)<<")\n";
+        cout<<"Total CPU time used: "<< getCPUTime()-Params::getInstance().startCPUTime << " seconds (" << convert_time(getCPUTime()-Params::getInstance().startCPUTime) << ")\n\n";
+        
+        time_t end_time;
+        time(&end_time);
+        cout << "Date and Time: " << ctime(&end_time);
+        exit(0);
+    }
+    
+    
     /*
      *  This is an actual terrace:
      *  - main tree - is terrace representative tree
@@ -65,7 +89,7 @@ void runterraceanalysis(Params &params){
          */
     
         //terrace->printInfo();
-        terrace->matrix->print_pr_ab_matrix();
+        //terrace->matrix->print_pr_ab_matrix();
     
         // INITIAL TREE (idealy should be the largest subtree without unique species, a subtree of some induced partition tree)
         vector<string> taxa_names_sub;
@@ -93,7 +117,7 @@ void runterraceanalysis(Params &params){
         TerraceTree tree_init;
         tree_init.copyTree_byTaxonNames(terrace,taxa_names_sub);
         //tree_init.drawTree(cout, WT_BR_SCALE | WT_TAXON_ID | WT_NEWLINE);
-        cout<<"INITIAL TERRACE"<<endl;
+        //cout<<"INITIAL TERRACE"<<endl;
         Terrace *init_terrace = new Terrace(tree_init, submatrix);
 
         init_terrace->out_file = params.out_prefix;
@@ -129,17 +153,21 @@ void runterraceanalysis(Params &params){
             cout<<i<<":"<<list_taxa_to_insert[i]<<endl;
         }*/
     
-        cout<<endl<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
-        cout<<endl<<"READY TO GENERATE TREES FROM A TERRACE"<<endl;
-        cout<<endl<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
-        cout<<"INPUT INFO:"<<endl;
-        cout<<"---------------------------------------------------------"<<endl;
-        cout<<"Number of taxa: "<<terrace->taxa_num<<endl;
-        cout<<"Number of partitions: "<<terrace->part_num<<endl;
+        // TAXON ORDER 3: Based on the number of allowed branches.
+        vector<string> ordered_taxa_to_insert;
+        ordered_taxa_to_insert = list_taxa_to_insert;
+        
+        cout<<"\n"<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<"\n";
+        cout<<"\n"<<"READY TO GENERATE TREES FROM A TERRACE"<<"\n";
+        cout<<"\n"<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<"\n";
+        cout<<"INPUT INFO:"<<"\n";
+        cout<<"---------------------------------------------------------"<<"\n";
+        cout<<"Number of taxa: "<<terrace->taxa_num<<"\n";
+        cout<<"Number of partitions: "<<terrace->part_num<<"\n";
         terrace->matrix->percent_missing();
-        cout<<"% of missing entries in supermatrix: "<<terrace->matrix->missing_percent<<endl;
-        cout<<"Number of taxa on initial tree: "<<init_terrace->taxa_num<<endl;
-        cout<<"Number of taxa to be inserted: "<<list_taxa_to_insert.size()<<endl;
+        cout<<"% of missing entries in supermatrix: "<<terrace->matrix->missing_percent<<"\n";
+        cout<<"Number of taxa on initial tree: "<<init_terrace->taxa_num<<"\n";
+        cout<<"Number of taxa to be inserted: "<<list_taxa_to_insert.size()<<"\n";
     
     
         //init_terrace->print_ALL_DATA(part_tree_pairs);
@@ -157,7 +185,7 @@ void runterraceanalysis(Params &params){
         }
         
         cout<<endl<<"Generating terrace trees.."<<endl;
-        init_terrace->generateTerraceTrees(terrace, part_tree_pairs, &list_taxa_to_insert, 0);
+        init_terrace->generateTerraceTrees(terrace, part_tree_pairs, list_taxa_to_insert, 0, &ordered_taxa_to_insert);
         cout<<endl<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
         cout<<endl<<"Done!"<<endl<<endl;
 
