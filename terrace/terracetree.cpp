@@ -8,7 +8,12 @@
 #include "terracetree.hpp"
 #include "terracenode.hpp"
 
-TerraceTree::TerraceTree(): MTree(){};
+TerraceTree::TerraceTree(): MTree(){
+    branchNum = 0;
+    leafNum = 0;
+    nodeNum = 0;
+    root = nullptr;
+};
 TerraceTree::~TerraceTree(){
     if (root != NULL)
         freeNode();
@@ -134,12 +139,10 @@ TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_b
     
     TerraceNode *node_1, *node_2;
     
-    node_1 = (TerraceNode*) newNode(leafNum, node_name.c_str());
-    
-    //assert(node_1->name == node_name);
-    
+    node_1 = (TerraceNode*) newNode(nodeNum, node_name.c_str());
     leafNum += 1;
     nodeNum += 1;
+    //assert(node_1->name == node_name);
     
     if(node_1_branch && node_2_branch){
         node_2 = (TerraceNode*)(newNode(nodeNum));
@@ -165,8 +168,12 @@ TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_b
     } else if(leafNum == 2){
         root->addNeighbor(node_1, 0.0,0);
         node_1->addNeighbor(root, 0.0,0);
+        branchNum = 1;
+        //assert(nodeNum==2);
     } else {
         root = node_1;
+        //assert(nodeNum==1);
+        //assert(branchNum=0);
     }
     
     //initializeTree();
@@ -184,8 +191,8 @@ TerraceNode* TerraceTree::insertNewTaxon(string node_name, TerraceNode *node_1_b
 
 void TerraceTree::remove_taxon(string taxon_name,bool update_leafNode){
 
-    StrVector taxa;
-    taxa.push_back(taxon_name);
+    //StrVector taxa;
+    //taxa.push_back(taxon_name);
 
     if(leafNum>=2){
         TerraceNode *node;
@@ -196,6 +203,11 @@ void TerraceTree::remove_taxon(string taxon_name,bool update_leafNode){
         }
         TerraceNeighbor* nei = (TerraceNeighbor*)node->neighbors[0];
 
+        if (node == root)
+        {    // find another root
+            root = findFirstTaxon(root);
+        }
+        
         // nei is a central node (or a second leaf in a 2-taxon tree), the branch will be joined, therefore, the link_neis should be deleted (only the pointers, not objects).
         
         FOR_NEIGHBOR_DECLARE(nei->node,NULL, it){
@@ -210,6 +222,7 @@ void TerraceTree::remove_taxon(string taxon_name,bool update_leafNode){
             
             Node *othernodes[2] = { nullptr, nullptr };
             int br_id=nei->id;
+        
             FOR_NEIGHBOR(nei->node,node, it){
                 if (othernodes[0] == nullptr)
                     othernodes[0] = (*it)->node;
@@ -220,6 +233,7 @@ void TerraceTree::remove_taxon(string taxon_name,bool update_leafNode){
                     br_id=(*it)->id;
                 }
             }
+        
             othernodes[0]->updateNeighbor(nei->node, othernodes[1], 0.0);
             othernodes[1]->updateNeighbor(nei->node, othernodes[0], 0.0);
             
@@ -230,10 +244,22 @@ void TerraceTree::remove_taxon(string taxon_name,bool update_leafNode){
             delete node;
             
             branchNum -=2;
-            leafNum -= 1;
+            leafNum--;
             nodeNum -=2;
             
+            int branchNum_ = branchNum;
+            int leafNum_ = leafNum;
+            int nodeNum_ = nodeNum;
+            
+            
             //initializeTree(); // ???? why fail without this initialization???
+            
+            if(branchNum_ != branchNum or leafNum_ != leafNum or nodeNum_ != nodeNum){
+                cout<<"-------------------------------------------------------\n";
+                cout<<"BEFORE:"<<leafNum_<<"|"<<nodeNum_<<"|"<<branchNum_<<"\n";
+                cout<<"AFTER:"<<leafNum<<"|"<<nodeNum<<"|"<<branchNum<<"\n";
+                cout<<"-------------------------------------------------------\n";
+            }
             
         } else {
             //if(leafNum==2){

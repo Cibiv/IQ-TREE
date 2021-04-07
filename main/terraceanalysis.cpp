@@ -89,7 +89,7 @@ void runterraceanalysis(Params &params){
          */
     
         //terrace->printInfo();
-        //terrace->matrix->print_pr_ab_matrix();
+        terrace->matrix->print_pr_ab_matrix();
     
         // INITIAL TREE (idealy should be the largest subtree without unique species, a subtree of some induced partition tree)
         vector<string> taxa_names_sub;

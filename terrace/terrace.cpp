@@ -1105,7 +1105,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 // for all partitions, which do not have the taxon of interest, remove the branch, which will be devided by the insertion of a new taxon from the backward map.
                 // in the next step it will be substituted by the three branches: one with a new taxon and two ends of the devided branch
                 for(j=0; j<nei_part_1->link_neighbors.size();j++){
-                    if((nei_part_1->link_neighbors[j]->node->id == node_1_branch->id && nei_part_2->link_neighbors[j]->node->id == node_2_branch->id) or (nei_part_1->link_neighbors[j]->node->id == node_2_branch->id && nei_part_2->link_neighbors[j]->node->id == node_1_branch->id)){
+                    if((nei_part_1->link_neighbors[j]->node == node_1_branch && nei_part_2->link_neighbors[j]->node == node_2_branch) or (nei_part_1->link_neighbors[j]->node == node_2_branch && nei_part_2->link_neighbors[j]->node == node_1_branch)){
                         
                         nei_part_1->link_neighbors.erase(nei_part_1->link_neighbors.begin()+j);
                         nei_part_2->link_neighbors.erase(nei_part_2->link_neighbors.begin()+j);
