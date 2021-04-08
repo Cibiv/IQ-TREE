@@ -141,7 +141,7 @@ public:
     /*
      *  For a given taxon name get allowed branches. aux_terrace contains pointers to top level induced partition trees (which are stored as terraces)
      */
-    void getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, NodeVector *node1_vec, NodeVector *node2_vec);
+    void getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, NodeVector *node1_vec, NodeVector *node2_vec, NodeVector *branch_end_1 = nullptr, NodeVector *branch_end_2 = nullptr);
     
     /*
      *  Insert a new taxon to the parent tree, update induced partition trees, update mapping (locally)

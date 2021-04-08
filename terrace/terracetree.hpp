@@ -36,6 +36,9 @@ public:
      */
     unordered_map<string, Node*> leafNodes;
     void fillLeafNodes();
+    void fillbrNodes();
+    
+    unordered_map<int, NodeVector> brNodes;
     
     /**
      read the tree from the input file in newick format
@@ -81,12 +84,12 @@ public:
     /**
      *  Insert a new taxon on given branch 
      */
-    TerraceNode* insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, bool update_leafNode = false);
+    TerraceNode* insertNewTaxon(string node_name, TerraceNode *node_1_branch, TerraceNode *node_2_branch, bool update_leafNode = false,bool update_brNodes=false);
     
     /**
      *  Remove one taxon
      */
-    void remove_taxon(string taxon_name,bool update_leafNode = false);
+    void remove_taxon(string taxon_name,bool update_leafNode = false,bool update_brNodes=false);
     
     /**
      *  print a tree, but taking into account that it can be empty, with one or two taxa or many taxa

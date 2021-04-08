@@ -157,6 +157,7 @@ void runterraceanalysis(Params &params){
         vector<string> ordered_taxa_to_insert;
         ordered_taxa_to_insert = list_taxa_to_insert;
         
+        init_terrace->fillbrNodes();
         cout<<"\n"<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<"\n";
         cout<<"\n"<<"READY TO GENERATE TREES FROM A TERRACE"<<"\n";
         cout<<"\n"<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<"\n";
