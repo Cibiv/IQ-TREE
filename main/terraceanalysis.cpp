@@ -75,8 +75,6 @@ void runterraceanalysis(Params &params){
     
     if(params.terrace_query_set){
         run_terrace_check(terrace,params);
-    }else if(params.print_induced_trees){
-        terrace->printInfo();
     }else{
         /*
          *  Create an auxiliary terrace:
@@ -88,8 +86,27 @@ void runterraceanalysis(Params &params){
          *  - induced tree - a common subtree between "initial to be expanded main tree" and high level induced tree
          */
     
-        //terrace->printInfo();
+        terrace->printInfo();
         terrace->matrix->print_pr_ab_matrix();
+        
+        if(params.print_induced_trees){
+            string out_file;
+            ofstream out;
+            out_file = params.out_prefix;
+            out_file += ".terrace_info";
+            out.open(out_file);
+            terrace->printInfo(out);
+            out.close();
+        }
+        if(params.print_pr_ab_matrix){
+            string out_file;
+            ofstream out;
+            out_file = params.out_prefix;
+            out_file += ".pr_ab_matrix";
+            out.open(out_file);
+            terrace->matrix->print_pr_ab_matrix(out);
+            out.close();
+        }
     
         // INITIAL TREE (idealy should be the largest subtree without unique species, a subtree of some induced partition tree)
         vector<string> taxa_names_sub;

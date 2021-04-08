@@ -184,27 +184,29 @@ void Terrace::set_part_trees(vector<TerraceTree*> input_induced_trees){
     // TODO: you need a check, that your input_induced_trees indeed correspond to presence-absence pattern of pr_ab_matrix
 }
 
-void Terrace::printInfo(){
+void Terrace::printInfo(ostream &out){
 
-    cout<<endl<<"=================================================="<<endl<<"Printing terrace information:"<<endl<<endl;
-    cout<<"Terrace representative tree:"<<endl;
-    print_terrace_tree();
-    cout<<endl;
+    //out<<endl<<"=================================================="<<endl;
+    out<<"Printing terrace information:"<<endl<<endl;
+    out<<"Terrace representative tree:"<<endl;
+    print_terrace_tree(true,out);
+    out<<endl;
     
-    if(matrix){
-        matrix->print_pr_ab_matrix();
-    }
+    /*if(matrix){
+        out<<"Presence-absence matrix:"<<endl;
+        matrix->print_pr_ab_matrix(out);
+    }*/
     
     if(induced_trees.size()>0){
         int i=0;
-        cout<<"Induced partition trees:"<<endl;
+        out<<"Induced partition trees:"<<endl;
         for(vector<TerraceTree*>::iterator it = induced_trees.begin(); it < induced_trees.end(); it++){
             i++;
-            cout<<"Part["<<i<<"]: ";
-            (*it)->print_terrace_tree(false);
+            out<<"Part["<<i<<"]: ";
+            (*it)->print_terrace_tree(false,out);
         }
     }
-    cout<<endl<<"=================================================="<<endl<<endl;
+    //out<<endl<<"=================================================="<<endl<<endl;
 }
 
 void Terrace::linkTrees(bool back_branch_map, bool back_taxon_map){

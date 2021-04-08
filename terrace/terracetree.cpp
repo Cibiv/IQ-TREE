@@ -351,16 +351,16 @@ void TerraceTree::remove_taxon(string taxon_name,bool update_leafNode,bool updat
 
 }
 
-void TerraceTree::print_terrace_tree(bool draw){
+void TerraceTree::print_terrace_tree(bool draw,ostream &out){
     
     if(leafNum>2 && draw){
-        drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
+        drawTree(out, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
     }else if(leafNum==2 or (!draw && leafNum>1)){
-        printTree(cout, WT_BR_SCALE | WT_NEWLINE);
+        printTree(out, WT_BR_SCALE | WT_NEWLINE);
     }else if(leafNum==1){
-        cout<<"("<<root->name<<");"<<endl;
+        out<<"("<<root->name<<");"<<endl;
     }else{
-        cout<<"();"<<endl;
+        out<<"();"<<endl;
     }
     
 }

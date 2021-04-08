@@ -94,7 +94,7 @@ public:
     /**
      *  print a tree, but taking into account that it can be empty, with one or two taxa or many taxa
      */
-    void print_terrace_tree(bool draw = false);
+    void print_terrace_tree(bool draw = false, ostream &out = cout);
     
 };
 

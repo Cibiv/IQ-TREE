@@ -85,27 +85,35 @@ void PresenceAbsenceMatrix::read_pr_ab_matrix(istream &in){
     init();
 };
 
-void PresenceAbsenceMatrix::print_pr_ab_matrix(){
+void PresenceAbsenceMatrix::print_pr_ab_matrix(ostream &out){
     int sum = 0, i, j;
     IntVector part_sum;
     part_sum.resize(part_num,0);
-    cout<<"Presence-absence matrix:"<<endl;
+    if(!Params::getInstance().print_pr_ab_matrix){
+        out<<"Presence-absence matrix:"<<endl;
+    }
+    out<<taxa_num<<" "<<part_num<<"\n";
     for(i=0; i<taxa_num; i++){
         sum=0;
-        cout<<taxa_names[i]<<" ";
+        out<<taxa_names[i];
         for(j=0; j<part_num; j++){
-            cout<<pr_ab_matrix[i][j]<<" ";
+            out<<" "<<pr_ab_matrix[i][j];
             sum+=pr_ab_matrix[i][j];
             part_sum[j]+=pr_ab_matrix[i][j];
         }
-        cout<<"| "<<sum<<endl;
+        out<<"\n";
+        if(!Params::getInstance().print_pr_ab_matrix){
+            out<<" | "<<sum<<endl;
+        }
     }
-    cout<<"--------------------"<<endl;
-    cout<<"Partition coverage: ";
-    for(j=0; j<part_num; j++){
-        cout<<part_sum[j]<<" ";
+    if(!Params::getInstance().print_pr_ab_matrix){
+        out<<"--------------------"<<endl;
+        out<<"Partition coverage: ";
+        for(j=0; j<part_num; j++){
+            out<<part_sum[j]<<" ";
+        }
+        out<<"\n\n";
     }
-    cout<<endl<<endl;
 };
 
 

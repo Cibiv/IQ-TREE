@@ -45,7 +45,7 @@ public:
     void read_pr_ab_matrix(const char *infile);
     void read_pr_ab_matrix(istream &in);
     
-    void print_pr_ab_matrix();
+    void print_pr_ab_matrix(ostream &out = cout);
     
     /*
      * Find taxon id by taxon name

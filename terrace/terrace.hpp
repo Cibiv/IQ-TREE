@@ -88,7 +88,7 @@ public:
      *  Print terrace info: a representative tree, induced trees and presence-absence matrix
      */
 
-    void printInfo();
+    void printInfo(ostream &out=cout);
     
     /*
      *  get induced partition trees
