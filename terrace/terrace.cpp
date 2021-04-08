@@ -880,7 +880,8 @@ void Terrace::create_Top_Low_Part_Tree_Pairs(vector<Terrace*> &part_tree_pairs, 
     }
 }
 
-void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, NodeVector *node1_vec, NodeVector *node2_vec, NodeVector *branch_end_1, NodeVector *branch_end_2){
+//void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, NodeVector *node1_vec, NodeVector *node2_vec, NodeVector *branch_end_1, NodeVector *branch_end_2){
+void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, NodeVector *node1_vec, NodeVector *node2_vec){
     // INFO/CHECK: make sure that your branches have proper unique ids, below code relies on that.
     //cout<<endl<<"**********************************************"<<endl<<endl;
     //cout<<"IN getALLOWEDbranches: "<<taxon_name<<endl;
@@ -909,7 +910,7 @@ void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace
         if(aux_terrace[i]->leafNodes.find(taxon_name)!=aux_terrace[i]->leafNodes.end()){
             node=(TerraceNode*) aux_terrace[i]->leafNodes[taxon_name];
             assert(node->name==taxon_name);
-            assert(node->isLeaf());
+            //assert(node->isLeaf());
             
             if(induced_trees[i]->leafNum>2){
                 nei = (TerraceNeighbor*) node->neighbors[0];
@@ -1356,7 +1357,7 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> &part_tree
     
     string taxon_name;
     taxon_name = list_taxa_to_insert[taxon_to_insert];
-    NodeVector branch_node_1, branch_node_2;
+    //NodeVector branch_node_1, branch_node_2;
     NodeVector node1_vec_branch, node2_vec_branch;
     if(ordered_taxa_to_insert){
         
@@ -1373,10 +1374,12 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> &part_tree
                 ordered_taxa_to_insert->clear();
             }
             
-            getAllowedBranches(taxon_name, part_tree_pairs, &node1_vec_branch, &node2_vec_branch, &branch_node_1, &branch_node_2);
+            //getAllowedBranches(taxon_name, part_tree_pairs, &node1_vec_branch, &node2_vec_branch, &branch_node_1, &branch_node_2);
+            getAllowedBranches(taxon_name, part_tree_pairs, &node1_vec_branch, &node2_vec_branch);
         }
     }else{
-        getAllowedBranches(taxon_name, part_tree_pairs, &node1_vec_branch, &node2_vec_branch,&branch_node_1, &branch_node_2);
+        //getAllowedBranches(taxon_name, part_tree_pairs, &node1_vec_branch, &node2_vec_branch,&branch_node_1, &branch_node_2);
+        getAllowedBranches(taxon_name, part_tree_pairs, &node1_vec_branch, &node2_vec_branch);
     }
     
     //cout<<endl<<"*******************************************************"<<endl;
@@ -2015,12 +2018,13 @@ string Terrace::getNextTaxon(vector<Terrace*> &part_tree_pairs, vector<string> *
     int len = 2*taxa_num-3;
     vector<string>::iterator it_NEO;
     
-    NodeVector branch_end_1, branch_end_2;
+    //NodeVector branch_end_1, branch_end_2;
     //this->getBranches(branch_end_1, branch_end_2);
     
     for(auto it=ordered_taxa_to_insert->begin(); it!=ordered_taxa_to_insert->end();it++){
         NodeVector node1_vec_branch, node2_vec_branch;
-        getAllowedBranches((*it), part_tree_pairs, &node1_vec_branch, &node2_vec_branch, &branch_end_1, &branch_end_2);
+        //getAllowedBranches((*it), part_tree_pairs, &node1_vec_branch, &node2_vec_branch, &branch_end_1, &branch_end_2);
+        getAllowedBranches((*it), part_tree_pairs, &node1_vec_branch, &node2_vec_branch);
         if(node1_vec_branch.size()==0){
             node1_vec_main.clear();
             node2_vec_main.clear();
