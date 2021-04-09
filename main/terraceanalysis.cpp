@@ -86,8 +86,8 @@ void runterraceanalysis(Params &params){
          *  - induced tree - a common subtree between "initial to be expanded main tree" and high level induced tree
          */
     
-        terrace->printInfo();
-        terrace->matrix->print_pr_ab_matrix();
+        //terrace->printInfo();
+        //terrace->matrix->print_pr_ab_matrix();
         
         if(params.print_induced_trees){
             string out_file;
@@ -202,6 +202,7 @@ void runterraceanalysis(Params &params){
             init_terrace->terrace_out = false;
         }
         
+        init_terrace->matrix->uniq_taxa_num = terrace->matrix->uniq_taxa_num;
         cout<<endl<<"Generating terrace trees.."<<endl;
         init_terrace->generateTerraceTrees(terrace, part_tree_pairs, list_taxa_to_insert, 0, &ordered_taxa_to_insert);
         cout<<endl<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;

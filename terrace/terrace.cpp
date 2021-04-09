@@ -1279,7 +1279,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
         cout<<"... trees generated - "<<intermediated_trees_num<<"; intermediated - "<<intermediated_trees_num-terrace_trees_num<<"; terrace - "<<terrace_trees_num<<"; dead paths - "<<dead_ends_num<<endl;
     }
     
-    if(intermediated_trees_num - terrace_trees_num > intermediate_max_trees){
+    if(intermediated_trees_num - terrace_trees_num == intermediate_max_trees){
         write_warning_stop(1);
     }
     
@@ -2022,6 +2022,11 @@ string Terrace::getNextTaxon(vector<Terrace*> &part_tree_pairs, vector<string> *
     
     //NodeVector branch_end_1, branch_end_2;
     //this->getBranches(branch_end_1, branch_end_2);
+    
+    /*int bond = 0;
+    if(ordered_taxa_to_insert->size()-matrix->uniq_taxa_num > 0){
+        bond=ordered_taxa_to_insert->size() - matrix->uniq_taxa_num;
+    }*/
     
     for(auto it=ordered_taxa_to_insert->begin(); it!=ordered_taxa_to_insert->end();it++){
         NodeVector node1_vec_branch, node2_vec_branch;

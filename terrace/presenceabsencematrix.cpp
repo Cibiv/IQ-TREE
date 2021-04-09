@@ -101,10 +101,10 @@ void PresenceAbsenceMatrix::print_pr_ab_matrix(ostream &out){
             sum+=pr_ab_matrix[i][j];
             part_sum[j]+=pr_ab_matrix[i][j];
         }
-        out<<"\n";
         if(!Params::getInstance().print_pr_ab_matrix){
-            out<<" | "<<sum<<endl;
+            out<<" | "<<sum;
         }
+        out<<"\n";
     }
     if(!Params::getInstance().print_pr_ab_matrix){
         out<<"--------------------"<<endl;
@@ -365,6 +365,11 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
             cout<<"At least one partition covers all taxa."<<endl<<"There are only trivial terraces (contain just 1 tree) for this dataset. Great!"<<endl<<endl;
             exit(0);
         }
+    }
+    
+    uniq_taxa_num = 0;
+    for(const auto& u: uniq_taxa){
+        uniq_taxa_num += u;
     }
     
     // order partitions by taxon coverage | addition: if partitions have the same number of taxa, order them by the overlap with partitions with larger number of taxa

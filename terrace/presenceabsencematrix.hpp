@@ -25,9 +25,10 @@ public:
     
     vector<IntVector> overlap_matrix;
     
-    int taxa_num;
-    int part_num;
-    double missing_percent;
+    int taxa_num{0};
+    int part_num{0};
+    int uniq_taxa_num{0};
+    double missing_percent{0.0};
     
     /*
      *  initialization
