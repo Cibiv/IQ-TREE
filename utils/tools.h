@@ -1769,6 +1769,10 @@ public:
     int terrace_stop_intermediate_num;
     int terrace_stop_terrace_trees_num;
     double terrace_stop_time;
+    
+    bool terrace_non_stop;
+    
+    
     /**
         number of terrace trees to be output to the file: default 100K
      */

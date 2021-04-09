@@ -140,15 +140,33 @@ void runterraceanalysis(Params &params){
         init_terrace->out_file = params.out_prefix;
         init_terrace->out_file += ".all_gen_terrace_trees";
         
-        if(params.terrace_stop_intermediate_num > 0){
-            init_terrace->intermediate_max_trees = params.terrace_stop_intermediate_num;
+        if(params.terrace_non_stop){
+            cout<<"All stopping rules for terrace generation are turned off.\n";
+            init_terrace->intermediate_max_trees = -1;
+            init_terrace->terrace_max_trees = -1;
+            init_terrace->seconds_max = -1;
+        } else {
+            if(params.terrace_stop_intermediate_num > 0){
+                init_terrace->intermediate_max_trees = params.terrace_stop_intermediate_num;
+            } else if(params.terrace_stop_intermediate_num < 0){
+                cout<<"The stopping rule based on the number of intermediate trees is turned off.\n";
+                init_terrace->intermediate_max_trees = -1;
+            }
+            if(params.terrace_stop_terrace_trees_num > 0){
+                init_terrace->terrace_max_trees = params.terrace_stop_terrace_trees_num;
+            } else if(params.terrace_stop_terrace_trees_num < 0){
+                cout<<"The stopping rule based on the size of a terrace is turned off.\n";
+                init_terrace->terrace_max_trees = -1;
+            }
+            
+            if(params.terrace_stop_time > 0){
+                init_terrace->seconds_max = params.terrace_stop_time*3600;
+            } else if(params.terrace_stop_time < 0){
+                cout<<"The stopping rule based on the CPU time limit is turned off.\n";
+                init_terrace->seconds_max = -1;
+            }
         }
-        if(params.terrace_stop_terrace_trees_num > 0){
-            init_terrace->terrace_max_trees = params.terrace_stop_terrace_trees_num;
-        }
-        if(params.terrace_stop_time > 0){
-            init_terrace->seconds_max = params.terrace_stop_time*3600;
-        }
+        
         init_terrace->trees_out_lim = params.terrace_print_lim;
         //cout<<"PRINTING LIMIT:"<<init_terrace->trees_out_lim<<endl;
         

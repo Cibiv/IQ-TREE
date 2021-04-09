@@ -1275,7 +1275,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     //printTree(cout, WT_BR_SCALE | WT_NEWLINE);
     
     intermediated_trees_num +=1;
-    if(intermediated_trees_num % 10000 == 0){
+    if(intermediated_trees_num % 100000 == 0){
         cout<<"... trees generated - "<<intermediated_trees_num<<"; intermediated - "<<intermediated_trees_num-terrace_trees_num<<"; terrace - "<<terrace_trees_num<<"; dead paths - "<<dead_ends_num<<endl;
     }
     
@@ -1284,7 +1284,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     }
     
     double time= getCPUTime()-Params::getInstance().startCPUTime;
-    if(time > seconds_max){
+    if(seconds_max!=-1 and time > seconds_max){
         write_warning_stop(3);
     }
     
@@ -2023,12 +2023,12 @@ string Terrace::getNextTaxon(vector<Terrace*> &part_tree_pairs, vector<string> *
     //NodeVector branch_end_1, branch_end_2;
     //this->getBranches(branch_end_1, branch_end_2);
     
-    /*int bond = 0;
+    int bond = 0;
     if(ordered_taxa_to_insert->size()-matrix->uniq_taxa_num > 0){
-        bond=ordered_taxa_to_insert->size() - matrix->uniq_taxa_num;
-    }*/
+        bond=matrix->uniq_taxa_num;
+    }
     
-    for(auto it=ordered_taxa_to_insert->begin(); it!=ordered_taxa_to_insert->end();it++){
+    for(auto it=ordered_taxa_to_insert->begin(); it!=ordered_taxa_to_insert->end()-bond;it++){
         NodeVector node1_vec_branch, node2_vec_branch;
         //getAllowedBranches((*it), part_tree_pairs, &node1_vec_branch, &node2_vec_branch, &branch_end_1, &branch_end_2);
         getAllowedBranches((*it), part_tree_pairs, &node1_vec_branch, &node2_vec_branch);
