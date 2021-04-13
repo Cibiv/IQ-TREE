@@ -1446,6 +1446,7 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> &part_tree
     if(ordered_taxa_to_insert){
         taxon_name = list_taxa_to_insert[taxon_to_insert];
         ordered_taxa_to_insert->insert(ordered_taxa_to_insert->begin(),taxon_name);
+        //cout<<"Added taxon back: "<<taxon_name<<"|ordered_taxa_to_insert->size()="<<ordered_taxa_to_insert->size()<<endl;
     }
 
 }
@@ -2023,8 +2024,9 @@ string Terrace::getNextTaxon(vector<Terrace*> &part_tree_pairs, vector<string> *
     //NodeVector branch_end_1, branch_end_2;
     //this->getBranches(branch_end_1, branch_end_2);
     
-    int bond = 0;
-    if(ordered_taxa_to_insert->size()-matrix->uniq_taxa_num > 0){
+    int bond = 0, diff = ordered_taxa_to_insert->size()-matrix->uniq_taxa_num;
+    //cout<<ordered_taxa_to_insert->size()<<"|"<<matrix->uniq_taxa_num<<"|"<<diff<<"|"<<ordered_taxa_to_insert->size()-matrix->uniq_taxa_num<<endl;
+    if(diff > 0){
         bond=matrix->uniq_taxa_num;
     }
     
