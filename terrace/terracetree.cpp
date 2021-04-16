@@ -44,7 +44,7 @@ Node* TerraceTree::newNode(int node_id, int node_name) {
 
 void TerraceTree::copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names){
     
-    //cout<<"Copying a tree using a vector of taxon names..."<<endl;
+    //cout<<"Copying a tree using a vector of taxon names..."<<"\n";
     
     int i,j, sum = 0;
     int taxa_num = taxon_names.size();
@@ -69,7 +69,7 @@ void TerraceTree::copyTree_byTaxonNames(MTree *tree, vector<string> taxon_names)
                 break;
             }
         }
-        //cout<<"Taxon["<<j<<"] = "<<check_int[j]<<"| main_tree:"<<taxa_nodes[j]->name<<"("<<taxa_nodes[j]->id<<") "<<"-> subtree: "<<((check) ? taxon_names[i] : "")<<endl;
+        //cout<<"Taxon["<<j<<"] = "<<check_int[j]<<"| main_tree:"<<taxa_nodes[j]->name<<"("<<taxa_nodes[j]->id<<") "<<"-> subtree: "<<((check) ? taxon_names[i] : "")<<"\n";
     }
     assert(sum == taxa_num && "Not all of the taxa appear in the complete tree!");
     taxa_set.clear();
@@ -96,7 +96,7 @@ void TerraceTree::cleanAllLinkINFO(bool clean_induced_part_maps, TerraceNode *no
         TerraceNeighbor *nei = (TerraceNeighbor*)node->findNeighbor(dad);
         TerraceNeighbor *dad_nei = (TerraceNeighbor*)dad->findNeighbor(node);
         if(nei->link_neighbors.size()>0){
-            //cout<<"| IF link_neighbours_exist -> clear them: size "<<nei->link_neighbors.size()<<endl;
+            //cout<<"| IF link_neighbours_exist -> clear them: size "<<nei->link_neighbors.size()<<"\n";
             
             // Clearing backward map from induced partition trees...
             if(clean_induced_part_maps){
@@ -305,7 +305,7 @@ void TerraceTree::remove_taxon(string taxon_name,bool update_leafNode,bool updat
         } else {
             //cout<<"| case_2: leafNUM=2\n";
             //if(leafNum==2){
-            //cout<<"two-taxon tree, remove one taxon"<<endl;
+            //cout<<"two-taxon tree, remove one taxon"<<"\n";
 
             if(root->name == taxon_name){
                 TerraceNode * new_root = (TerraceNode*) root->neighbors[0]->node;
@@ -358,9 +358,9 @@ void TerraceTree::print_terrace_tree(bool draw,ostream &out){
     }else if(leafNum==2 or (!draw && leafNum>1)){
         printTree(out, WT_BR_SCALE | WT_NEWLINE);
     }else if(leafNum==1){
-        out<<"("<<root->name<<");"<<endl;
+        out<<"("<<root->name<<");"<<"\n";
     }else{
-        out<<"();"<<endl;
+        out<<"();"<<"\n";
     }
     
 }
@@ -381,9 +381,9 @@ void TerraceTree::fillLeafNodes(){
     }
     
     if(false){
-        cout<<"-----------------------"<<endl;
+        cout<<"-----------------------"<<"\n";
         for(const auto& entry: leafNodes){
-            cout<<entry.first<<"->"<<entry.second->name<<endl;
+            cout<<entry.first<<"->"<<entry.second->name<<"\n";
         }
     }
 };

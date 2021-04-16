@@ -122,7 +122,7 @@ void runterraceanalysis(Params &params){
         for(i=0; i<terrace->taxa_num; i++){
             if(terrace->matrix->pr_ab_matrix[i][init_part]==1){
                 taxa_names_sub.push_back(terrace->matrix->taxa_names[i]);
-                //cout<<"TAXON "<<terrace->matrix->taxa_names[i]<<endl;
+                //cout<<"TAXON "<<terrace->matrix->taxa_names[i]<<"\n";
             }
         }*/
     
@@ -134,7 +134,7 @@ void runterraceanalysis(Params &params){
         TerraceTree tree_init;
         tree_init.copyTree_byTaxonNames(terrace,taxa_names_sub);
         //tree_init.drawTree(cout, WT_BR_SCALE | WT_TAXON_ID | WT_NEWLINE);
-        //cout<<"INITIAL TERRACE"<<endl;
+        //cout<<"INITIAL TERRACE"<<"\n";
         Terrace *init_terrace = new Terrace(tree_init, submatrix);
 
         init_terrace->out_file = params.out_prefix;
@@ -168,7 +168,7 @@ void runterraceanalysis(Params &params){
         }
         
         init_terrace->trees_out_lim = params.terrace_print_lim;
-        //cout<<"PRINTING LIMIT:"<<init_terrace->trees_out_lim<<endl;
+        //cout<<"PRINTING LIMIT:"<<init_terrace->trees_out_lim<<"\n";
         
         init_terrace->linkTrees(true, false); // branch_back_map, taxon_back_map; in this case you only want to map branches
 
@@ -183,9 +183,9 @@ void runterraceanalysis(Params &params){
             }
         }*/
         
-        /*cout<<"Taxa to insert on initial tree: "<<endl;
+        /*cout<<"Taxa to insert on initial tree: "<<"\n";
         for(i=0; i<list_taxa_to_insert.size(); i++){
-            cout<<i<<":"<<list_taxa_to_insert[i]<<endl;
+            cout<<i<<":"<<list_taxa_to_insert[i]<<"\n";
         }*/
     
         // TAXON ORDER 3: Based on the number of allowed branches.
@@ -200,10 +200,12 @@ void runterraceanalysis(Params &params){
         cout<<"---------------------------------------------------------"<<"\n";
         cout<<"Number of taxa: "<<terrace->taxa_num<<"\n";
         cout<<"Number of partitions: "<<terrace->part_num<<"\n";
+        cout<<"Number of special taxa (row sum = 1): "<<terrace->matrix->uniq_taxa_num<<"\n";
         terrace->matrix->percent_missing();
         cout<<"% of missing entries in supermatrix: "<<terrace->matrix->missing_percent<<"\n";
         cout<<"Number of taxa on initial tree: "<<init_terrace->taxa_num<<"\n";
         cout<<"Number of taxa to be inserted: "<<list_taxa_to_insert.size()<<"\n";
+        
     
     
         //init_terrace->print_ALL_DATA(part_tree_pairs);
@@ -221,10 +223,10 @@ void runterraceanalysis(Params &params){
         }
         
         init_terrace->matrix->uniq_taxa_num = terrace->matrix->uniq_taxa_num;
-        cout<<endl<<"Generating terrace trees.."<<endl;
+        cout<<"\n"<<"Generating terrace trees.."<<"\n";
         init_terrace->generateTerraceTrees(terrace, part_tree_pairs, list_taxa_to_insert, 0, &ordered_taxa_to_insert);
-        cout<<endl<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
-        cout<<endl<<"Done!"<<endl<<endl;
+        cout<<"\n"<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<"\n";
+        cout<<"\n"<<"Done!"<<"\n"<<"\n";
 
         init_terrace->write_summary_generation();
     }
@@ -253,10 +255,10 @@ void run_terrace_check(Terrace *terrace,Params &params){
         MTree *tree = new MTree();
         tree->readTree(*in, params.is_rooted);
         if(terrace->check_two_trees(tree)){
-            cout<<"Checking query tree "<<count<<"..."<<"on the terrace."<<endl;
+            cout<<"Checking query tree "<<count<<"..."<<"on the terrace."<<"\n";
             trees_on.push_back(tree);
         }else{
-            cout<<"Checking query tree "<<count<<"..."<<"NOT on the terrace!"<<endl;
+            cout<<"Checking query tree "<<count<<"..."<<"NOT on the terrace!"<<"\n";
             trees_off.push_back(tree);
         }
         delete tree;
@@ -295,17 +297,17 @@ void run_terrace_check(Terrace *terrace,Params &params){
         out_off.close();
     }
     
-    cout<<endl<<"----------------------------------------------------------------------------"<<endl;
-    cout<<"Done."<<endl;
-    cout<<"Checked "<<count<<" trees:"<<endl;
+    cout<<"\n"<<"----------------------------------------------------------------------------"<<"\n";
+    cout<<"Done."<<"\n";
+    cout<<"Checked "<<count<<" trees:"<<"\n";
     if(trees_on.size() == count){
-        cout<<"- all trees belong to the same terrace"<<endl;
+        cout<<"- all trees belong to the same terrace"<<"\n";
     }else if(trees_off.size() == count){
-        cout<<"- none of the trees belongs to considered terrace"<<endl;
+        cout<<"- none of the trees belongs to considered terrace"<<"\n";
     }else{
-        cout<<" - "<<trees_on.size()<<" trees belong to considered terrace"<<endl;
-        cout<<" - "<<trees_off.size()<<" trees do not belong to considered terrace"<<endl;
+        cout<<" - "<<trees_on.size()<<" trees belong to considered terrace"<<"\n";
+        cout<<" - "<<trees_off.size()<<" trees do not belong to considered terrace"<<"\n";
     }
-    cout<<"----------------------------------------------------------------------------"<<endl<<endl;
+    cout<<"----------------------------------------------------------------------------"<<"\n"<<"\n";
 }
 

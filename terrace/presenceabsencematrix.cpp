@@ -47,7 +47,7 @@ void PresenceAbsenceMatrix::get_from_alignment(Params &params){
 
 void PresenceAbsenceMatrix::read_pr_ab_matrix(const char *infile){
     ifstream in;
-    //cout<<endl<<"-----------------------------------------------------"<<endl;
+    //cout<<"\n"<<"-----------------------------------------------------"<<"\n";
     try {
         in.exceptions(ios::failbit | ios::badbit);
         in.open(infile);
@@ -71,7 +71,7 @@ void PresenceAbsenceMatrix::read_pr_ab_matrix(istream &in){
     for(i=0; i<taxa_num; i++){
         if(!(in>>name)) throw "Each line should start with a taxon name!";
         if(name == "0" or name == "1") throw "Each line should start with a taxon name! 0 and 1 are not allowed as taxon names.";
-        //cout<<"Taxon "<<i<<": "<<name<<endl;
+        //cout<<"Taxon "<<i<<": "<<name<<"\n";
         taxa_names.push_back(name);
         vector<int> vec(part_num, -1);
         for(j=0; j<part_num; j++){
@@ -90,7 +90,7 @@ void PresenceAbsenceMatrix::print_pr_ab_matrix(ostream &out){
     IntVector part_sum;
     part_sum.resize(part_num,0);
     if(!Params::getInstance().print_pr_ab_matrix){
-        out<<"Presence-absence matrix:"<<endl;
+        out<<"Presence-absence matrix:"<<"\n";
     }
     out<<taxa_num<<" "<<part_num<<"\n";
     for(i=0; i<taxa_num; i++){
@@ -107,7 +107,7 @@ void PresenceAbsenceMatrix::print_pr_ab_matrix(ostream &out){
         out<<"\n";
     }
     if(!Params::getInstance().print_pr_ab_matrix){
-        out<<"--------------------"<<endl;
+        out<<"--------------------"<<"\n";
         out<<"Partition coverage: ";
         for(j=0; j<part_num; j++){
             out<<part_sum[j]<<" ";
@@ -121,7 +121,7 @@ int PresenceAbsenceMatrix::findTaxonID(string taxon_name){
     int id;
     for(id=0; id<taxa_names.size(); id++){
         if(taxa_names[id]==taxon_name){
-            //cout<<"GET_TAXON_ID: taxa_name = "<<taxon_name<<" | taxa_id = "<<id<<endl;
+            //cout<<"GET_TAXON_ID: taxa_name = "<<taxon_name<<" | taxa_id = "<<id<<"\n";
             return id;
         }
     }
@@ -147,12 +147,12 @@ void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree,
     Node *node;
     int taxon_matrix_id;
     for(NodeVector::iterator it=taxa_nodes.begin(); it<taxa_nodes.end(); it++){
-        //cout<<(*it)->name<<" id = "<<(*it)->id<<endl;
+        //cout<<(*it)->name<<" id = "<<(*it)->id<<"\n";
         taxon_matrix_id = findTaxonID((*it)->name);
-        //cout<<"TAXON_MATRIX_ID:"<<taxon_matrix_id<<endl;
+        //cout<<"TAXON_MATRIX_ID:"<<taxon_matrix_id<<"\n";
         if(pr_ab_matrix[taxon_matrix_id][part] == 1){
             node = part_tree->findLeafName((*it)->name);
-            //cout<<"PREPARING PART_TAXA: part = "<<part<<"|leaf_id = "<<(*it)->id<<"|leaf_name = "<<(*it)->name<<endl;
+            //cout<<"PREPARING PART_TAXA: part = "<<part<<"|leaf_id = "<<(*it)->id<<"|leaf_name = "<<(*it)->name<<"\n";
             assert(node && "ERROR: The leaf is not found on partition tree!");
             //part_taxa[taxon_matrix_id]=node;
             part_taxa.push_back(node);
@@ -161,19 +161,19 @@ void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree,
     
     bool check = false;
     if(check){
-        //cout<<"GET_taxa_nodes_info...."<<endl;
-        cout<<"Presence-absence info:"<<endl;
+        //cout<<"GET_taxa_nodes_info...."<<"\n";
+        cout<<"Presence-absence info:"<<"\n";
         for(int i=0; i<taxa_num; i++){
             cout<<pr_ab_matrix[i][part]<<" ";
         }
-        cout<<endl;
-        cout<<"Taxon names info:"<<endl;
+        cout<<"\n";
+        cout<<"Taxon names info:"<<"\n";
         for(int i=0; i<taxa_num; i++){
             cout<<taxa_names[i]<<" ";
         }
-        cout<<endl;
+        cout<<"\n";
         
-        cout<<"Partition taxa info:"<<endl;
+        cout<<"Partition taxa info:"<<"\n";
         for(int i=0; i<taxa_num; i++){
             if(part_taxa[i]){
                 cout<<part_taxa[i]->name<<"("<<part_taxa[i]->id<<") ";
@@ -181,7 +181,7 @@ void PresenceAbsenceMatrix::getPartTaxa(int part, MTree *tree, MTree *part_tree,
                 cout<<"NA ";
             }
         }
-        cout<<endl;
+        cout<<"\n";
     }
 }
 
@@ -189,7 +189,7 @@ void PresenceAbsenceMatrix::reorderAccordingToTree(NodeVector taxa_nodes){
 
     // WARNING: when adding new taxa, this function is not helpful, because the ids of new taxa (at the current setting, as of 06.10.20) are larger than the number of taxa (id of new taxon is set to the number of nodes, which is then increased by 1, when a taxon is added)
     
-    //cout<<"BEFORE reordering according to the tree:"<<endl;
+    //cout<<"BEFORE reordering according to the tree:"<<"\n";
     //print_pr_ab_matrix();
     
     int i=0;
@@ -203,7 +203,7 @@ void PresenceAbsenceMatrix::reorderAccordingToTree(NodeVector taxa_nodes){
     
     for(i=0; i<taxa_nodes.size();i++){
         id=findTaxonID(taxa_nodes[i]->name);
-        //cout<<taxa_nodes[i]->name<<" id = "<<id<<endl;
+        //cout<<taxa_nodes[i]->name<<" id = "<<id<<"\n";
         aux_matrix[taxa_nodes[i]->id]=pr_ab_matrix[id];
         aux_names[taxa_nodes[i]->id]=taxa_names[id];
     }
@@ -216,7 +216,7 @@ void PresenceAbsenceMatrix::reorderAccordingToTree(NodeVector taxa_nodes){
         taxa_names.push_back(aux_names[i]);
     }
     
-    //cout<<"AFTER reordering according to the tree:"<<endl;
+    //cout<<"AFTER reordering according to the tree:"<<"\n";
     //print_pr_ab_matrix();
 }
 
@@ -243,12 +243,12 @@ void PresenceAbsenceMatrix::getSubPrAbMatrix(vector<string> taxa_names_subset, P
     
     int i,j,h;
     for(i=0; i<taxa_names_subset.size(); i++){
-        //cout<<i<<": subset_taxon = "<<taxa_names_subset[i]<<endl;
+        //cout<<i<<": subset_taxon = "<<taxa_names_subset[i]<<"\n";
         found = false;
         for(j=0; j<taxa_names.size(); j++){
-            //cout<<j<<": taxon_name = "<<taxa_names[j]<<endl;
+            //cout<<j<<": taxon_name = "<<taxa_names[j]<<"\n";
             if(taxa_names_subset[i]==taxa_names[j]){
-                //cout<<"MATCH"<<endl;
+                //cout<<"MATCH"<<"\n";
                 if(parts){
                     IntVector taxon_coverage;
                     for(IntVector::iterator k=parts->begin(); k<parts->end(); k++){
@@ -265,7 +265,7 @@ void PresenceAbsenceMatrix::getSubPrAbMatrix(vector<string> taxa_names_subset, P
             }
         }
         if(!found){
-            cout<<"Taxon "<<taxa_names_subset[i]<<" is not found in the presence-absence matrix..."<<endl;
+            cout<<"Taxon "<<taxa_names_subset[i]<<" is not found in the presence-absence matrix..."<<"\n";
             not_found_taxon_names.push_back(taxa_names_subset[i]);
         }
     }
@@ -275,9 +275,9 @@ void PresenceAbsenceMatrix::getSubPrAbMatrix(vector<string> taxa_names_subset, P
         submatrix->taxa_num = submatrix->taxa_names.size();
         submatrix->part_num = submatrix->pr_ab_matrix[0].size();
         if(print_info){
-            cout<<"INFO: original matrix."<<endl;
+            cout<<"INFO: original matrix."<<"\n";
             print_pr_ab_matrix();
-            cout<<endl<<"INFO: a submatrix for "<<submatrix->taxa_num<<" taxa was extracted."<<endl;
+            cout<<"\n"<<"INFO: a submatrix for "<<submatrix->taxa_num<<" taxa was extracted."<<"\n";
             submatrix->print_pr_ab_matrix();
         }
     }
@@ -305,23 +305,23 @@ void PresenceAbsenceMatrix::extend_by_new_taxa(string taxon_name, IntVector pr_a
 
 void PresenceAbsenceMatrix::remove_taxon(string taxon_name){
     
-    //cout<<"REMOVING taxon "<<taxon_name<<" from matrix."<<endl;
+    //cout<<"REMOVING taxon "<<taxon_name<<" from matrix."<<"\n";
     int id = findTaxonID(taxon_name);
     
-    /*cout<<"BEFORE:"<<endl;
+    /*cout<<"BEFORE:"<<"\n";
     print_pr_ab_matrix();
-    cout<<"MATRIX   dim: "<<pr_ab_matrix.size()<<"x"<<pr_ab_matrix[0].size()<<endl;
-    cout<<"TAXAname dim:"<<taxa_names.size()<<endl;*/
+    cout<<"MATRIX   dim: "<<pr_ab_matrix.size()<<"x"<<pr_ab_matrix[0].size()<<"\n";
+    cout<<"TAXAname dim:"<<taxa_names.size()<<"\n";*/
     
     pr_ab_matrix.erase(pr_ab_matrix.begin()+id);
     taxa_names.erase(taxa_names.begin()+id);
     
     taxa_num-=1;
     
-    /*cout<<"AFTER:"<<endl;
+    /*cout<<"AFTER:"<<"\n";
     print_pr_ab_matrix();
-    cout<<"MATRIX   dim: "<<pr_ab_matrix.size()<<"x"<<pr_ab_matrix[0].size()<<endl;
-    cout<<"TAXAname dim:"<<taxa_names.size()<<endl;*/
+    cout<<"MATRIX   dim: "<<pr_ab_matrix.size()<<"x"<<pr_ab_matrix[0].size()<<"\n";
+    cout<<"TAXAname dim:"<<taxa_names.size()<<"\n";*/
     
     flag_reorderAccordingToTree = false;
     
@@ -337,7 +337,7 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
     // - include or not to include unique taxa on the initial tree?
     
     
-    //cout<<endl<<"=================================================="<<endl<<"INITIAL tree and Taxon Order:"<<endl<<endl;
+    //cout<<"\n"<<"=================================================="<<"\n"<<"INITIAL tree and Taxon Order:"<<"\n"<<"\n";
     int i,j,k;
     
     IntVector part_cov, taxon_cov, uniq_taxa;
@@ -361,8 +361,8 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
             }
         }
         if(part_cov[i]+uniq_taxa[i] == taxa_num){
-            cout<<endl<<"INFO: "<<endl;
-            cout<<"At least one partition covers all taxa."<<endl<<"There are only trivial terraces (contain just 1 tree) for this dataset. Great!"<<endl<<endl;
+            cout<<"\n"<<"INFO: "<<"\n";
+            cout<<"At least one partition covers all taxa."<<"\n"<<"There are only trivial terraces (contain just 1 tree) for this dataset. Great!"<<"\n"<<"\n";
             exit(0);
         }
     }
@@ -417,7 +417,7 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
     */
     // END: ORDER TYPE 2 ====================================================================
     
-    //cout<<"Partition with maximum coverage based on non-spesific taxa is "<<ordered_partitions[0]<<" with "<<part_cov[ordered_partitions[0]]<<" taxa."<<endl;
+    //cout<<"Partition with maximum coverage based on non-spesific taxa is "<<ordered_partitions[0]<<" with "<<part_cov[ordered_partitions[0]]<<" taxa."<<"\n";
     
     // Vector for part id stores its order
     vector<int> part_order;
@@ -427,7 +427,7 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
     }
     
     /*for(i=0; i<part_num; i++){
-        cout<<"Partition "<<i<<": ordered as "<<part_order[i]<<" with coverage of "<<part_cov[i]<<endl;
+        cout<<"Partition "<<i<<": ordered as "<<part_order[i]<<" with coverage of "<<part_cov[i]<<"\n";
     }*/
     
     int part_max = ordered_partitions[0];
@@ -436,7 +436,7 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
     ordered_taxa_ids.resize(part_num+1);
     
     // collecting taxon names from partition with the largest subtree excluding unique taxa
-    cout<<"Partition "<<part_max+1<<" is chosen for the initial tree."<<endl;
+    cout<<"Partition "<<part_max+1<<" is chosen for the initial tree."<<"\n";
     for(j=0; j<taxa_num; j++){
         //if(pr_ab_matrix[j][part_max]==1 && taxon_cov[j]>1){ // collecting only non-unique taxa
         if(pr_ab_matrix[j][part_max]==1){ // collecting all taxa from the chosen partition also unique
@@ -456,7 +456,7 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
     
     for(i=1; i<part_num; i++){
         if(ordered_taxa_ids[i].size()>1){
-            //cout<<endl<<"ANALYSING COVERAGE SIZE "<<i<<endl;
+            //cout<<"\n"<<"ANALYSING COVERAGE SIZE "<<i<<"\n";
             vector<IntVector> cov_within_cat;
             cov_within_cat.resize(ordered_taxa_ids[i].size());
             ordered_ids.clear();
@@ -473,7 +473,7 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
                 //for(k=0; k<cov_within_cat[j].size(); k++){
                 //    cout<<" "<<cov_within_cat[j][k];
                 //}
-                //cout<<endl;
+                //cout<<"\n";
             }
             
             // REORDER taxa within each coverage category
@@ -482,9 +482,9 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
             ordered_taxa_ids[i].clear();
             ordered_taxa_ids[i] = ordered_ids;
             
-            /*cout<<"REORDERED taxa:"<<endl;
+            /*cout<<"REORDERED taxa:"<<"\n";
             for(k=0; k<ordered_taxa_ids[i].size(); k++){
-                cout<<k+1<<"|taxon "<<ordered_taxa_ids[i][k]<<"|"<<taxa_names[ordered_taxa_ids[i][k]]<<endl;
+                cout<<k+1<<"|taxon "<<ordered_taxa_ids[i][k]<<"|"<<taxa_names[ordered_taxa_ids[i][k]]<<"\n";
             }*/
             
         }
@@ -497,12 +497,12 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
         // ===================================================================
         for(i=ordered_taxa_ids.size()-1; i>-1; i--){
             if(!ordered_taxa_ids[i].empty()){
-                //cout<<"Taxa with "<<i<<" gene coverage: "<<endl;
+                //cout<<"Taxa with "<<i<<" gene coverage: "<<"\n";
                 for(j=0; j<ordered_taxa_ids[i].size(); j++){
-                    //cout<<" "<<j<<": "<<ordered_taxa_by_coverage[i][j]<<endl;
+                    //cout<<" "<<j<<": "<<ordered_taxa_by_coverage[i][j]<<"\n";
                     list_taxa_to_insert.push_back(taxa_names[ordered_taxa_ids[i][j]]);
                 }
-                //cout<<endl;
+                //cout<<"\n";
             }
         }
     } else if(taxon_order_type == 2){
@@ -512,9 +512,9 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
         
     }
     
-    /*cout<<endl<<"FINAL taxon order:"<<endl;
+    /*cout<<"\n"<<"FINAL taxon order:"<<"\n";
     for(j=0; j<list_taxa_to_insert.size(); j++){
-        cout<<j<<": "<<list_taxa_to_insert[j]<<endl;
+        cout<<j<<": "<<list_taxa_to_insert[j]<<"\n";
     }*/
 }
 
@@ -530,27 +530,27 @@ void PresenceAbsenceMatrix::orderTaxaByCoverage(vector<int> &taxon_ids, vector<I
         for(j=0; j<coverage_info[i].size(); j++){
             cout<<" "<<coverage_info[i][j];
         }
-        cout<<endl;
+        cout<<"\n";
     }*/
     
     for(i=1; i<taxon_ids.size(); i++){
-        //cout<<"CHECKING taxon "<<i<<" with id "<<taxon_ids[i]<<endl;
+        //cout<<"CHECKING taxon "<<i<<" with id "<<taxon_ids[i]<<"\n";
         inserted_check = FALSE;
         
         for(j=0; j<ordered_taxa_ids.size(); j++){
-            //cout<<"comparing with taxon "<<j<<" with id "<<taxon_ids[ordered_taxa_ids[j]]<<endl;
+            //cout<<"comparing with taxon "<<j<<" with id "<<taxon_ids[ordered_taxa_ids[j]]<<"\n";
             int ident=0;
             for(k=0; k<coverage_info[0].size(); k++){
-                //cout<<"partition_order_info:"<<coverage_info[i][k]<<" vs. "<<coverage_info[ordered_taxa_ids[j]][k]<<endl;
+                //cout<<"partition_order_info:"<<coverage_info[i][k]<<" vs. "<<coverage_info[ordered_taxa_ids[j]][k]<<"\n";
                 if(coverage_info[i][k]<coverage_info[ordered_taxa_ids[j]][k]){
                     // insert
                     ordered_taxa_ids.insert(ordered_taxa_ids.begin()+j,i);
                     inserted_check = TRUE;
-                    //cout<<"inserted"<<endl;
+                    //cout<<"inserted"<<"\n";
                     break;
                 } else if(coverage_info[i][k]>coverage_info[ordered_taxa_ids[j]][k]){
                     // do not insert, check next taxon
-                    //cout<<"breaking, check next taxon.."<<endl;
+                    //cout<<"breaking, check next taxon.."<<"\n";
                     break;
                 } else {
                     ident+=1;
@@ -610,7 +610,7 @@ void PresenceAbsenceMatrix::orderPartByOverlap(IntVector &ordered_partitions,Int
                         for(int l=0; l<part_num; l++){
                             cout<<" "<<ordered_partitions[l];
                         }
-                        cout<<endl;
+                        cout<<"\n";
                         
                         orderPartByOverlap_within(upper_lim, ordered_partitions, group, part_cov);
                         
@@ -618,7 +618,7 @@ void PresenceAbsenceMatrix::orderPartByOverlap(IntVector &ordered_partitions,Int
                         for(int l=0; l<part_num; l++){
                             cout<<" "<<ordered_partitions[l];
                         }
-                        cout<<endl;
+                        cout<<"\n";
                     }
                 }else{
                     // there are partitions before considered group
@@ -663,29 +663,29 @@ void PresenceAbsenceMatrix::orderPartByOverlap_within(int upper_lim, IntVector &
             overlap[k][j]=val;
         }
     }
-    cout<<"------------"<<endl;
+    cout<<"------------"<<"\n";
     for(j=0; j<group.size(); j++){
         cout<<group[j];
         for(k=0; k<group.size(); k++){
             cout<<" "<<overlap[j][k];
         }
-        cout<<endl;
+        cout<<"\n";
     }
-    cout<<"------------"<<endl;
+    cout<<"------------"<<"\n";
     for(j=0; j<group.size(); j++){
         sort(overlap[j].begin(), overlap[j].end(),greater<int>());
     }
-    cout<<"------------"<<endl;
+    cout<<"------------"<<"\n";
     for(j=0; j<group.size(); j++){
         cout<<group[j];
         for(k=0; k<group.size(); k++){
             cout<<" "<<overlap[j][k];
         }
-        cout<<endl;
+        cout<<"\n";
     }
-    cout<<"------------"<<endl;
+    cout<<"------------"<<"\n";
     
-    cout<<"NEW ORDER"<<endl;
+    cout<<"NEW ORDER"<<"\n";
     new_order.push_back(0);
     inserted=false;
     for(j=1; j<group.size(); j++){
@@ -743,17 +743,17 @@ void PresenceAbsenceMatrix::orderPartByOverlap_preceding(int upper_lim, IntVecto
         //sort(overlap[i].begin(), overlap[i].end(),greater<int>()); // there is no need to sort, because you need to follow the order of preceding partitions
     }
     
-    cout<<"------------"<<endl;
-    cout<<"preceding"<<endl;
-    cout<<"------------"<<endl;
+    cout<<"------------"<<"\n";
+    cout<<"preceding"<<"\n";
+    cout<<"------------"<<"\n";
     for(j=0; j<group.size(); j++){
         cout<<group[j];
         for(k=0; k<upper_lim; k++){
             cout<<" "<<overlap[j][k];
         }
-        cout<<endl;
+        cout<<"\n";
     }
-    cout<<"------------"<<endl;
+    cout<<"------------"<<"\n";
     
     IntVector new_order;
     new_order.push_back(0);

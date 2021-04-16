@@ -79,7 +79,7 @@ void TerraceNeighbor::delete_ptr_members(){
 
 void TerraceNeighbor::printInfo(Node *dad){
     
-    cout<<"TerraceNeighbour information for node "<<this->node->id<<", a neighbour of node "<<dad->id<<":"<<endl;
+    cout<<"TerraceNeighbour information for node "<<this->node->id<<", a neighbour of node "<<dad->id<<":"<<"\n";
     
     NeighborVec::iterator it1;
     vector<Node*>::iterator it2;
@@ -88,22 +88,22 @@ void TerraceNeighbor::printInfo(Node *dad){
     int taxa_to_insert_size = taxa_to_insert.size();
     
     int i=0;
-    cout<<"There are "<<link_neighbors_size<<" link neighbors."<<endl;
+    cout<<"There are "<<link_neighbors_size<<" link neighbors."<<"\n";
     if(link_neighbors_size>0){
         for(it1=link_neighbors.begin(); it1<link_neighbors.end(); it1++){
             i++;
-            cout<<"link_neighbor["<<i<<"]="<<(*it1)->node->id<<endl;
+            cout<<"link_neighbor["<<i<<"]="<<(*it1)->node->id<<"\n";
         }
-        cout<<endl;
+        cout<<"\n";
     }
     i=0;
-    cout<<"There are "<<taxa_to_insert_size<<" taxa to insert."<<endl;
+    cout<<"There are "<<taxa_to_insert_size<<" taxa to insert."<<"\n";
     if(taxa_to_insert_size>0){
         for(it2=taxa_to_insert.begin(); it2<taxa_to_insert.end(); it2++){
             i++;
-            cout<<"taxa_to_insert["<<i<<"]="<<(*it2)->name<<endl;
+            cout<<"taxa_to_insert["<<i<<"]="<<(*it2)->name<<"\n";
         }
-        cout<<endl;
+        cout<<"\n";
     }
     
 }

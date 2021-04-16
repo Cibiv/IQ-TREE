@@ -50,7 +50,7 @@ Terrace::Terrace(const char *infile_tree, bool is_rooted,const char *infile_matr
 
     //NodeVector taxa_nodes;
     //getTaxa(taxa_nodes);
-    //cout<<"BEFORE reodering"<<endl;
+    //cout<<"BEFORE reodering"<<"\n";
     //matrix->print_pr_ab_matrix();
     get_part_trees();
     //matrix->reorderAccordingToTree(taxa_nodes);
@@ -79,10 +79,10 @@ Terrace::Terrace(TerraceTree tree, PresenceAbsenceMatrix *m){
     //matrix->print_pr_ab_matrix();
     //NodeVector taxa_nodes;
     //getTaxa(taxa_nodes);
-    //cout<<"BEFORE reodering"<<endl;
+    //cout<<"BEFORE reodering"<<"\n";
     //matrix->print_pr_ab_matrix();
     //matrix->reorderAccordingToTree(taxa_nodes);
-    //cout<<"AFTER reodering"<<endl;
+    //cout<<"AFTER reodering"<<"\n";
     //matrix->print_pr_ab_matrix();
     
     get_part_trees();
@@ -122,7 +122,7 @@ Terrace::Terrace(TerraceTree tree, PresenceAbsenceMatrix *m, vector<TerraceTree*
 void Terrace::get_part_trees(){
     
     assert(matrix!=nullptr && "ERROR: Presence-absence matrix is absent! I cannot get induced partition trees..");
-    //cout<<"Preparing induced partition trees..."<<endl;
+    //cout<<"Preparing induced partition trees..."<<"\n";
     
     int id,k;
     string taxa_set = "";
@@ -143,7 +143,7 @@ void Terrace::get_part_trees(){
             id=matrix->findTaxonID(taxon_name);
             assert(id != -1 && "Not all of the taxa appear in the pr_ab_matrix!");
             check_int[(*it2)->id] = matrix->pr_ab_matrix[id][part];
-            //cout<<"Taxon["<<(*it2)->name<<"|"<<(*it2)->id<<"|"<<id<<"] in partition "<<part<<" is "<<check_int[(*it2)->id]<<"||MATRIX_INFO:"<<matrix->taxa_names[id]<<"-"<<matrix->pr_ab_matrix[id][part]<<endl;
+            //cout<<"Taxon["<<(*it2)->name<<"|"<<(*it2)->id<<"|"<<id<<"] in partition "<<part<<" is "<<check_int[(*it2)->id]<<"||MATRIX_INFO:"<<matrix->taxa_names[id]<<"-"<<matrix->pr_ab_matrix[id][part]<<"\n";
             if(check_int[(*it2)->id]==1){
                 leafNum_part_tree+=1;
             }
@@ -186,27 +186,27 @@ void Terrace::set_part_trees(vector<TerraceTree*> input_induced_trees){
 
 void Terrace::printInfo(ostream &out){
 
-    //out<<endl<<"=================================================="<<endl;
-    out<<"Printing terrace information:"<<endl<<endl;
-    out<<"Terrace representative tree:"<<endl;
+    //out<<"\n"<<"=================================================="<<"\n";
+    out<<"Printing terrace information:"<<"\n"<<"\n";
+    out<<"Terrace representative tree:"<<"\n";
     print_terrace_tree(true,out);
-    out<<endl;
+    out<<"\n";
     
     /*if(matrix){
-        out<<"Presence-absence matrix:"<<endl;
+        out<<"Presence-absence matrix:"<<"\n";
         matrix->print_pr_ab_matrix(out);
     }*/
     
     if(induced_trees.size()>0){
         int i=0;
-        out<<"Induced partition trees:"<<endl;
+        out<<"Induced partition trees:"<<"\n";
         for(vector<TerraceTree*>::iterator it = induced_trees.begin(); it < induced_trees.end(); it++){
             i++;
             out<<"Part["<<i<<"]: ";
             (*it)->print_terrace_tree(false,out);
         }
     }
-    //out<<endl<<"=================================================="<<endl<<endl;
+    //out<<"\n"<<"=================================================="<<"\n"<<"\n";
 }
 
 void Terrace::linkTrees(bool back_branch_map, bool back_taxon_map){
@@ -302,9 +302,9 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bo
         return;
     }
     
-    //cout<<"MASTER NODE:"<<node->id<<endl;
+    //cout<<"MASTER NODE:"<<node->id<<"\n";
     FOR_NEIGHBOR_DECLARE(node, dad, it) {
-        //cout<<"Node->id = "<<(*it)->node->id<<" | Dad->id = "<<node->id<<endl;
+        //cout<<"Node->id = "<<(*it)->node->id<<" | Dad->id = "<<node->id<<"\n";
         linkTree(part, part_taxa, back_branch_map, back_taxon_map, (TerraceNode*) (*it)->node, (TerraceNode*) node);
     }
     
@@ -312,7 +312,7 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bo
         // Check, if the final dad has empty_branches and map them to branch, which is available.
         // Note, that if there are some empty branches/taxa, there will be exactly one branch available for mapping.
         if(!node->empty_br_node_nei.empty()){
-            //cout<<"I got here! Partition: "<<part<<"| Node->id:"<<node->id<<endl;
+            //cout<<"I got here! Partition: "<<part<<"| Node->id:"<<node->id<<"\n";
             FOR_NEIGHBOR_DECLARE(node, NULL, it) {
                 if(((TerraceNeighbor*)(*it))->link_neighbors[part]){
                     TerraceNeighbor* node_nei_part = (TerraceNeighbor*)((TerraceNeighbor*)(*it))->link_neighbors[part];
@@ -341,7 +341,7 @@ void Terrace::linkTree(int part, NodeVector &part_taxa, bool back_branch_map, bo
             }
             
             // WARNING: I think, it should never rich this point, because at least one neighbour should have a corresponding branch on partition tree.
-            cout<<"ERROR: hey, the assumption was, that the code should never come here..."<<endl;
+            cout<<"ERROR: hey, the assumption was, that the code should never come here..."<<"\n";
         }
         return;
     }
@@ -357,7 +357,7 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
     vector<TerraceNeighbor*> part_vec;
     vector<TerraceNeighbor*> child_part_vec;
     
-    //cout<<"Linking branch ("<<node->id<<","<<dad->id<<");"<<endl;
+    //cout<<"Linking branch ("<<node->id<<","<<dad->id<<");"<<"\n";
     
     FOR_NEIGHBOR_DECLARE(node, dad, it) {
         if (((TerraceNeighbor*)*it)->link_neighbors[part]) {
@@ -371,11 +371,11 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
     
     if(child_part_vec.size()==2){
         if(child_part_vec[0]->node != child_part_vec[1]->node){
-            //cout<<"My weird case I..."<<endl;
-            //cout<<"child_part_vec[0]="<<child_part_vec[0]->node->id<<endl;
-            //cout<<"child_part_vec[1]="<<child_part_vec[1]->node->id<<endl;
-            //cout<<"part_vec[0]="<<part_vec[0]->node->id<<endl;
-            //cout<<"part_vec[1]="<<part_vec[1]->node->id<<endl;
+            //cout<<"My weird case I..."<<"\n";
+            //cout<<"child_part_vec[0]="<<child_part_vec[0]->node->id<<"\n";
+            //cout<<"child_part_vec[1]="<<child_part_vec[1]->node->id<<"\n";
+            //cout<<"part_vec[0]="<<part_vec[0]->node->id<<"\n";
+            //cout<<"part_vec[1]="<<part_vec[1]->node->id<<"\n";
             TerraceNeighbor * nei_aux;
             if(part_vec[0]->node == part_vec[1]->node){
                 nei_aux = part_vec[0];
@@ -396,10 +396,10 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
                     }
                 }
             }
-            //cout<<"child_part_vec[0]="<<child_part_vec[0]->node->id<<endl;
-            //cout<<"child_part_vec[1]="<<child_part_vec[1]->node->id<<endl;
-            //cout<<"part_vec[0]="<<part_vec[0]->node->id<<endl;
-            //cout<<"part_vec[1]="<<part_vec[1]->node->id<<endl;
+            //cout<<"child_part_vec[0]="<<child_part_vec[0]->node->id<<"\n";
+            //cout<<"child_part_vec[1]="<<child_part_vec[1]->node->id<<"\n";
+            //cout<<"part_vec[0]="<<part_vec[0]->node->id<<"\n";
+            //cout<<"part_vec[1]="<<part_vec[1]->node->id<<"\n";
         }
     }
 
@@ -411,7 +411,7 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
     
     if (part_vec.empty()){
         int i=0;
-        //cout<<"CASE 0: CHILDREN DO NOT HAVE IMAGE"<<endl<<endl;
+        //cout<<"CASE 0: CHILDREN DO NOT HAVE IMAGE"<<"\n"<<"\n";
         if(!node->empty_br_dad_nei.empty()){
             for(i=0; i<node->empty_br_dad_nei.size(); i++){
                 dad->empty_br_dad_nei.push_back(node->empty_br_dad_nei[i]);
@@ -431,7 +431,7 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
     int i=0;
     if (part_vec.size() == 1) {
         
-        //cout<<"CASE 1: ONE CHILD HAS IMAGE"<<endl<<endl;
+        //cout<<"CASE 1: ONE CHILD HAS IMAGE"<<"\n"<<"\n";
         nei->link_neighbors[part] = child_part_vec[0];
         dad_nei->link_neighbors[part] = part_vec[0];
         
@@ -447,7 +447,7 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
         
         // Get maps for empty branches
         if(node->empty_br_node_nei.size()>0){
-            //cout<<"INFO CHECK (one child image, get maps for the empty branches): ("<<node->id<<","<<dad->id<<")"<<endl;
+            //cout<<"INFO CHECK (one child image, get maps for the empty branches): ("<<node->id<<","<<dad->id<<")"<<"\n";
             for(i=0; i<node->empty_br_node_nei.size(); i++){
                 
                 ((TerraceNeighbor*)node->empty_br_node_nei[i])->link_neighbors[part]=child_part_vec[0];
@@ -456,7 +456,7 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
                 if(back_branch_map){
                     child_part_vec[0]->link_neighbors.push_back(node->empty_br_node_nei[i]);
                     part_vec[0]->link_neighbors.push_back(node->empty_br_dad_nei[i]);
-                    //cout<<i<<":"<<"("<<node->empty_br_node_nei[i]->node->id<<","<<node->empty_br_dad_nei[i]->node->id<<") -> ("<<child_part_vec[0]->node->id<<","<<part_vec[0]->node->id<<")"<<endl;
+                    //cout<<i<<":"<<"("<<node->empty_br_node_nei[i]->node->id<<","<<node->empty_br_dad_nei[i]->node->id<<") -> ("<<child_part_vec[0]->node->id<<","<<part_vec[0]->node->id<<")"<<"\n";
                 }
                 
                 if(back_taxon_map){
@@ -502,7 +502,7 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
     // this is due to the fact, that all branches have a link_neighbors and the direction in which the branch "folds" is not certain
     
     if(child_part_vec[0]==child_part_vec[1]){
-        //cout<<"My weird case II..."<<endl;
+        //cout<<"My weird case II..."<<"\n";
         
         assert(part_vec[0]==part_vec[1]);
         
@@ -521,7 +521,7 @@ void Terrace::linkBranch(int part, TerraceNeighbor *nei, TerraceNeighbor *dad_ne
     }
     
     
-    //cout<<"CASE 2: TWO CHILDREN HAVE IMAGEs AND THEY ARE DIFFERENT"<<endl<<endl;
+    //cout<<"CASE 2: TWO CHILDREN HAVE IMAGEs AND THEY ARE DIFFERENT"<<"\n"<<"\n";
     TerraceNode *node_part = (TerraceNode*) child_part_vec[0]->node;
     TerraceNode *dad_part = nullptr;
     FOR_NEIGHBOR(node_part, NULL, it) {
@@ -565,14 +565,14 @@ void Terrace::update_map(int part, NodeVector &part_taxa, bool back_branch_map, 
     
     if(!dad){
         FOR_NEIGHBOR_DECLARE(node, dad, it) {
-            //cout<<"Node->id = "<<(*it)->node->id<<" | Dad->id = "<<node->id<<endl;
+            //cout<<"Node->id = "<<(*it)->node->id<<" | Dad->id = "<<node->id<<"\n";
             update_map(part, part_taxa, back_branch_map, back_taxon_map, (TerraceNode*) (*it)->node, (TerraceNode*) node);
         }
         
         // Check, if the final dad has empty_branches and map them to branch, which is available.
         // Note, that if there are some empty branches/taxa, there will be exactly one branch available for mapping.
         if(!node->empty_br_node_nei.empty()){
-            //cout<<"I got here! Partition: "<<part<<"| Node->id:"<<node->id<<endl;
+            //cout<<"I got here! Partition: "<<part<<"| Node->id:"<<node->id<<"\n";
             FOR_NEIGHBOR_DECLARE(node, NULL, it) {
                 if(((TerraceNeighbor*)(*it))->link_neighbors[part]){
                     TerraceNeighbor* node_nei_part = (TerraceNeighbor*)((TerraceNeighbor*)(*it))->link_neighbors[part];
@@ -663,9 +663,9 @@ void Terrace::update_map(int part, NodeVector &part_taxa, bool back_branch_map, 
                 return;
             }
         
-            //cout<<"MASTER NODE:"<<node->id<<endl;
+            //cout<<"MASTER NODE:"<<node->id<<"\n";
             FOR_NEIGHBOR_DECLARE(node, dad, it) {
-                //cout<<"Node->id = "<<(*it)->node->id<<" | Dad->id = "<<node->id<<endl;
+                //cout<<"Node->id = "<<(*it)->node->id<<" | Dad->id = "<<node->id<<"\n";
                 update_map(part, part_taxa, back_branch_map, back_taxon_map, (TerraceNode*) (*it)->node, (TerraceNode*) node);
             }
 
@@ -677,14 +677,14 @@ void Terrace::update_map(int part, NodeVector &part_taxa, bool back_branch_map, 
 
 void Terrace::printMapInfo(int partition){
     
-    cout<<"Mapping info"<<endl<<endl;
+    cout<<"Mapping info"<<"\n"<<"\n";
     NodeVector nodes1, nodes2;
     getBranches(nodes1, nodes2);
     int part = 0;
     drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE);
     if(partition==-1){
         for (vector<TerraceTree*>::iterator it = induced_trees.begin(); it != induced_trees.end(); it++, part++) {
-            cout << endl << "Subtree for partition " << part << "("<<(*it)->leafNum<<","<<(*it)->nodeNum<<","<<(*it)->branchNum<<")"<< endl;
+            cout << "\n" << "Subtree for partition " << part << "("<<(*it)->leafNum<<","<<(*it)->nodeNum<<","<<(*it)->branchNum<<")"<< "\n";
             // INFO: drawing of two-taxon tree fails.
             if((*it)->leafNum>2){
                 (*it)->drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE );
@@ -714,13 +714,13 @@ void Terrace::printMapInfo(int partition){
                         //cout <<"("<<nei1->length<<")";
                     }
                     else cout << -1;
-                    cout << endl;
+                    cout << "\n";
                 }
             }
         }
     } else {
         part = partition;
-        cout << endl << "Subtree for partition " << part << "("<<induced_trees[part]->leafNum<<","<<induced_trees[part]->nodeNum<<","<<induced_trees[part]->branchNum<<")"<< endl;
+        cout << "\n" << "Subtree for partition " << part << "("<<induced_trees[part]->leafNum<<","<<induced_trees[part]->nodeNum<<","<<induced_trees[part]->branchNum<<")"<< "\n";
         // INFO: drawing of two-taxon tree fails.
         if(induced_trees[part]->leafNum>2){
             induced_trees[part]->drawTree(cout, WT_BR_SCALE | WT_INT_NODE | WT_TAXON_ID | WT_NEWLINE );
@@ -750,28 +750,28 @@ void Terrace::printMapInfo(int partition){
                     //cout <<"("<<nei1->length<<")";
                 }
                 else cout << -1;
-                cout << endl;
+                cout << "\n";
             }
         }
     }
-    cout << endl;
+    cout << "\n";
 }
 
 void Terrace::printBackMapInfo(){
 
     // INFO: Also for upper level induced partition trees their induced subtrees are the same induced partition trees as for the master tree
-    cout<<endl<<"-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*"<<endl;
-    cout<<endl<<"BACKWARD mapping information:"<<endl;
-    cout<<endl<<"-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*"<<endl;
+    cout<<"\n"<<"-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*"<<"\n";
+    cout<<"\n"<<"BACKWARD mapping information:"<<"\n";
+    cout<<"\n"<<"-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*"<<"\n";
     
     int i,j,k;
     NodeVector node_1, node_2;
     TerraceNeighbor *nei12, *nei21;
     
    for(i=0; i<part_num; i++){
-        cout<<endl<<"---------------------------------------------"<<endl;
-        cout<<endl<<"Partition "<<i<<":"<< "("<<induced_trees[i]->leafNum<<","<<induced_trees[i]->nodeNum<<","<<induced_trees[i]->branchNum<<")"<<endl;
-        cout<<endl<<"---------------------------------------------"<<endl;
+        cout<<"\n"<<"---------------------------------------------"<<"\n";
+        cout<<"\n"<<"Partition "<<i<<":"<< "("<<induced_trees[i]->leafNum<<","<<induced_trees[i]->nodeNum<<","<<induced_trees[i]->branchNum<<")"<<"\n";
+        cout<<"\n"<<"---------------------------------------------"<<"\n";
         if(induced_trees[i]->leafNum>1){
             node_1.clear();
             node_2.clear();
@@ -779,7 +779,7 @@ void Terrace::printBackMapInfo(){
             for(j=0; j<node_1.size();j++){
                 nei12 = (TerraceNeighbor*) node_1[j]->findNeighbor(node_2[j]);
                 nei21 = (TerraceNeighbor*) node_2[j]->findNeighbor(node_1[j]);
-                cout<<endl<<"* branch "<<nei12->id<<": ";
+                cout<<"\n"<<"* branch "<<nei12->id<<": ";
                 if(node_1[j]->isLeaf()){
                     cout<<node_1[j]->name;
                 }
@@ -787,8 +787,8 @@ void Terrace::printBackMapInfo(){
                 if(node_2[j]->isLeaf()){
                     cout<<node_2[j]->name;
                 }
-                cout<<"("<<node_2[j]->id<<")"<<endl;
-                cout<<"+ link_neighbors:"<<endl;
+                cout<<"("<<node_2[j]->id<<")"<<"\n";
+                cout<<"+ link_neighbors:"<<"\n";
                 if(!nei12->link_neighbors.empty()){
                     for(k=0; k<nei12->link_neighbors.size();k++){
                         cout<<" - "<<nei21->link_neighbors[k]->id<<":";
@@ -799,11 +799,11 @@ void Terrace::printBackMapInfo(){
                         if(nei12->link_neighbors[k]->node->isLeaf()){
                             cout<<nei12->link_neighbors[k]->node->name;
                         }
-                        cout<<"("<<nei12->link_neighbors[k]->node->id<<")"<<endl;
+                        cout<<"("<<nei12->link_neighbors[k]->node->id<<")"<<"\n";
                     }
                 }
 
-                cout<<"+ link_neighbors_lowtop_back:"<<endl;
+                cout<<"+ link_neighbors_lowtop_back:"<<"\n";
                 if(!nei12->link_neighbors_lowtop_back.empty()){
                     for(k=0; k<nei12->link_neighbors_lowtop_back.size();k++){
                         cout<<" - "<<nei21->link_neighbors_lowtop_back[k]->id<<":";
@@ -814,7 +814,7 @@ void Terrace::printBackMapInfo(){
                         if(nei12->link_neighbors_lowtop_back[k]->node->isLeaf()){
                             cout<<nei12->link_neighbors_lowtop_back[k]->node->name;
                         }
-                        cout<<"("<<nei12->link_neighbors_lowtop_back[k]->node->id<<")"<<endl;
+                        cout<<"("<<nei12->link_neighbors_lowtop_back[k]->node->id<<")"<<"\n";
                     }
                 }
             }
@@ -864,7 +864,7 @@ void Terrace::create_Top_Low_Part_Tree_Pairs(vector<Terrace*> &part_tree_pairs, 
         aux_submatrix->part_num = 1;
         //aux_submatrix->print_pr_ab_matrix();
         //terrace->induced_trees[i]->printTree(cout,WT_BR_LEN_ROUNDING + WT_NEWLINE);
-        //cout<<endl;
+        //cout<<"\n";
          */
         
         aux_induced_part_trees.clear();
@@ -885,9 +885,9 @@ void Terrace::create_Top_Low_Part_Tree_Pairs(vector<Terrace*> &part_tree_pairs, 
 //void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, NodeVector *node1_vec, NodeVector *node2_vec, NodeVector *branch_end_1, NodeVector *branch_end_2){
 void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace, NodeVector *node1_vec, NodeVector *node2_vec){
     // INFO/CHECK: make sure that your branches have proper unique ids, below code relies on that.
-    //cout<<endl<<"**********************************************"<<endl<<endl;
-    //cout<<"IN getALLOWEDbranches: "<<taxon_name<<endl;
-    //cout<<endl<<"**********************************************"<<endl<<endl;
+    //cout<<"\n"<<"**********************************************"<<"\n"<<"\n";
+    //cout<<"IN getALLOWEDbranches: "<<taxon_name<<"\n";
+    //cout<<"\n"<<"**********************************************"<<"\n"<<"\n";
 
     //printMapInfo();
     //printBackMapInfo();
@@ -941,7 +941,7 @@ void Terrace::getAllowedBranches(string taxon_name, vector<Terrace*> aux_terrace
                         cout<<"\n";
                     }*/
                 } else {
-                    //cout<<"All branches are allowed for this tree. Push them back"<<endl;
+                    //cout<<"All branches are allowed for this tree. Push them back"<<"\n";
                     /*for(k=0; k<branch_end_1->size(); k++){
                         aux_nei = branch_end_1->at(k)->findNeighbor(branch_end_2->at(k));
                         
@@ -1188,7 +1188,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     //cout<<"============================================\n";
     //cout<<"YES->INSERTED: "<<node_name<<"\n";
     //cout<<"============================================\n";
-    //cout<<"Reached update part"<<endl;
+    //cout<<"Reached update part"<<"\n";
     for(i=0; i<part_num; i++){
         if(induced_trees[i]->leafNum>2){
             //if(induced_trees[i]->findLeafName(node_name)){
@@ -1196,7 +1196,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
             if(part_tree_pairs[i]->leafNodes.find(node_name)!=part_tree_pairs[i]->leafNodes.end()){
                 // SANITY CHECK:
                 //assert(part_tree_pairs[i]->matrix->findTaxonID(node_name)!=-1);
-                //cout<<"Partition:"<<i<<"- larger than 2 - leaf occurs"<<endl;
+                //cout<<"Partition:"<<i<<"- larger than 2 - leaf occurs"<<"\n";
                 // if a taxon was inserted to the induced partition tree, update
                 //part_taxa.clear();
                 //matrix->getPartTaxa(i, this, induced_trees[i], part_taxa);
@@ -1205,13 +1205,13 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
 
             }else{
                 //cout<<"Partition:"<<i<<"| IN_extendNewTaxon_AFTER:case>2, taxon DOES NOT OCCUR => simple update\n";
-                //cout<<"Partition:"<<i<<"- larger than 2 - leaf does not occur"<<endl;
+                //cout<<"Partition:"<<i<<"- larger than 2 - leaf does not occur"<<"\n";
                 
-                //cout<<"if a taxon does not occur on the induced partition tree"<<endl;
+                //cout<<"if a taxon does not occur on the induced partition tree"<<"\n";
                 nei_part_1 = (TerraceNeighbor*)induced_part_tree_branch_1[i]->findNeighbor(induced_part_tree_branch_2[i]);
                 nei_part_2 = (TerraceNeighbor*)induced_part_tree_branch_2[i]->findNeighbor(induced_part_tree_branch_1[i]);
                 
-                /*//cout<<"First branch: one part of the devided branch"<<endl;
+                /*//cout<<"First branch: one part of the devided branch"<<"\n";
                 nei_aux = (TerraceNeighbor*)node_1_branch->findNeighbor(center_node);
                 nei_aux->link_neighbors[i] = nei_part_1;
                 nei_part_1->link_neighbors.push_back(nei_aux);
@@ -1220,7 +1220,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 nei_aux->link_neighbors[i] = nei_part_2;
                 nei_part_2->link_neighbors.push_back(nei_aux);
                 
-                //cout<<"Second branch: another part of the devided branch"<<endl;
+                //cout<<"Second branch: another part of the devided branch"<<"\n";
                 nei_aux = (TerraceNeighbor*)center_node->findNeighbor(node_2_branch);
                 nei_aux->link_neighbors[i] = nei_part_1;
                 nei_part_1->link_neighbors.push_back(nei_aux);
@@ -1229,12 +1229,12 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
                 nei_aux->link_neighbors[i] = nei_part_2;
                 nei_part_2->link_neighbors.push_back(nei_aux);
                 
-                //cout<<"Third branch: incident to a newly inserted taxon: center->leaf"<<endl;
+                //cout<<"Third branch: incident to a newly inserted taxon: center->leaf"<<"\n";
                 nei_aux = (TerraceNeighbor*)center_node->findNeighbor(leaf_node);
                 nei_aux->link_neighbors[i] = nei_part_1;
                 nei_part_1->link_neighbors.push_back(nei_aux);
 		
-                //cout<<"Third branch: incident to a newly inserted taxon: leaf->center"<<endl;
+                //cout<<"Third branch: incident to a newly inserted taxon: leaf->center"<<"\n";
                 nei_aux = (TerraceNeighbor*)leaf_node->findNeighbor(center_node);
                 nei_aux->link_neighbors[i] = nei_part_2;
                 nei_part_2->link_neighbors.push_back(nei_aux);*/
@@ -1257,7 +1257,7 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
         }
         //else{
             //cout<<"Partition:"<<i<<"| IN_extendNewTaxon_AFTER:case<=2 => do nothing\n";
-            //cout<<"Partition:"<<i<<"- less than 2"<<endl;
+            //cout<<"Partition:"<<i<<"- less than 2"<<"\n";
         //}
         
         /*if(i==1){
@@ -1271,12 +1271,12 @@ void Terrace::extendNewTaxon(string node_name, TerraceNode *node_1_branch, Terra
     }
     
     
-    //cout<<"INTERMEDIATE_INFO_TAXA_"<<leafNum<<"_INSERTED_"<<node_name<<"_TREE_"<<endl;
+    //cout<<"INTERMEDIATE_INFO_TAXA_"<<leafNum<<"_INSERTED_"<<node_name<<"_TREE_"<<"\n";
     //printTree(cout, WT_BR_SCALE | WT_NEWLINE);
     
     intermediated_trees_num +=1;
     if(intermediated_trees_num % 100000 == 0){
-        cout<<"... trees generated - "<<intermediated_trees_num<<"; intermediated - "<<intermediated_trees_num-terrace_trees_num<<"; terrace - "<<terrace_trees_num<<"; dead paths - "<<dead_ends_num<<endl;
+        cout<<"... trees generated - "<<intermediated_trees_num<<"; intermediated - "<<intermediated_trees_num-terrace_trees_num<<"; terrace - "<<terrace_trees_num<<"; dead paths - "<<dead_ends_num<<"\n";
     }
     
     if(intermediated_trees_num - terrace_trees_num == intermediate_max_trees){
@@ -1384,22 +1384,22 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> &part_tree
         getAllowedBranches(taxon_name, part_tree_pairs, &node1_vec_branch, &node2_vec_branch);
     }
     
-    //cout<<endl<<"*******************************************************"<<endl;
-    //cout<<"GENERATE_TERRACE_TREES | TAXON "<<taxon_name<<endl;
-    //cout<<"*******************************************************"<<endl;
+    //cout<<"\n"<<"*******************************************************"<<"\n";
+    //cout<<"GENERATE_TERRACE_TREES | TAXON "<<taxon_name<<"\n";
+    //cout<<"*******************************************************"<<"\n";
     
     
     int j, id;
     
     if(!node1_vec_branch.empty()){
-        //cout<<"NUM_OF_ALLOWED_BRANCHES_"<<taxon_name<<"_"<<node1_vec_branch.size()<<endl;
-        //cout<<"ALL ALLOWED BRANCHES:"<<endl;
+        //cout<<"NUM_OF_ALLOWED_BRANCHES_"<<taxon_name<<"_"<<node1_vec_branch.size()<<"\n";
+        //cout<<"ALL ALLOWED BRANCHES:"<<"\n";
         //for(j=0; j<node1_vec_branch.size(); j++){
-        //    cout<<j<<":"<<node1_vec_branch[j]->id<<"-"<<node2_vec_branch[j]->id<<endl;
+        //    cout<<j<<":"<<node1_vec_branch[j]->id<<"-"<<node2_vec_branch[j]->id<<"\n";
         //}
         
         for(j=0; j<node1_vec_branch.size(); j++){
-            //cout<<"-----------------------------------"<<endl<<"INSERTing taxon "<<taxon_name<<" on branch "<<j+1<<" out of "<<node1_vec_branch.size()<<": "<<node1_vec_branch[j]->id<<"-"<<node2_vec_branch[j]->id<<endl<<"-----------------------------------"<<endl;
+            //cout<<"-----------------------------------"<<"\n"<<"INSERTing taxon "<<taxon_name<<" on branch "<<j+1<<" out of "<<node1_vec_branch.size()<<": "<<node1_vec_branch[j]->id<<"-"<<node2_vec_branch[j]->id<<"\n"<<"-----------------------------------"<<"\n";
             
             id = terrace->matrix->findTaxonID(taxon_name);
             assert(id!=-1);
@@ -1427,7 +1427,7 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> &part_tree
                 }
                 terrace_trees_num+=1;
                 //if(terrace_trees_num % 1000 == 0){
-                //    cout<<"... generated tree "<<terrace_trees_num<<endl;
+                //    cout<<"... generated tree "<<terrace_trees_num<<"\n";
                 //}
                 //printTree(cout, WT_BR_SCALE | WT_NEWLINE);
                 if(terrace_trees_num == terrace_max_trees){
@@ -1438,22 +1438,22 @@ void Terrace::generateTerraceTrees(Terrace *terrace, vector<Terrace*> &part_tree
             }
         }
     } else {
-        //cout<<"NUM_OF_ALLOWED_BRANCHES_"<<taxon_name<<"_0_dead_end"<<endl;
-        //cout<<"For a given taxon "<<taxon_name<<" there are no allowed branches.. Dead end.."<<endl;
+        //cout<<"NUM_OF_ALLOWED_BRANCHES_"<<taxon_name<<"_0_dead_end"<<"\n";
+        //cout<<"For a given taxon "<<taxon_name<<" there are no allowed branches.. Dead end.."<<"\n";
         dead_ends_num +=1;
     }
     
     if(ordered_taxa_to_insert){
         taxon_name = list_taxa_to_insert[taxon_to_insert];
         ordered_taxa_to_insert->insert(ordered_taxa_to_insert->begin(),taxon_name);
-        //cout<<"Added taxon back: "<<taxon_name<<"|ordered_taxa_to_insert->size()="<<ordered_taxa_to_insert->size()<<endl;
+        //cout<<"Added taxon back: "<<taxon_name<<"|ordered_taxa_to_insert->size()="<<ordered_taxa_to_insert->size()<<"\n";
     }
 
 }
 
 void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pairs){
     
-    //cout<<"-----------------------------------"<<endl<<"REMOVING TAXON: "<<taxon_name<<endl<<"-----------------------------------"<<endl;
+    //cout<<"-----------------------------------"<<"\n"<<"REMOVING TAXON: "<<taxon_name<<"\n"<<"-----------------------------------"<<"\n";
     
     int i, j, h;
     NodeVector induced_part_tree_branch_1, induced_part_tree_branch_2;
@@ -1495,8 +1495,8 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
     bool appear;
     
     for(i=0; i<part_num; i++){
-        //cout<<"-------------------------------"<<endl;
-        //cout<<endl<<"Partition "<<i<<":"<<endl;
+        //cout<<"-------------------------------"<<"\n";
+        //cout<<"\n"<<"Partition "<<i<<":"<<"\n";
         
         update_nei_aux.clear();
         update_nei_top_aux.clear();
@@ -1513,7 +1513,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
         //if(part_tree_pairs[i]->findLeafName(taxon_name)){
         //if(part_tree_pairs[i]->matrix->findTaxonID(taxon_name)!=-1){
         if(part_tree_pairs[i]->leafNodes.find(taxon_name)!=part_tree_pairs[i]->leafNodes.end()){
-            //cout<<"- with Leaf"<<endl;
+            //cout<<"- with Leaf"<<"\n";
             
             // SANITY CHECK:
             //assert(part_tree_pairs[i]->matrix->findTaxonID(taxon_name)!=-1);
@@ -1523,7 +1523,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
             
             if(induced_trees[i]->leafNum>2){
                 
-                //cout<<"- with more than 2 leaves:"<<induced_trees[i]->leafNum<<endl;
+                //cout<<"- with more than 2 leaves:"<<induced_trees[i]->leafNum<<"\n";
                 //node_leaf = induced_trees[i]->findLeafName(taxon_name);
                 node_leaf = induced_trees[i]->leafNodes[taxon_name];
                 node_central = node_leaf->neighbors[0]->node;
@@ -1559,22 +1559,22 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                     induced_part_tree_branch_2[i] = neiC2->link_neighbors[i]->node;
                 }*/
                 
-                //cout<<"induced_part_tree_branch_1[i] = "<<induced_part_tree_branch_1[i]->id<<endl;
-                //cout<<"induced_part_tree_branch_2[i] = "<<induced_part_tree_branch_2[i]->id<<endl;
-                //cout<<"node_leaf="<<node_leaf->id<<endl;
-                //cout<<"node_central="<<node_central->id<<endl;
+                //cout<<"induced_part_tree_branch_1[i] = "<<induced_part_tree_branch_1[i]->id<<"\n";
+                //cout<<"induced_part_tree_branch_2[i] = "<<induced_part_tree_branch_2[i]->id<<"\n";
+                //cout<<"node_leaf="<<node_leaf->id<<"\n";
+                //cout<<"node_central="<<node_central->id<<"\n";
                 
                 FOR_NEIGHBOR(node_central, nullptr, it){
                     nei1=(TerraceNeighbor*)(*it);
                     nei2=(TerraceNeighbor*)(*it)->node->findNeighbor(node_central);
                     
                     if(!((TerraceNeighbor*)(*it))->link_neighbors.empty()){
-                        //cout<<endl<<"DEBUGGING: clearing forward nei's maps"<<endl;
+                        //cout<<"\n"<<"DEBUGGING: clearing forward nei's maps"<<"\n";
                         // clearing forward maps from agile (parent) tree to common partition subtree
                         for(j=0; j<nei1->link_neighbors.size(); j++){
-                            //cout<<"Neibour "<<j<<":"<<endl;
-                            //cout<<"- nei1->link_neighbors[j]="<<nei1->link_neighbors[j]->node->id<<endl;
-                            //cout<<"- nei2->link_neighbors[j]="<<nei2->link_neighbors[j]->node->id<<endl;
+                            //cout<<"Neibour "<<j<<":"<<"\n";
+                            //cout<<"- nei1->link_neighbors[j]="<<nei1->link_neighbors[j]->node->id<<"\n";
+                            //cout<<"- nei2->link_neighbors[j]="<<nei2->link_neighbors[j]->node->id<<"\n";
                             ((TerraceNeighbor*)nei1->link_neighbors[j])->link_neighbors[i] = nullptr;
                             ((TerraceNeighbor*)nei2->link_neighbors[j])->link_neighbors[i] = nullptr;
                             
@@ -1593,7 +1593,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                             }
                             if(!appear){
                                 update_nei_aux.push_back(nei1->link_neighbors[j]);
-                                //cout<<"+ added nei1->"<<nei1->link_neighbors[j]->node->id<<" to update list"<<endl;
+                                //cout<<"+ added nei1->"<<nei1->link_neighbors[j]->node->id<<" to update list"<<"\n";
                             }
                             
                             appear=false;
@@ -1609,7 +1609,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                             }
                             if(!appear){
                                 update_nei_aux.push_back(nei2->link_neighbors[j]);
-                                //cout<<"+ added nei2->"<<nei2->link_neighbors[j]->node->id<<" to update list"<<endl;
+                                //cout<<"+ added nei2->"<<nei2->link_neighbors[j]->node->id<<" to update list"<<"\n";
                             }
                         }
                         
@@ -1620,7 +1620,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                 
                     if(!((TerraceNeighbor*)(*it))->link_neighbors_lowtop_back.empty()){
                         
-                        //cout<<"clearing forward maps from induced partition tree (parent) to common partition subtree"<<endl;
+                        //cout<<"clearing forward maps from induced partition tree (parent) to common partition subtree"<<"\n";
                         for(j=0; j<((TerraceNeighbor*)(*it))->link_neighbors_lowtop_back.size(); j++){
                             ((TerraceNeighbor*)nei1->link_neighbors_lowtop_back[j])->link_neighbors[0] = nullptr;
                             ((TerraceNeighbor*)nei2->link_neighbors_lowtop_back[j])->link_neighbors[0] = nullptr;
@@ -1628,7 +1628,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                             // INFO: note, that for top partition trees we do not need to avoid adding 6 neis to the list, because they will still exist after taxon deletion. However, when you'll update, set all neis to nei_low_12 and nei_low_21 correctly to nei_low_21 and not to nei_low_12
                             update_nei_top_aux.push_back(nei1->link_neighbors_lowtop_back[j]);
                             update_nei_top_aux.push_back(nei2->link_neighbors_lowtop_back[j]);
-                            //cout<<"update_nei_top_aux.size()="<<update_nei_top_aux.size()<<endl;
+                            //cout<<"update_nei_top_aux.size()="<<update_nei_top_aux.size()<<"\n";
                         }
                         
                         // clearing backward maps from common partition subtree to induced partition tree (parent)
@@ -1645,18 +1645,18 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                 update_nei_top[i] = update_nei_top_aux;
                 
             } //else {
-              //  cout<<"- with less than 2 leaves:"<<induced_trees[i]->leafNum<<endl;
+              //  cout<<"- with less than 2 leaves:"<<induced_trees[i]->leafNum<<"\n";
             //}
         } else {
-            //cout<<"- without Leaf"<<endl;
+            //cout<<"- without Leaf"<<"\n";
             if(induced_trees[i]->leafNum>2){
-                //cout<<"- with more than 2 leaves:"<<induced_trees[i]->leafNum<<endl;
+                //cout<<"- with more than 2 leaves:"<<induced_trees[i]->leafNum<<"\n";
                 
                 induced_part_tree_branch_1[i] = neiC1->link_neighbors[i]->node;
                 induced_part_tree_branch_2[i] = nei1C->link_neighbors[i]->node;
                 
-                //cout<<"induced_part_tree_branch_1[i] = "<<induced_part_tree_branch_1[i]->id<<endl;
-                //cout<<"induced_part_tree_branch_2[i] = "<<induced_part_tree_branch_2[i]->id<<endl;
+                //cout<<"induced_part_tree_branch_1[i] = "<<induced_part_tree_branch_1[i]->id<<"\n";
+                //cout<<"induced_part_tree_branch_2[i] = "<<induced_part_tree_branch_2[i]->id<<"\n";
                 
                 /*
                  * INFO: For partitions, which do not have corresponding taxon, remove 6 possible backward neighbors corresponding to three branches, which will be removed/modified
@@ -1680,14 +1680,14 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
                 }
             }
             //else{
-            //    cout<<"- with less than 2 leaves:"<<induced_trees[i]->leafNum<<endl;
+            //    cout<<"- with less than 2 leaves:"<<induced_trees[i]->leafNum<<"\n";
             //}
         }
     }
     
     //cleanAllLinkNeighboursAndTaxa(true);
 
-    //cout<<"Removing the taxon from the low-level induced partition tree...."<<endl;
+    //cout<<"Removing the taxon from the low-level induced partition tree...."<<"\n";
     for(i=0; i<part_num; i++){
         if(induced_trees[i]->leafNum>1){
             //if(induced_trees[i]->findLeafName(taxon_name)){
@@ -1702,7 +1702,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
         }
     }
 
-    //cout<<"Removing the taxon from agile tree...."<<endl;
+    //cout<<"Removing the taxon from agile tree...."<<"\n";
     remove_taxon(taxon_name,true,true);
     
     ((TerraceNeighbor*)node_1->findNeighbor(node_2))->link_neighbors.resize(part_num,nullptr);
@@ -1711,17 +1711,17 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
     //matrix->remove_taxon(taxon_name);
     taxa_num -= 1;
     
-    //cout<<"Updating maps for partition trees...."<<endl;
+    //cout<<"Updating maps for partition trees...."<<"\n";
     // RE-MAP with new UPDATE using vectors of "to be modified" and not the update_map function
     for(i=0; i<part_num; i++){
-        //cout<<"Updating maps for partition "<<i<<":"<<endl;
+        //cout<<"Updating maps for partition "<<i<<":"<<"\n";
         if(induced_trees[i]->leafNum>2){
             nei1 = (TerraceNeighbor*) induced_part_tree_branch_1[i]->findNeighbor(induced_part_tree_branch_2[i]);
             nei2 = (TerraceNeighbor*) induced_part_tree_branch_2[i]->findNeighbor(induced_part_tree_branch_1[i]);
             
             // AGILE TREE
             if(!update_nei[i].empty()){
-                //cout<<"There are "<<update_nei[i].size()/2<<" branches ("<<update_nei[i].size()<<" neighbors) to be updated"<<endl;
+                //cout<<"There are "<<update_nei[i].size()/2<<" branches ("<<update_nei[i].size()<<" neighbors) to be updated"<<"\n";
                 for(j=0;j<update_nei[i].size()/2; j++){
                     ((TerraceNeighbor*)update_nei[i][2*j])->link_neighbors[i] = nei1;
                     nei1->link_neighbors.push_back(update_nei[i][2*j]);
@@ -1736,7 +1736,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
             
             // TOP induced partition trees
             if(!update_nei_top[i].empty()){
-                //cout<<"TOP PART TREE: There are "<<update_nei_top[i].size()/2<<" branches ("<<update_nei_top[i].size()<<" neighbors) to be updated"<<endl;
+                //cout<<"TOP PART TREE: There are "<<update_nei_top[i].size()/2<<" branches ("<<update_nei_top[i].size()<<" neighbors) to be updated"<<"\n";
                 for(j=0;j<update_nei_top[i].size()/2; j++){
                     ((TerraceNeighbor*)update_nei_top[i][2*j])->link_neighbors[0] = nei1;
                     nei1->link_neighbors_lowtop_back.push_back(update_nei_top[i][2*j]);
@@ -1749,7 +1749,7 @@ void Terrace::remove_one_taxon(string taxon_name, vector<Terrace*> part_tree_pai
 }
 
 void Terrace::remove_one_taxon_naive(string taxon_name, vector<Terrace*> part_tree_pairs){
-    //cout<<"-----------------------------------"<<endl<<"REMOVING TAXON: "<<taxon_name<<endl<<"-----------------------------------"<<endl;
+    //cout<<"-----------------------------------"<<"\n"<<"REMOVING TAXON: "<<taxon_name<<"\n"<<"-----------------------------------"<<"\n";
     
     bool clean_induced_part_maps = true;
     
@@ -1816,27 +1816,27 @@ void Terrace::cleanAllLinkNeighboursAndTaxa(bool clean_induced_part_maps){
 void Terrace::print_ALL_DATA(vector<Terrace*> part_tree_pairs){
     int i;
     
-    cout<<endl<<"================ BEGIN: PRINTING all INFO ================"<<endl;
-    cout<<"Initial PARENT tree"<<endl;
+    cout<<"\n"<<"================ BEGIN: PRINTING all INFO ================"<<"\n";
+    cout<<"Initial PARENT tree"<<"\n";
     print_terrace_tree();
     
     matrix->print_pr_ab_matrix();
     
-    cout<<"================ INDUCED PARTITION PAIRS =========="<<endl;
+    cout<<"================ INDUCED PARTITION PAIRS =========="<<"\n";
     for(i=0; i<part_num; i++){
-        cout<<"------------------> TOP PART TREE "<<i<<":"<<endl;
+        cout<<"------------------> TOP PART TREE "<<i<<":"<<"\n";
         part_tree_pairs[i]->print_terrace_tree();
         part_tree_pairs[i]->matrix->print_pr_ab_matrix();
         
-        cout<<endl<<"------------------> LOW part tree "<<i<<":"<<endl;
+        cout<<"\n"<<"------------------> LOW part tree "<<i<<":"<<"\n";
         induced_trees[i]->print_terrace_tree();
-        cout<<endl;
-        cout<<endl<<"========================================================="<<endl;
+        cout<<"\n";
+        cout<<"\n"<<"========================================================="<<"\n";
     }
     
     printMapInfo();
     printBackMapInfo();
-    cout<<"================ END: PRINTING all INFO ================="<<endl<<endl;
+    cout<<"================ END: PRINTING all INFO ================="<<"\n"<<"\n";
 
 }
 
@@ -1897,14 +1897,14 @@ bool Terrace::check_two_trees(MTree* query_tree){
         rfdist = new int [n*n];
         memset(rfdist, 0, n*n* sizeof(int));
         tree_set.computeRFDist(rfdist,&tree_set_1);
-        //cout<<"Partition "<<part+1<<": RF-distance between induced trees is "<<rfdist[0]<<endl;
+        //cout<<"Partition "<<part+1<<": RF-distance between induced trees is "<<rfdist[0]<<"\n";
         
         if(rfdist[0]!=0){
-            //cout<<"---------------------------------------------"<<endl;
-            //cout<<"A query tree does not belong to the terrace:"<<endl;
+            //cout<<"---------------------------------------------"<<"\n";
+            //cout<<"A query tree does not belong to the terrace:"<<"\n";
             //tree->printTree(cout,WT_SORT_TAXA|WT_BR_LEN_ROUNDING|WT_NEWLINE);
             
-            //cout<<"The first encountered pair of induced partition trees that do not match. Partition "<<part+1<<endl;
+            //cout<<"The first encountered pair of induced partition trees that do not match. Partition "<<part+1<<"\n";
             //tree_set[0]->printTree(cout,WT_SORT_TAXA|WT_BR_LEN_ROUNDING|WT_NEWLINE);
             //tree_set_1[0]->printTree(cout,WT_SORT_TAXA|WT_BR_LEN_ROUNDING|WT_NEWLINE);
             
@@ -1916,25 +1916,25 @@ bool Terrace::check_two_trees(MTree* query_tree){
         tree_set.clear();
         
     }
-    //cout<<"---------------------------------------------"<<endl;
-    //cout<<"A query tree is ON the terrace"<<endl;
+    //cout<<"---------------------------------------------"<<"\n";
+    //cout<<"A query tree is ON the terrace"<<"\n";
     
     return true;
 }
 
 void Terrace::write_terrace_trees_to_file(){
  
-    cout<<"Wall-clock time used so far: "<<getRealTime()-Params::getInstance().start_real_time<<" seconds ("<<convert_time(getRealTime()-Params::getInstance().start_real_time)<<")"<<endl;
+    cout<<"Wall-clock time used so far: "<<getRealTime()-Params::getInstance().start_real_time<<" seconds ("<<convert_time(getRealTime()-Params::getInstance().start_real_time)<<")"<<"\n";
     cout<<"CPU time used on generation of terrace trees: "
-    << getCPUTime()-Params::getInstance().startCPUTime << " seconds (" << convert_time(getCPUTime()-Params::getInstance().startCPUTime) << ")" << endl;
-    cout<<"---------------------------------------------------------"<<endl;
+    << getCPUTime()-Params::getInstance().startCPUTime << " seconds (" << convert_time(getCPUTime()-Params::getInstance().startCPUTime) << ")" << "\n";
+    cout<<"---------------------------------------------------------"<<"\n";
     
-    cout<<"Printing "<<terrace_trees_num<<" terrace trees to file "<<endl<<out_file<<"..."<<endl;
+    cout<<"Printing "<<terrace_trees_num<<" terrace trees to file "<<"\n"<<out_file<<"..."<<"\n";
         
     if(trees_out_lim==0 or trees_out_lim > terrace_trees_num){
         trees_out_lim = terrace_trees_num;
     } else {
-        cout<<"WARNING: The number of generated trees from the terrace ("<<terrace_trees_num<<") is larger than the output treshold ("<<trees_out_lim<<" trees). Only "<<trees_out_lim<<" trees will be written to the file."<<endl;
+        cout<<"WARNING: The number of generated trees from the terrace ("<<terrace_trees_num<<") is larger than the output treshold ("<<trees_out_lim<<" trees). Only "<<trees_out_lim<<" trees will be written to the file."<<"\n";
     }
     
     ofstream out;
@@ -1942,7 +1942,7 @@ void Terrace::write_terrace_trees_to_file(){
     out.open(out_file,std::ios_base::app);
         
     for(int i=0; i<trees_out_lim; i++){
-        out<<terrace_trees[i]<<endl;
+        out<<terrace_trees[i]<<"\n";
     }
     out.close();
 
@@ -1952,61 +1952,61 @@ void Terrace::write_summary_generation(){
 
     //Params::getInstance().run_time = (getCPUTime() - Params::getInstance().startCPUTime);
     
-    cout<<"---------------------------------------------------------"<<endl;
-    cout<<"SUMMARY:"<<endl;
-    cout<<"Number of trees on terrace: "<<terrace_trees_num<<endl;
-    cout<<"Number of intermediated trees visited: "<<intermediated_trees_num - terrace_trees_num<<endl;
-    cout<<"Number of dead ends encountered: "<<dead_ends_num<<endl;
-    cout<<"---------------------------------------------------------"<<endl;
+    cout<<"---------------------------------------------------------"<<"\n";
+    cout<<"SUMMARY:"<<"\n";
+    cout<<"Number of trees on terrace: "<<terrace_trees_num<<"\n";
+    cout<<"Number of intermediated trees visited: "<<intermediated_trees_num - terrace_trees_num<<"\n";
+    cout<<"Number of dead ends encountered: "<<dead_ends_num<<"\n";
+    cout<<"---------------------------------------------------------"<<"\n";
     
     if(terrace_out){
         out.close();
         //write_terrace_trees_to_file();
-        //cout<<"---------------------------------------------------------"<<endl;
+        //cout<<"---------------------------------------------------------"<<"\n";
     }
-    cout<<"Total wall-clock time used: "<<getRealTime()-Params::getInstance().start_real_time<<" seconds ("<<convert_time(getRealTime()-Params::getInstance().start_real_time)<<")"<<endl;
+    cout<<"Total wall-clock time used: "<<getRealTime()-Params::getInstance().start_real_time<<" seconds ("<<convert_time(getRealTime()-Params::getInstance().start_real_time)<<")"<<"\n";
     cout<<"Total CPU time used: "
-    << getCPUTime()-Params::getInstance().startCPUTime << " seconds (" << convert_time(getCPUTime()-Params::getInstance().startCPUTime) << ")" << endl;
-    cout<<endl;
+    << getCPUTime()-Params::getInstance().startCPUTime << " seconds (" << convert_time(getCPUTime()-Params::getInstance().startCPUTime) << ")" << "\n";
+    cout<<"\n";
 }
 
 void Terrace::write_warning_stop(int type){
     
-    cout<<endl<<"=========================================="<<endl;
-    cout<<"WARNING: stopping condition is active!"<<endl;
-    cout<<"The total number of trees on the terrace is NOT yet computed!"<<endl;
-    cout<<"Check summary at the current step. You can change the stopping rule via corresponding option (see below)."<<endl;
-    cout<<"=========================================="<<endl;
+    cout<<"\n"<<"=========================================="<<"\n";
+    cout<<"WARNING: stopping condition is active!"<<"\n";
+    cout<<"The total number of trees on the terrace is NOT yet computed!"<<"\n";
+    cout<<"Check summary at the current step. You can change the stopping rule via corresponding option (see below)."<<"\n";
+    cout<<"=========================================="<<"\n";
     
     switch (type) {
         case 1:
-            cout<<"Type of stopping rule: number of visited intermediate trees"<<endl;
-            cout<<"Current setting: stop if the number of visited intermediate trees reached "<<intermediate_max_trees<<endl;
-            cout<<"To change the value use -t_stop_i <number_of_intermediate_trees_to_stop>"<<endl;
-            cout<<"------------------------------------------"<<endl;
-            cout<<"The number of considered intermediated trees already reached "<<intermediate_max_trees<<". Exiting generation process..."<<endl;
+            cout<<"Type of stopping rule: number of visited intermediate trees"<<"\n";
+            cout<<"Current setting: stop if the number of visited intermediate trees reached "<<intermediate_max_trees<<"\n";
+            cout<<"To change the value use -t_stop_i <number_of_intermediate_trees_to_stop>"<<"\n";
+            cout<<"------------------------------------------"<<"\n";
+            cout<<"The number of considered intermediated trees already reached "<<intermediate_max_trees<<". Exiting generation process..."<<"\n";
             break;
         case 2:
-            cout<<"Type of stopping rule: terrace size"<<endl;
-            cout<<"Current setting: stop if the number of trees on the terrace reached "<<terrace_max_trees<<endl;
-            cout<<"To change the value use -t_stop_t <number_of_terrace_trees_to_stop>"<<endl;
-            cout<<"------------------------------------------"<<endl;
-            cout<<"Considered terrace already contains "<<terrace_max_trees<<" trees."<<endl<<"Exiting generation process..."<<endl;
+            cout<<"Type of stopping rule: terrace size"<<"\n";
+            cout<<"Current setting: stop if the number of trees on the terrace reached "<<terrace_max_trees<<"\n";
+            cout<<"To change the value use -t_stop_t <number_of_terrace_trees_to_stop>"<<"\n";
+            cout<<"------------------------------------------"<<"\n";
+            cout<<"Considered terrace already contains "<<terrace_max_trees<<" trees."<<"\n"<<"Exiting generation process..."<<"\n";
             break;
             
         case 3:
-            cout<<"Type of stopping rule: CPU time used"<<endl;
-            cout<<"Current setting: stop if the CPU time used is larger than "<<seconds_max<<endl;
-            cout<<"To change the value use -t_stop_h <number_of_hours_to_stop>"<<endl;
-            cout<<"------------------------------------------"<<endl;
-            cout<<"Total CPU time is already larger than "<<seconds_max<<" trees."<<endl<<"Exiting generation process..."<<endl;
+            cout<<"Type of stopping rule: CPU time used"<<"\n";
+            cout<<"Current setting: stop if the CPU time used is larger than "<<seconds_max<<"\n";
+            cout<<"To change the value use -t_stop_h <number_of_hours_to_stop>"<<"\n";
+            cout<<"------------------------------------------"<<"\n";
+            cout<<"Total CPU time is already larger than "<<seconds_max<<" trees."<<"\n"<<"Exiting generation process..."<<"\n";
             break;
             
         default:
             break;
     }
     
-    cout<<"Printing summary at current step..."<<endl;
+    cout<<"Printing summary at current step..."<<"\n";
     write_summary_generation();
     time_t end_time;
     time(&end_time);
@@ -2025,7 +2025,7 @@ string Terrace::getNextTaxon(vector<Terrace*> &part_tree_pairs, vector<string> *
     //this->getBranches(branch_end_1, branch_end_2);
     
     int bond = 0, diff = ordered_taxa_to_insert->size()-matrix->uniq_taxa_num;
-    //cout<<ordered_taxa_to_insert->size()<<"|"<<matrix->uniq_taxa_num<<"|"<<diff<<"|"<<ordered_taxa_to_insert->size()-matrix->uniq_taxa_num<<endl;
+    //cout<<ordered_taxa_to_insert->size()<<"|"<<matrix->uniq_taxa_num<<"|"<<diff<<"|"<<ordered_taxa_to_insert->size()-matrix->uniq_taxa_num<<"\n";
     if(diff > 0){
         bond=matrix->uniq_taxa_num;
     }
