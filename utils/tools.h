@@ -1739,6 +1739,11 @@ public:
         generate all NNI neighbours for the input tree and output them
      */
     bool gen_all_NNI;
+    
+    /**
+        Modify trees by collapsing all degree 2 nodes
+     */
+    bool deg2flag{false};
 
     /**********************************************/
     /****** variables for upper bound tests *******/
@@ -1762,7 +1767,7 @@ public:
     /** file with tree set to be tested, whether from the same terrace with the representative tree */
     char *terrace_query_set;
     
-    /*
+    /**
      *  Options to set different stopping rules for generation of terrace trees
      */
     
@@ -1772,6 +1777,10 @@ public:
     
     bool terrace_non_stop;
     
+    /**
+        Start generation process from a larger initial tree, i.e. remove m leaves and start generation process as in the typical analysis. This does not guarantee generating all trees, but can help investigate complicated datsets, if there are more than 1 tree on a terrace.
+     */
+    int terrace_remove_m_leaves;
     
     /**
         number of terrace trees to be output to the file: default 100K

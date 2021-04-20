@@ -435,8 +435,10 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
     vector<IntVector> ordered_taxa_ids;
     ordered_taxa_ids.resize(part_num+1);
     
+    const int m = Params::getInstance().terrace_remove_m_leaves;
+    
     // collecting taxon names from partition with the largest subtree excluding unique taxa
-    cout<<"Partition "<<part_max+1<<" is chosen for the initial tree."<<"\n";
+    
     for(j=0; j<taxa_num; j++){
         //if(pr_ab_matrix[j][part_max]==1 && taxon_cov[j]>1){ // collecting only non-unique taxa
         if(pr_ab_matrix[j][part_max]==1){ // collecting all taxa from the chosen partition also unique
@@ -450,6 +452,13 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
                 }
             }
         }
+    }
+    
+    if(m==0){
+        cout<<"Partition "<<part_max+1<<" is chosen for the initial tree."<<"\n";
+    } else {
+        cout<<"The initial tree will be created by removing from the input tree "<<m<<" leaves."<<"\n";
+        cout<<"Note, that this procedure does not guarantee generating all trees from a terrace! It is only meant to investigate, if at least some trees from a terrace can be generate."<<"\n";
     }
     
     IntVector ordered_ids;
@@ -490,7 +499,10 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
         }
     }
     
-    int taxon_order_type = 1;
+    const int must_insert = taxa_num - m;
+    int inserted_num = taxa_names_sub.size();
+    
+    const int taxon_order_type = 1;
     if(taxon_order_type == 1){
         // ===================================================================
         // TAXON ORDER 1: first by coverage, then by partition order
@@ -499,8 +511,13 @@ void PresenceAbsenceMatrix::getINFO_init_tree_taxon_order(vector<string> &taxa_n
             if(!ordered_taxa_ids[i].empty()){
                 //cout<<"Taxa with "<<i<<" gene coverage: "<<"\n";
                 for(j=0; j<ordered_taxa_ids[i].size(); j++){
-                    //cout<<" "<<j<<": "<<ordered_taxa_by_coverage[i][j]<<"\n";
-                    list_taxa_to_insert.push_back(taxa_names[ordered_taxa_ids[i][j]]);
+                    if(m==0 or must_insert == inserted_num){
+                        //cout<<" "<<j<<": "<<ordered_taxa_by_coverage[i][j]<<"\n";
+                        list_taxa_to_insert.push_back(taxa_names[ordered_taxa_ids[i][j]]);
+                    }else{
+                        taxa_names_sub.push_back(taxa_names[ordered_taxa_ids[i][j]]);
+                        inserted_num++;
+                    }
                 }
                 //cout<<"\n";
             }

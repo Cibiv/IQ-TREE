@@ -248,12 +248,13 @@ void run_terrace_check(Terrace *terrace,Params &params){
     }*/
     
     // Alternative
-    ifstream *in = new ifstream;
-    in->open(params.terrace_query_set);
-    while (!in->eof() && count < params.tree_max_count) {
+    ifstream in;
+    in.open(params.terrace_query_set);
+    //while (!in.eof() && count < params.tree_max_count) {
+    while (!in.eof()) {
         count++;
         MTree *tree = new MTree();
-        tree->readTree(*in, params.is_rooted);
+        tree->readTree(in, params.is_rooted);
         if(terrace->check_two_trees(tree)){
             cout<<"Checking query tree "<<count<<"..."<<"on the terrace."<<"\n";
             trees_on.push_back(tree);
@@ -263,9 +264,12 @@ void run_terrace_check(Terrace *terrace,Params &params){
         }
         delete tree;
         
+        char ch;
+        (in) >> ch;
+        if (in.eof()) break;
+        in.unget();
     }
-    in->close();
-    delete in;
+    in.close();
     
     if(!trees_on.empty() and !trees_off.empty()){
         string out_file_on = params.out_prefix;
@@ -311,3 +315,46 @@ void run_terrace_check(Terrace *terrace,Params &params){
     cout<<"----------------------------------------------------------------------------"<<"\n"<<"\n";
 }
 
+void run_collapse_trees(Params &params){
+    
+    string out_file = params.out_prefix;
+    out_file += ".deg_2_collapsed";
+
+    ofstream out;
+    out.exceptions(ios::failbit | ios::badbit);
+    out.open(out_file);
+    
+    ifstream in;
+    in.open(params.user_file);
+    int numtrees = 1;
+    
+    // The degree 2 node is treated as a root (a third edge with taxon name "__root__" is added to this node), so it will have degree 3 and won't be removed, by the below code. Na ja.
+    while (!in.eof() && numtrees < 4) {
+        MTree *tree = new MTree();
+        tree->readTree(in, params.is_rooted);
+        
+        // collapse any internal node of degree 2
+        NodeVector nodes;
+        tree->getInternalNodes(nodes);
+        int num_collapsed = 0;
+        for (NodeVector::iterator it = nodes.begin(); it != nodes.end(); it++) {
+            if ((*it)->degree() == 2) {
+                Node *left = (*it)->neighbors[0]->node;
+                Node *right = (*it)->neighbors[1]->node;
+                double len = (*it)->neighbors[0]->length+(*it)->neighbors[1]->length;
+                left->updateNeighbor((*it), right, len);
+                right->updateNeighbor((*it), left, len);
+                delete (*it);
+                num_collapsed++;
+                if (verbose_mode >= VB_MED)
+                    cout << "Node of degree 2 collapsed" << endl;
+            }
+        }
+        //tree->printTree(cout,WT_BR_SCALE | WT_NEWLINE);
+        tree->printTree(out,WT_BR_SCALE | WT_NEWLINE);
+        delete tree;
+        numtrees++;
+    }
+    in.close();
+    out.close();
+}

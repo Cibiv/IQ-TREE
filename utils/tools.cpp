@@ -1026,6 +1026,8 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.terrace_stop_time = 0.0;
     params.terrace_non_stop = false;
     params.terrace_print_lim = 0;
+    params.terrace_remove_m_leaves = 0;
+    
     params.matrix_order = false;
     
     params.gen_all_NNI = false;
@@ -1799,15 +1801,26 @@ void parseArg(int argc, char *argv[], Params &params) {
                 continue;
             }
             
+            if (strcmp(argv[cnt], "-t_rm_leaves") == 0) {
+                cnt++;
+                if (cnt >= argc)
+                    throw "Use -t_rm_leaves <number_of_leaves_to_be_inserted>";
+                params.terrace_remove_m_leaves = convert_int(argv[cnt]);
+                if(params.terrace_remove_m_leaves<=0){
+                    throw "Invalid value! Use -t_rm_leaves <leaves_num> with leaves_num>0";
+                }
+                continue;
+            }
+            
+            
             if (strcmp(argv[cnt], "-t_stop_i") == 0) {
                 cnt++;
                 if (cnt >= argc)
                     throw "Use -t_stop_i <number_of_intermediate_trees_to_stop>";
                 params.terrace_stop_intermediate_num = convert_int(argv[cnt]);
-                //if(params.terrace_stop_intermediate_num<=0){
-                    //throw "Invalid value! Use -t_stop_i <trees_num> with trees_num>0";
-                    //cout<<"The stopping rule based on the size of a terrace is turned off.\n";
-                //}
+                if(params.terrace_stop_intermediate_num==0){
+                    throw "Invalid value! Use -t_stop_i <trees_num> with trees_num > 0 to stop after trees_num intermediate trees were generated, or use trees_num < 0 to turn off this stopping rule.";
+                }
                 continue;
             }
             
@@ -1816,10 +1829,9 @@ void parseArg(int argc, char *argv[], Params &params) {
                 if (cnt >= argc)
                     throw "Use -t_stop_t <number_of_terrace_trees_to_stop>";
                 params.terrace_stop_terrace_trees_num = convert_int(argv[cnt]);
-                //if(params.terrace_stop_terrace_trees_num<=0){
-                    //throw "Invalid value! Use -t_stop_t <trees_num> with trees_num>0";
-                    //cout<<"The stopping rule based on the number of intermediate trees is turned off.\n";
-                //}
+                if(params.terrace_stop_terrace_trees_num==0){
+                    throw "Invalid value! Use -t_stop_t <trees_num> with trees_num>0 to stop after trees_num terrace trees were generated, or use trees_num < 0 to turn off this stopping rule.";
+                }
                 continue;
             }
             
@@ -1828,10 +1840,9 @@ void parseArg(int argc, char *argv[], Params &params) {
                 if (cnt >= argc)
                     throw "Use -t_stop_h <number_of_hours_to_stop>";
                 params.terrace_stop_time = convert_double(argv[cnt]);
-                //if(params.terrace_stop_time<=0){
-                    //throw "Invalid value! Use -t_stop_h <h> with h>0";
-                    //cout<<"The stopping rule based on the CPU time limit is turned off.\n";
-                //}
+                if(params.terrace_stop_time==0){
+                    throw "Invalid value! Use -t_stop_h <h> with h>0 to stop the run atmost after h hours, or use h < 0 to turn off this stopping rule.";
+                }
                 continue;
             }
             
@@ -1848,6 +1859,11 @@ void parseArg(int argc, char *argv[], Params &params) {
             
             if (strcmp(argv[cnt], "-gen_all_nni") == 0) {
                 params.gen_all_NNI = true;
+                continue;
+            }
+            
+            if (strcmp(argv[cnt], "-deg2collapse") == 0) {
+                params.deg2flag=true;
                 continue;
             }
             

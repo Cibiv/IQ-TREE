@@ -2553,7 +2553,9 @@ int main(int argc, char *argv[]) {
     } else if (Params::getInstance().terrace_analysis) { /**Terrace analysis*/
         cout<<"Starting terrace analysis..."<<endl;
         runterraceanalysis(Params::getInstance());
-	} else if (Params::getInstance().aln_file || Params::getInstance().partition_file) {
+    } else if(Params::getInstance().deg2flag){
+        run_collapse_trees(Params::getInstance());
+    } else if (Params::getInstance().aln_file || Params::getInstance().partition_file) {
 		if ((Params::getInstance().siteLL_file || Params::getInstance().second_align) && !Params::getInstance().gbo_replicates)
 		{
 			if (Params::getInstance().siteLL_file)

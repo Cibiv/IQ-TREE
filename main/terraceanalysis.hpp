@@ -24,4 +24,9 @@ void runterraceanalysis(Params &params);
 void run_terrace_check(Terrace *terrace, Params &params);
 
 
+/**
+        Check if trees in the list have degree 2 nodes, if yes, collapse them. This is used to deal with trees output by terraphast.
+ */
+void run_collapse_trees(Params &params);
+
 #endif /* terraceanalysis_hpp */
