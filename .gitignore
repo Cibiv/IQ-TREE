@@ -56,3 +56,14 @@ sprng/Makefile
 tree/CMakeFiles/
 tree/cmake_install.cmake
 tree/Makefile
+cmake_install.cmake
+utils/CMakeFiles/
+utils/cmake_install.cmake
+utils/Makefile
+vectorclass/CMakeFiles/
+vectorclass/cmake_install.cmake
+vectorclass/Makefile
+whtest/CMakeFiles/
+whtest/cmake_install.cmake
+whtest/Makefile
+includelog
