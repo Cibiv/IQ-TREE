@@ -1,9 +1,0 @@
-#nexus
-
-begin sets;
-	charset part1 = 1-999\3 2-999\3;
-	charset part2 = 3-999\3;
-	charset part3 = 1000-1998;
-
-	charpartition mine = HKY:part1, GTR+G:part2, GTR+G: part3;
-end;

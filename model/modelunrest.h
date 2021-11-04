@@ -40,8 +40,6 @@ protected:
 	 * model parameters.
 	 */
 	virtual void setRates();
-	
-	void writeInfo(ostream &out);
 };
 
 #endif /* MODELUNREST_H_ */

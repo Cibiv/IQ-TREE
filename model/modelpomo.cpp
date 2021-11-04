@@ -6,8 +6,8 @@
 #include <string.h>
 
 #ifdef USE_EIGEN3
-#include <Eigen/Dense>
-#include <unsupported/Eigen/MatrixFunctions>
+#include <eigen/Eigen/Dense>
+#include <eigen/unsupported/Eigen/MatrixFunctions>
 #endif
 
 ModelPoMo::ModelPoMo(PhyloTree *tree) : ModelMarkov(tree) {

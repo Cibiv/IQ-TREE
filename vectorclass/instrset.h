@@ -34,7 +34,7 @@
 #define INSTRSET 8
 #elif defined ( __AVX__ )
 #define INSTRSET 7
-#elif defined ( __SSE4_2__ )
+#elif defined ( __SSE4_2__ ) || defined ( __ARM_NEON ) // set INSTRSET value to 6 if ARM_NEON, to include intrinsics from SSE4.2 and below
 #define INSTRSET 6
 #elif defined ( __SSE4_1__ )
 #define INSTRSET 5
@@ -65,17 +65,41 @@
 #elif INSTRSET == 7
 #include <immintrin.h>                 // AVX
 #elif INSTRSET == 6
+#if defined(__ARM_NEON)
+#include "sse2neon.h"                   // SSE4.2
+#else
 #include <nmmintrin.h>                 // SSE4.2
+#endif
 #elif INSTRSET == 5
-#include <smmintrin.h>                 // SSE4.1
+#if defined(__ARM_NEON)
+#include "sse2neon.h"                   // SSE4.1
+#else
+#include <smmintrin.h>                   // SSE4.1
+#endif
 #elif INSTRSET == 4
-#include <tmmintrin.h>                 // SSSE3
+#if defined(__ARM_NEON)
+#include "sse2neon.h"                   // SSSE3
+#else
+#include <tmmintrin.h>                   // SSSE3
+#endif
 #elif INSTRSET == 3
-#include <pmmintrin.h>                 // SSE3
+#if defined(__ARM_NEON)
+#include "sse2neon.h"                   // SSE3
+#else
+#include <pmmintrin.h>                   // SSE3
+#endif
 #elif INSTRSET == 2
-#include <emmintrin.h>                 // SSE2
+#if defined(__ARM_NEON)
+#include "sse2neon.h"                   // SSE2
+#else
+#include <emmintrin.h>                   // SSE2
+#endif
 #elif INSTRSET == 1
-#include <xmmintrin.h>                 // SSE
+#if defined(__ARM_NEON)
+#include "sse2neon.h"                   // SSE
+#else
+#include <xmmintrin.h>                   // SSE
+#endif
 #endif // INSTRSET
 
 #if INSTRSET >= 8 && !defined(__FMA__)
