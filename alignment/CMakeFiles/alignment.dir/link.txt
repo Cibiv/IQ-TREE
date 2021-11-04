@@ -1,0 +1,2 @@
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/ar qc libalignment.a  CMakeFiles/alignment.dir/pattern.cpp.o CMakeFiles/alignment.dir/alignment.cpp.o CMakeFiles/alignment.dir/alignmentpairwise.cpp.o CMakeFiles/alignment.dir/maalignment.cpp.o CMakeFiles/alignment.dir/superalignment.cpp.o CMakeFiles/alignment.dir/superalignmentpairwise.cpp.o CMakeFiles/alignment.dir/superalignmentpairwiseplen.cpp.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/ranlib libalignment.a

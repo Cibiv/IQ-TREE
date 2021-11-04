@@ -55,8 +55,8 @@
 
 #ifdef __SSE3
 #include <stdint.h>
-#include <xmmintrin.h>
-#include <pmmintrin.h>
+#include "sse2neon.h"
+#include "sse2neon.h"
 #include "cycle.h"
 
 static void computeTraversalInfo(nodeptr, traversalInfo *, int *, int, int, pllBoolean, recompVectors *, pllBoolean);

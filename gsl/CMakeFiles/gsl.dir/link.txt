@@ -1,0 +1,2 @@
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/ar qc libgsl.a  CMakeFiles/gsl.dir/binomial_tpe.cpp.o CMakeFiles/gsl.dir/multinomial.cpp.o CMakeFiles/gsl.dir/pow_int.cpp.o CMakeFiles/gsl.dir/gauss.cpp.o CMakeFiles/gsl.dir/gaussinv.cpp.o CMakeFiles/gsl.dir/gausspdf.cpp.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/ranlib libgsl.a

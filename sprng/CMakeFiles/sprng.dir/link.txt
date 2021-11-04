@@ -1,0 +1,2 @@
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/ar qc libsprng.a  CMakeFiles/sprng.dir/lcg64.c.o CMakeFiles/sprng.dir/makeseed.c.o CMakeFiles/sprng.dir/memory.c.o CMakeFiles/sprng.dir/store.c.o CMakeFiles/sprng.dir/primes-lcg64.c.o CMakeFiles/sprng.dir/checkid.c.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/ranlib libsprng.a

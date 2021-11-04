@@ -1410,7 +1410,7 @@ inline UINT fast_popcount(Vec4ui &x) {
 }
 
 inline UINT fast_popcount(Vec8ui &x) {
-#if defined (__GNUC__) || defined(__clang__)
+#if (defined (__GNUC__) || defined(__clang__)) && !defined(__ARM_NEON)
     MEM_ALIGN_BEGIN uint64_t vec[4] MEM_ALIGN_END;
     MEM_ALIGN_BEGIN uint64_t res[4] MEM_ALIGN_END;
     Vec8ui y;

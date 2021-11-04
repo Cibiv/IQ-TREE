@@ -18,8 +18,8 @@
  * Would be more efficient to apply it just once to basis in constructor.
  */
 #ifdef USE_EIGEN3
-#include <Eigen/Dense>
-#include <unsupported/Eigen/MatrixFunctions>
+#include <eigen/Eigen/Dense>
+#include <eigen/unsupported/Eigen/MatrixFunctions>
 using namespace Eigen;
 #endif
 #include "modelliemarkov.h"

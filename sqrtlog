@@ -1,0 +1,17 @@
+Scanning dependencies of target kernelsse
+make[2]: Warning: File 'CMakeFiles/kernelsse.dir/depend.make' has modification time 0.36 s in the future
+[  1%] Building CXX object CMakeFiles/kernelsse.dir/tree/phylokernelsse.cpp.o
+[  1%] Linking CXX static library libkernelsse.a
+make[2]: warning:  Clock skew detected.  Your build may be incomplete.
+[  1%] Built target kernelsse
+Scanning dependencies of target kernelfma
+make[2]: Warning: File 'CMakeFiles/kernelfma.dir/depend.make' has modification time 0.31 s in the future
+[  2%] Building CXX object CMakeFiles/kernelfma.dir/tree/phylokernelfma.cpp.o
+c++: error: unrecognized command line option ‘-mavx’
+c++: error: unrecognized command line option ‘-mfma’
+CMakeFiles/kernelfma.dir/build.make:62: recipe for target 'CMakeFiles/kernelfma.dir/tree/phylokernelfma.cpp.o' failed
+make[2]: *** [CMakeFiles/kernelfma.dir/tree/phylokernelfma.cpp.o] Error 1
+CMakeFiles/Makefile2:109: recipe for target 'CMakeFiles/kernelfma.dir/all' failed
+make[1]: *** [CMakeFiles/kernelfma.dir/all] Error 2
+Makefile:151: recipe for target 'all' failed
+make: *** [all] Error 2

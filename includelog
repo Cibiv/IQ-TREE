@@ -1,0 +1,33 @@
+./pll/avxLikelihood.c:#include "sse2neon.h"
+./pll/avxLikelihood.c:#include "sse2neon.h"
+./pll/evaluateGenericSpecial.c:#include "sse2neon.h"
+./pll/evaluateGenericSpecial.c:#include "sse2neon.h"
+./pll/evaluateGenericSpecial.c:/*#include "sse2neon.h"*/
+./pll/evaluatePartialGenericSpecial.c:#include "sse2neon.h"
+./pll/evaluatePartialGenericSpecial.c:#include "sse2neon.h"
+./pll/fastDNAparsimony.c:#include "sse2neon.h"
+./pll/fastDNAparsimony.c:#include "sse2neon.h"
+./pll/fastDNAparsimony.c:#include "sse2neon.h"
+./pll/fastDNAparsimony.c:#include "sse2neon.h"
+./pll/makenewzGenericSpecial.c:#include "sse2neon.h"
+./pll/makenewzGenericSpecial.c:#include "sse2neon.h"
+./pll/makenewzGenericSpecial.c:/*#include "sse2neon.h"*/
+./pll/newviewGenericSpecial.c:#include "sse2neon.h"
+./pll/newviewGenericSpecial.c:#include "sse2neon.h"
+./pll/parsimony.c:#include "sse2neon.h"
+./pll/parsimony.c:#include "sse2neon.h"
+./pll/parsimony.c:#include "sse2neon.h"
+./pll/parsimony.c:#include "sse2neon.h"
+./pll/pll.h:#include "sse2neon.h"
+./pll/pll.h:#include "sse2neon.h"
+./pll/pll.h:#include "sse2neon.h"
+./pll/pll.h:#include "sse2neon.h"
+./pll/utils.c:#include "sse2neon.h"
+./pll/utils.c:#include "sse2neon.h" 
+./vectorclass/instrset.h:#include "sse2neon.h"                   // SSE4.2
+./vectorclass/instrset.h:#include "sse2neon.h"                   // SSE4.1
+./vectorclass/instrset.h:#include "sse2neon.h"                   // SSSE3
+./vectorclass/instrset.h:#include "sse2neon.h"                   // SSE3
+./vectorclass/instrset.h:#include "sse2neon.h"                   // SSE2
+./vectorclass/instrset.h:#include "sse2neon.h"                   // SSE
+grep: input file ‘./includelog’ is also the output

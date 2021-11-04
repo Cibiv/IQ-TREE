@@ -1,0 +1,994 @@
+The system is: Linux - 4.4.156-94.64-default - aarch64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: /home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+
+The C compiler identification is GNU, found in "/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/3.14.1/CompilerIdC/a.out"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: /home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++ 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+
+The CXX compiler identification is GNU, found in "/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/3.14.1/CompilerIdCXX/a.out"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_9c494/fast 
+gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: Warning: File 'Makefile' has modification time 0.082 s in the future
+/usr/bin/gmake -f CMakeFiles/cmTC_9c494.dir/build.make CMakeFiles/cmTC_9c494.dir/build
+gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[2]: Warning: File 'CMakeFiles/cmTC_9c494.dir/flags.make' has modification time 0.078 s in the future
+Building C object CMakeFiles/cmTC_9c494.dir/testCCompiler.c.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc    -o CMakeFiles/cmTC_9c494.dir/testCCompiler.c.o   -c /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp/testCCompiler.c
+Linking C executable cmTC_9c494
+/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9c494.dir/link.txt --verbose=1
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc      -rdynamic CMakeFiles/cmTC_9c494.dir/testCCompiler.c.o  -o cmTC_9c494 
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[1]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_143bb/fast 
+gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: Warning: File 'Makefile' has modification time 0.12 s in the future
+/usr/bin/gmake -f CMakeFiles/cmTC_143bb.dir/build.make CMakeFiles/cmTC_143bb.dir/build
+gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[2]: Warning: File 'CMakeFiles/cmTC_143bb.dir/flags.make' has modification time 0.076 s in the future
+Building C object CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc   -v -o CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o   -c /sto2/sw/tools/cmake/3.14.1/share/cmake-3.14/Modules/CMakeCCompilerABI.c
+Using built-in specs.
+COLLECT_GCC=/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc
+Target: aarch64-linux-gnu
+Configured with: /tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/build/9e0ed06a5acc3e1b116762146780994ab1b97adc/gcc-9.3.0/configure --build=aarch64-linux-gnu --disable-multilib --disable-werror --enable-64-bit-bfd --enable-checking=release --enable-gnu-indirect-function --enable-interwork --enable-languages=c,c++,fortran --enable-lto --enable-plugins --enable-stage1-checking --host=aarch64-linux-gnu --libexecdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/libexec' --target=aarch64-linux-gnu --with-build-config=bootstrap-debug --prefix=/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc --bindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --sbindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --libdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/lib' --includedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --oldincludedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --datarootdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/share'
+Thread model: posix
+gcc version 9.3.0 (GCC) 
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o' '-c' '-mlittle-endian' '-mabi=lp64'
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/cc1 -quiet -v -iprefix /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/ -isystem /home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include /sto2/sw/tools/cmake/3.14.1/share/cmake-3.14/Modules/CMakeCCompilerABI.c -quiet -dumpbase CMakeCCompilerABI.c -mlittle-endian -mabi=lp64 -auxbase-strip CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o -version -o /tmp/ccgJrBgk.s
+GNU C17 (GCC) version 9.3.0 (aarch64-linux-gnu)
+	compiled by GNU C version 9.3.0, GMP version 6.0.0, MPFR version 3.1.3, MPC version 1.0.3, isl version isl-0.16.1-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+ignoring nonexistent directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/include"
+ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/include"
+ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../include"
+ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed"
+ignoring nonexistent directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/include"
+ignoring duplicate directory "/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include"
+  as it is a non-system directory that duplicates a system directory
+#include "..." search starts here:
+#include <...> search starts here:
+ /home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/include
+ /home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed
+ /usr/local/include
+ /usr/include
+End of search list.
+GNU C17 (GCC) version 9.3.0 (aarch64-linux-gnu)
+	compiled by GNU C version 9.3.0, GMP version 6.0.0, MPFR version 3.1.3, MPC version 1.0.3, isl version isl-0.16.1-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+Compiler executable checksum: 95bf97381f4eb90814f93898cc41e9c0
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o' '-c' '-mlittle-endian' '-mabi=lp64'
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/bin/as -v -EL -mabi=lp64 -o CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o /tmp/ccgJrBgk.s
+GNU assembler version 2.32 (aarch64-linux-gnu) using BFD version (GNU Binutils) 2.32
+COMPILER_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/bin/
+LIBRARY_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o' '-c' '-mlittle-endian' '-mabi=lp64'
+Linking C executable cmTC_143bb
+/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_143bb.dir/link.txt --verbose=1
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc     -v -rdynamic CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o  -o cmTC_143bb 
+Using built-in specs.
+COLLECT_GCC=/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc
+COLLECT_LTO_WRAPPER=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/lto-wrapper
+Target: aarch64-linux-gnu
+Configured with: /tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/build/9e0ed06a5acc3e1b116762146780994ab1b97adc/gcc-9.3.0/configure --build=aarch64-linux-gnu --disable-multilib --disable-werror --enable-64-bit-bfd --enable-checking=release --enable-gnu-indirect-function --enable-interwork --enable-languages=c,c++,fortran --enable-lto --enable-plugins --enable-stage1-checking --host=aarch64-linux-gnu --libexecdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/libexec' --target=aarch64-linux-gnu --with-build-config=bootstrap-debug --prefix=/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc --bindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --sbindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --libdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/lib' --includedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --oldincludedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --datarootdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/share'
+Thread model: posix
+gcc version 9.3.0 (GCC) 
+COMPILER_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/bin/
+LIBRARY_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_143bb' '-mlittle-endian' '-mabi=lp64'
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/collect2 -plugin /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/liblto_plugin.so -plugin-opt=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/lto-wrapper -plugin-opt=-fresolution=/tmp/cca6P5oe.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --eh-frame-hdr -export-dynamic -dynamic-linker /lib/ld-linux-aarch64.so.1 -X -EL -maarch64linux -o cmTC_143bb /usr/lib/../lib64/crt1.o /usr/lib/../lib64/crti.o /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/crtbegin.o -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0 -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64 -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64 -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64 -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../.. CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/crtend.o /usr/lib/../lib64/crtn.o
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_143bb' '-mlittle-endian' '-mabi=lp64'
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[1]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+
+
+Parsed C implicit include dir info from above output: rv=done
+  found start of include info
+  found start of implicit include info
+    add: [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/include]
+    add: [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include]
+    add: [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include]
+    add: [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed]
+    add: [/usr/local/include]
+    add: [/usr/include]
+  end of search list found
+  collapse include dir [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/include] ==> [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/include]
+  collapse include dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include] ==> [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include]
+  collapse include dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc/aarch64-linux-gnu/9.3.0/include]
+  collapse include dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed]
+  collapse include dir [/usr/local/include] ==> [/usr/local/include]
+  collapse include dir [/usr/include] ==> [/usr/include]
+  implicit include dirs: [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/include;/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc/aarch64-linux-gnu/9.3.0/include;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed;/usr/local/include;/usr/include]
+
+
+Parsed C implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command(s):/usr/bin/gmake cmTC_143bb/fast ]
+  ignore line: [gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp']
+  ignore line: [gmake[1]: Warning: File 'Makefile' has modification time 0.12 s in the future]
+  ignore line: [/usr/bin/gmake -f CMakeFiles/cmTC_143bb.dir/build.make CMakeFiles/cmTC_143bb.dir/build]
+  ignore line: [gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp']
+  ignore line: [gmake[2]: Warning: File 'CMakeFiles/cmTC_143bb.dir/flags.make' has modification time 0.076 s in the future]
+  ignore line: [Building C object CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc   -v -o CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o   -c /sto2/sw/tools/cmake/3.14.1/share/cmake-3.14/Modules/CMakeCCompilerABI.c]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc]
+  ignore line: [Target: aarch64-linux-gnu]
+  ignore line: [Configured with: /tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/build/9e0ed06a5acc3e1b116762146780994ab1b97adc/gcc-9.3.0/configure --build=aarch64-linux-gnu --disable-multilib --disable-werror --enable-64-bit-bfd --enable-checking=release --enable-gnu-indirect-function --enable-interwork --enable-languages=c,c++,fortran --enable-lto --enable-plugins --enable-stage1-checking --host=aarch64-linux-gnu --libexecdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/libexec' --target=aarch64-linux-gnu --with-build-config=bootstrap-debug --prefix=/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc --bindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --sbindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --libdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/lib' --includedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --oldincludedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --datarootdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/share']
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 9.3.0 (GCC) ]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o' '-c' '-mlittle-endian' '-mabi=lp64']
+  ignore line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/cc1 -quiet -v -iprefix /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/ -isystem /home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include /sto2/sw/tools/cmake/3.14.1/share/cmake-3.14/Modules/CMakeCCompilerABI.c -quiet -dumpbase CMakeCCompilerABI.c -mlittle-endian -mabi=lp64 -auxbase-strip CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o -version -o /tmp/ccgJrBgk.s]
+  ignore line: [GNU C17 (GCC) version 9.3.0 (aarch64-linux-gnu)]
+  ignore line: [	compiled by GNU C version 9.3.0, GMP version 6.0.0, MPFR version 3.1.3, MPC version 1.0.3, isl version isl-0.16.1-GMP]
+  ignore line: []
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [ignoring nonexistent directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/include"]
+  ignore line: [ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/include"]
+  ignore line: [ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../include"]
+  ignore line: [ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed"]
+  ignore line: [ignoring nonexistent directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/include"]
+  ignore line: [ignoring duplicate directory "/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include"]
+  ignore line: [  as it is a non-system directory that duplicates a system directory]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/include]
+  ignore line: [ /home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include]
+  ignore line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include]
+  ignore line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed]
+  ignore line: [ /usr/local/include]
+  ignore line: [ /usr/include]
+  ignore line: [End of search list.]
+  ignore line: [GNU C17 (GCC) version 9.3.0 (aarch64-linux-gnu)]
+  ignore line: [	compiled by GNU C version 9.3.0, GMP version 6.0.0, MPFR version 3.1.3, MPC version 1.0.3, isl version isl-0.16.1-GMP]
+  ignore line: []
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [Compiler executable checksum: 95bf97381f4eb90814f93898cc41e9c0]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o' '-c' '-mlittle-endian' '-mabi=lp64']
+  ignore line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/bin/as -v -EL -mabi=lp64 -o CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o /tmp/ccgJrBgk.s]
+  ignore line: [GNU assembler version 2.32 (aarch64-linux-gnu) using BFD version (GNU Binutils) 2.32]
+  ignore line: [COMPILER_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/bin/]
+  ignore line: [LIBRARY_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o' '-c' '-mlittle-endian' '-mabi=lp64']
+  ignore line: [Linking C executable cmTC_143bb]
+  ignore line: [/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_143bb.dir/link.txt --verbose=1]
+  ignore line: [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc     -v -rdynamic CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o  -o cmTC_143bb ]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc]
+  ignore line: [COLLECT_LTO_WRAPPER=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/lto-wrapper]
+  ignore line: [Target: aarch64-linux-gnu]
+  ignore line: [Configured with: /tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/build/9e0ed06a5acc3e1b116762146780994ab1b97adc/gcc-9.3.0/configure --build=aarch64-linux-gnu --disable-multilib --disable-werror --enable-64-bit-bfd --enable-checking=release --enable-gnu-indirect-function --enable-interwork --enable-languages=c,c++,fortran --enable-lto --enable-plugins --enable-stage1-checking --host=aarch64-linux-gnu --libexecdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/libexec' --target=aarch64-linux-gnu --with-build-config=bootstrap-debug --prefix=/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc --bindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --sbindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --libdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/lib' --includedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --oldincludedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --datarootdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/share']
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 9.3.0 (GCC) ]
+  ignore line: [COMPILER_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/bin/]
+  ignore line: [LIBRARY_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_143bb' '-mlittle-endian' '-mabi=lp64']
+  link line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/collect2 -plugin /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/liblto_plugin.so -plugin-opt=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/lto-wrapper -plugin-opt=-fresolution=/tmp/cca6P5oe.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --eh-frame-hdr -export-dynamic -dynamic-linker /lib/ld-linux-aarch64.so.1 -X -EL -maarch64linux -o cmTC_143bb /usr/lib/../lib64/crt1.o /usr/lib/../lib64/crti.o /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/crtbegin.o -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0 -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64 -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64 -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64 -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../.. CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/crtend.o /usr/lib/../lib64/crtn.o]
+    arg [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/collect2] ==> ignore
+    arg [-plugin] ==> ignore
+    arg [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/liblto_plugin.so] ==> ignore
+    arg [-plugin-opt=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/lto-wrapper] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/cca6P5oe.res] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-export-dynamic] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib/ld-linux-aarch64.so.1] ==> ignore
+    arg [-X] ==> ignore
+    arg [-EL] ==> ignore
+    arg [-maarch64linux] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_143bb] ==> ignore
+    arg [/usr/lib/../lib64/crt1.o] ==> ignore
+    arg [/usr/lib/../lib64/crti.o] ==> ignore
+    arg [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/crtbegin.o] ==> ignore
+    arg [-L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0] ==> dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0]
+    arg [-L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc] ==> dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc]
+    arg [-L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64] ==> dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64]
+    arg [-L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64] ==> dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64]
+    arg [-L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64] ==> dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64]
+    arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
+    arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
+    arg [-L/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib] ==> dir [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib]
+    arg [-L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64] ==> dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64]
+    arg [-L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib] ==> dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib]
+    arg [-L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib] ==> dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib]
+    arg [-L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../..] ==> dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../..]
+    arg [CMakeFiles/cmTC_143bb.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [-lgcc] ==> lib [gcc]
+    arg [--push-state] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [--pop-state] ==> ignore
+    arg [-lc] ==> lib [c]
+    arg [-lgcc] ==> lib [gcc]
+    arg [--push-state] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [--pop-state] ==> ignore
+    arg [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/crtend.o] ==> ignore
+    arg [/usr/lib/../lib64/crtn.o] ==> ignore
+  collapse library dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc/aarch64-linux-gnu/9.3.0]
+  collapse library dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc]
+  collapse library dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64] ==> [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64]
+  collapse library dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64] ==> [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64]
+  collapse library dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64]
+  collapse library dir [/lib/../lib64] ==> [/lib64]
+  collapse library dir [/usr/lib/../lib64] ==> [/usr/lib64]
+  collapse library dir [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib] ==> [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib]
+  collapse library dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64] ==> [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64]
+  collapse library dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib] ==> [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib]
+  collapse library dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/aarch64-linux-gnu/lib]
+  collapse library dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../..] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib]
+  implicit libs: [gcc;gcc_s;c;gcc;gcc_s]
+  implicit dirs: [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc/aarch64-linux-gnu/9.3.0;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc;/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64;/lib64;/usr/lib64;/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib;/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/aarch64-linux-gnu/lib;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib]
+  implicit fwks: []
+
+
+
+
+Detecting C [-std=c11] compiler features compiled with the following output:
+Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_df14a/fast 
+gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: Warning: File 'Makefile' has modification time 0.069 s in the future
+/usr/bin/gmake -f CMakeFiles/cmTC_df14a.dir/build.make CMakeFiles/cmTC_df14a.dir/build
+gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[2]: Warning: File 'CMakeFiles/cmTC_df14a.dir/flags.make' has modification time 0.065 s in the future
+Building C object CMakeFiles/cmTC_df14a.dir/feature_tests.c.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc   -std=c11 -o CMakeFiles/cmTC_df14a.dir/feature_tests.c.o   -c /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/feature_tests.c
+Linking C executable cmTC_df14a
+/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_df14a.dir/link.txt --verbose=1
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc      -rdynamic CMakeFiles/cmTC_df14a.dir/feature_tests.c.o  -o cmTC_df14a 
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[1]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+
+
+    Feature record: C_FEATURE:1c_function_prototypes
+    Feature record: C_FEATURE:1c_restrict
+    Feature record: C_FEATURE:1c_static_assert
+    Feature record: C_FEATURE:1c_variadic_macros
+
+
+Detecting C [-std=c99] compiler features compiled with the following output:
+Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_d2e1c/fast 
+gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: Warning: File 'Makefile' has modification time 0.049 s in the future
+/usr/bin/gmake -f CMakeFiles/cmTC_d2e1c.dir/build.make CMakeFiles/cmTC_d2e1c.dir/build
+gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[2]: Warning: File 'CMakeFiles/cmTC_d2e1c.dir/flags.make' has modification time 0.045 s in the future
+Building C object CMakeFiles/cmTC_d2e1c.dir/feature_tests.c.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc   -std=c99 -o CMakeFiles/cmTC_d2e1c.dir/feature_tests.c.o   -c /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/feature_tests.c
+Linking C executable cmTC_d2e1c
+/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d2e1c.dir/link.txt --verbose=1
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc      -rdynamic CMakeFiles/cmTC_d2e1c.dir/feature_tests.c.o  -o cmTC_d2e1c 
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[1]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+
+
+    Feature record: C_FEATURE:1c_function_prototypes
+    Feature record: C_FEATURE:1c_restrict
+    Feature record: C_FEATURE:0c_static_assert
+    Feature record: C_FEATURE:1c_variadic_macros
+
+
+Detecting C [-std=c90] compiler features compiled with the following output:
+Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_d9da2/fast 
+gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: Warning: File 'Makefile' has modification time 0.11 s in the future
+/usr/bin/gmake -f CMakeFiles/cmTC_d9da2.dir/build.make CMakeFiles/cmTC_d9da2.dir/build
+gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[2]: Warning: File 'CMakeFiles/cmTC_d9da2.dir/flags.make' has modification time 0.11 s in the future
+Building C object CMakeFiles/cmTC_d9da2.dir/feature_tests.c.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc   -std=c90 -o CMakeFiles/cmTC_d9da2.dir/feature_tests.c.o   -c /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/feature_tests.c
+Linking C executable cmTC_d9da2
+/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d9da2.dir/link.txt --verbose=1
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/cc      -rdynamic CMakeFiles/cmTC_d9da2.dir/feature_tests.c.o  -o cmTC_d9da2 
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[1]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+
+
+    Feature record: C_FEATURE:1c_function_prototypes
+    Feature record: C_FEATURE:0c_restrict
+    Feature record: C_FEATURE:0c_static_assert
+    Feature record: C_FEATURE:0c_variadic_macros
+Determining if the CXX compiler works passed with the following output:
+Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_11420/fast 
+gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: Warning: File 'Makefile' has modification time 0.13 s in the future
+/usr/bin/gmake -f CMakeFiles/cmTC_11420.dir/build.make CMakeFiles/cmTC_11420.dir/build
+gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[2]: Warning: File 'CMakeFiles/cmTC_11420.dir/flags.make' has modification time 0.083 s in the future
+Building CXX object CMakeFiles/cmTC_11420.dir/testCXXCompiler.cxx.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++     -o CMakeFiles/cmTC_11420.dir/testCXXCompiler.cxx.o -c /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
+Linking CXX executable cmTC_11420
+/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_11420.dir/link.txt --verbose=1
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++       -rdynamic CMakeFiles/cmTC_11420.dir/testCXXCompiler.cxx.o  -o cmTC_11420 
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[1]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_ffbeb/fast 
+gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: Warning: File 'Makefile' has modification time 0.089 s in the future
+/usr/bin/gmake -f CMakeFiles/cmTC_ffbeb.dir/build.make CMakeFiles/cmTC_ffbeb.dir/build
+gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[2]: Warning: File 'CMakeFiles/cmTC_ffbeb.dir/flags.make' has modification time 0.086 s in the future
+Building CXX object CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++    -v -o CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o -c /sto2/sw/tools/cmake/3.14.1/share/cmake-3.14/Modules/CMakeCXXCompilerABI.cpp
+Using built-in specs.
+COLLECT_GCC=/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++
+Target: aarch64-linux-gnu
+Configured with: /tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/build/9e0ed06a5acc3e1b116762146780994ab1b97adc/gcc-9.3.0/configure --build=aarch64-linux-gnu --disable-multilib --disable-werror --enable-64-bit-bfd --enable-checking=release --enable-gnu-indirect-function --enable-interwork --enable-languages=c,c++,fortran --enable-lto --enable-plugins --enable-stage1-checking --host=aarch64-linux-gnu --libexecdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/libexec' --target=aarch64-linux-gnu --with-build-config=bootstrap-debug --prefix=/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc --bindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --sbindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --libdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/lib' --includedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --oldincludedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --datarootdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/share'
+Thread model: posix
+gcc version 9.3.0 (GCC) 
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mlittle-endian' '-mabi=lp64'
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/cc1plus -quiet -v -iprefix /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/ -isystem /home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include -D_GNU_SOURCE /sto2/sw/tools/cmake/3.14.1/share/cmake-3.14/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpbase CMakeCXXCompilerABI.cpp -mlittle-endian -mabi=lp64 -auxbase-strip CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o -version -o /tmp/ccVNK9Bc.s
+GNU C++14 (GCC) version 9.3.0 (aarch64-linux-gnu)
+	compiled by GNU C version 9.3.0, GMP version 6.0.0, MPFR version 3.1.3, MPC version 1.0.3, isl version isl-0.16.1-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+ignoring nonexistent directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/include"
+ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0"
+ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0/aarch64-linux-gnu"
+ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward"
+ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/include"
+ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../include"
+ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed"
+ignoring nonexistent directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/include"
+ignoring duplicate directory "/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include"
+  as it is a non-system directory that duplicates a system directory
+#include "..." search starts here:
+#include <...> search starts here:
+ /home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/include
+ /home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0/aarch64-linux-gnu
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed
+ /usr/local/include
+ /usr/include
+End of search list.
+GNU C++14 (GCC) version 9.3.0 (aarch64-linux-gnu)
+	compiled by GNU C version 9.3.0, GMP version 6.0.0, MPFR version 3.1.3, MPC version 1.0.3, isl version isl-0.16.1-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+Compiler executable checksum: fe5c87e4e0aa5d87a76f4cb35c141000
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mlittle-endian' '-mabi=lp64'
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/bin/as -v -EL -mabi=lp64 -o CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccVNK9Bc.s
+GNU assembler version 2.32 (aarch64-linux-gnu) using BFD version (GNU Binutils) 2.32
+COMPILER_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/bin/
+LIBRARY_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mlittle-endian' '-mabi=lp64'
+Linking CXX executable cmTC_ffbeb
+/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ffbeb.dir/link.txt --verbose=1
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++      -v -rdynamic CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_ffbeb 
+Using built-in specs.
+COLLECT_GCC=/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++
+COLLECT_LTO_WRAPPER=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/lto-wrapper
+Target: aarch64-linux-gnu
+Configured with: /tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/build/9e0ed06a5acc3e1b116762146780994ab1b97adc/gcc-9.3.0/configure --build=aarch64-linux-gnu --disable-multilib --disable-werror --enable-64-bit-bfd --enable-checking=release --enable-gnu-indirect-function --enable-interwork --enable-languages=c,c++,fortran --enable-lto --enable-plugins --enable-stage1-checking --host=aarch64-linux-gnu --libexecdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/libexec' --target=aarch64-linux-gnu --with-build-config=bootstrap-debug --prefix=/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc --bindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --sbindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --libdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/lib' --includedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --oldincludedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --datarootdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/share'
+Thread model: posix
+gcc version 9.3.0 (GCC) 
+COMPILER_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/bin/
+LIBRARY_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_ffbeb' '-shared-libgcc' '-mlittle-endian' '-mabi=lp64'
+ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/collect2 -plugin /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/liblto_plugin.so -plugin-opt=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccin6bhg.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -export-dynamic -dynamic-linker /lib/ld-linux-aarch64.so.1 -X -EL -maarch64linux -o cmTC_ffbeb /usr/lib/../lib64/crt1.o /usr/lib/../lib64/crti.o /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/crtbegin.o -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0 -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64 -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64 -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64 -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../.. CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/crtend.o /usr/lib/../lib64/crtn.o
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_ffbeb' '-shared-libgcc' '-mlittle-endian' '-mabi=lp64'
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[1]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+
+
+Parsed CXX implicit include dir info from above output: rv=done
+  found start of include info
+  found start of implicit include info
+    add: [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/include]
+    add: [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include]
+    add: [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0]
+    add: [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0/aarch64-linux-gnu]
+    add: [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward]
+    add: [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include]
+    add: [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed]
+    add: [/usr/local/include]
+    add: [/usr/include]
+  end of search list found
+  collapse include dir [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/include] ==> [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/include]
+  collapse include dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include] ==> [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include]
+  collapse include dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include/c++/9.3.0]
+  collapse include dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0/aarch64-linux-gnu] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include/c++/9.3.0/aarch64-linux-gnu]
+  collapse include dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include/c++/9.3.0/backward]
+  collapse include dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc/aarch64-linux-gnu/9.3.0/include]
+  collapse include dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed]
+  collapse include dir [/usr/local/include] ==> [/usr/local/include]
+  collapse include dir [/usr/include] ==> [/usr/include]
+  implicit include dirs: [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/include;/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include/c++/9.3.0;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include/c++/9.3.0/aarch64-linux-gnu;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include/c++/9.3.0/backward;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc/aarch64-linux-gnu/9.3.0/include;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed;/usr/local/include;/usr/include]
+
+
+Parsed CXX implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command(s):/usr/bin/gmake cmTC_ffbeb/fast ]
+  ignore line: [gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp']
+  ignore line: [gmake[1]: Warning: File 'Makefile' has modification time 0.089 s in the future]
+  ignore line: [/usr/bin/gmake -f CMakeFiles/cmTC_ffbeb.dir/build.make CMakeFiles/cmTC_ffbeb.dir/build]
+  ignore line: [gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp']
+  ignore line: [gmake[2]: Warning: File 'CMakeFiles/cmTC_ffbeb.dir/flags.make' has modification time 0.086 s in the future]
+  ignore line: [Building CXX object CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++    -v -o CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o -c /sto2/sw/tools/cmake/3.14.1/share/cmake-3.14/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++]
+  ignore line: [Target: aarch64-linux-gnu]
+  ignore line: [Configured with: /tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/build/9e0ed06a5acc3e1b116762146780994ab1b97adc/gcc-9.3.0/configure --build=aarch64-linux-gnu --disable-multilib --disable-werror --enable-64-bit-bfd --enable-checking=release --enable-gnu-indirect-function --enable-interwork --enable-languages=c,c++,fortran --enable-lto --enable-plugins --enable-stage1-checking --host=aarch64-linux-gnu --libexecdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/libexec' --target=aarch64-linux-gnu --with-build-config=bootstrap-debug --prefix=/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc --bindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --sbindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --libdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/lib' --includedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --oldincludedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --datarootdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/share']
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 9.3.0 (GCC) ]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mlittle-endian' '-mabi=lp64']
+  ignore line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/cc1plus -quiet -v -iprefix /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/ -isystem /home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include -D_GNU_SOURCE /sto2/sw/tools/cmake/3.14.1/share/cmake-3.14/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpbase CMakeCXXCompilerABI.cpp -mlittle-endian -mabi=lp64 -auxbase-strip CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o -version -o /tmp/ccVNK9Bc.s]
+  ignore line: [GNU C++14 (GCC) version 9.3.0 (aarch64-linux-gnu)]
+  ignore line: [	compiled by GNU C version 9.3.0, GMP version 6.0.0, MPFR version 3.1.3, MPC version 1.0.3, isl version isl-0.16.1-GMP]
+  ignore line: []
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [ignoring nonexistent directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/include"]
+  ignore line: [ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0"]
+  ignore line: [ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0/aarch64-linux-gnu"]
+  ignore line: [ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward"]
+  ignore line: [ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/include"]
+  ignore line: [ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../include"]
+  ignore line: [ignoring duplicate directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed"]
+  ignore line: [ignoring nonexistent directory "/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/../../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/include"]
+  ignore line: [ignoring duplicate directory "/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include"]
+  ignore line: [  as it is a non-system directory that duplicates a system directory]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/include]
+  ignore line: [ /home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/include]
+  ignore line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0]
+  ignore line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0/aarch64-linux-gnu]
+  ignore line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../include/c++/9.3.0/backward]
+  ignore line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include]
+  ignore line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/include-fixed]
+  ignore line: [ /usr/local/include]
+  ignore line: [ /usr/include]
+  ignore line: [End of search list.]
+  ignore line: [GNU C++14 (GCC) version 9.3.0 (aarch64-linux-gnu)]
+  ignore line: [	compiled by GNU C version 9.3.0, GMP version 6.0.0, MPFR version 3.1.3, MPC version 1.0.3, isl version isl-0.16.1-GMP]
+  ignore line: []
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [Compiler executable checksum: fe5c87e4e0aa5d87a76f4cb35c141000]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mlittle-endian' '-mabi=lp64']
+  ignore line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/bin/as -v -EL -mabi=lp64 -o CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccVNK9Bc.s]
+  ignore line: [GNU assembler version 2.32 (aarch64-linux-gnu) using BFD version (GNU Binutils) 2.32]
+  ignore line: [COMPILER_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/bin/]
+  ignore line: [LIBRARY_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mlittle-endian' '-mabi=lp64']
+  ignore line: [Linking CXX executable cmTC_ffbeb]
+  ignore line: [/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ffbeb.dir/link.txt --verbose=1]
+  ignore line: [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++      -v -rdynamic CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_ffbeb ]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++]
+  ignore line: [COLLECT_LTO_WRAPPER=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/lto-wrapper]
+  ignore line: [Target: aarch64-linux-gnu]
+  ignore line: [Configured with: /tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/build/9e0ed06a5acc3e1b116762146780994ab1b97adc/gcc-9.3.0/configure --build=aarch64-linux-gnu --disable-multilib --disable-werror --enable-64-bit-bfd --enable-checking=release --enable-gnu-indirect-function --enable-interwork --enable-languages=c,c++,fortran --enable-lto --enable-plugins --enable-stage1-checking --host=aarch64-linux-gnu --libexecdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/libexec' --target=aarch64-linux-gnu --with-build-config=bootstrap-debug --prefix=/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc --bindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --sbindir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/bin' --libdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/lib' --includedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --oldincludedir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/include' --datarootdir='/tmp/gcc/93/.conan/data/gcc/9.3.0.93/infra/stable/package/9e0ed06a5acc3e1b116762146780994ab1b97adc/share']
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 9.3.0 (GCC) ]
+  ignore line: [COMPILER_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/bin/]
+  ignore line: [LIBRARY_PATH=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/:/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib/:/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_ffbeb' '-shared-libgcc' '-mlittle-endian' '-mabi=lp64']
+  link line: [ /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/collect2 -plugin /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/liblto_plugin.so -plugin-opt=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccin6bhg.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -export-dynamic -dynamic-linker /lib/ld-linux-aarch64.so.1 -X -EL -maarch64linux -o cmTC_ffbeb /usr/lib/../lib64/crt1.o /usr/lib/../lib64/crti.o /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/crtbegin.o -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0 -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64 -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64 -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64 -L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib -L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../.. CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/crtend.o /usr/lib/../lib64/crtn.o]
+    arg [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/collect2] ==> ignore
+    arg [-plugin] ==> ignore
+    arg [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/liblto_plugin.so] ==> ignore
+    arg [-plugin-opt=/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../libexec/gcc/aarch64-linux-gnu/9.3.0/lto-wrapper] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/ccin6bhg.res] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-export-dynamic] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib/ld-linux-aarch64.so.1] ==> ignore
+    arg [-X] ==> ignore
+    arg [-EL] ==> ignore
+    arg [-maarch64linux] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_ffbeb] ==> ignore
+    arg [/usr/lib/../lib64/crt1.o] ==> ignore
+    arg [/usr/lib/../lib64/crti.o] ==> ignore
+    arg [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/crtbegin.o] ==> ignore
+    arg [-L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0] ==> dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0]
+    arg [-L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc] ==> dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc]
+    arg [-L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64] ==> dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64]
+    arg [-L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64] ==> dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64]
+    arg [-L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64] ==> dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64]
+    arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
+    arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
+    arg [-L/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib] ==> dir [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib]
+    arg [-L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64] ==> dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64]
+    arg [-L/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib] ==> dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib]
+    arg [-L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib] ==> dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib]
+    arg [-L/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../..] ==> dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../..]
+    arg [CMakeFiles/cmTC_ffbeb.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [-lstdc++] ==> lib [stdc++]
+    arg [-lm] ==> lib [m]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [-lc] ==> lib [c]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/crtend.o] ==> ignore
+    arg [/usr/lib/../lib64/crtn.o] ==> ignore
+  collapse library dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc/aarch64-linux-gnu/9.3.0]
+  collapse library dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc]
+  collapse library dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64/../lib64] ==> [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64]
+  collapse library dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/../lib64] ==> [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64]
+  collapse library dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../lib64] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64]
+  collapse library dir [/lib/../lib64] ==> [/lib64]
+  collapse library dir [/usr/lib/../lib64] ==> [/usr/lib64]
+  collapse library dir [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib] ==> [/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib]
+  collapse library dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64] ==> [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64]
+  collapse library dir [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib] ==> [/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib]
+  collapse library dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../../../aarch64-linux-gnu/lib] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/aarch64-linux-gnu/lib]
+  collapse library dir [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/../lib/gcc/aarch64-linux-gnu/9.3.0/../../..] ==> [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib]
+  implicit libs: [stdc++;m;gcc_s;gcc;c;gcc_s;gcc]
+  implicit dirs: [/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc/aarch64-linux-gnu/9.3.0;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib/gcc;/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib64;/lib64;/usr/lib64;/home/jm17923/Software/arm/compiler/20.2/arm-linux-compiler-20.2_Generic-AArch64_SLES-12_aarch64-linux/lib;/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/aarch64-linux-gnu/lib;/sto2/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/lib]
+  implicit fwks: []
+
+
+
+
+Detecting CXX [-std=c++2a] compiler features compiled with the following output:
+Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_d2f70/fast 
+gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: Warning: File 'Makefile' has modification time 0.11 s in the future
+/usr/bin/gmake -f CMakeFiles/cmTC_d2f70.dir/build.make CMakeFiles/cmTC_d2f70.dir/build
+gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[2]: Warning: File 'CMakeFiles/cmTC_d2f70.dir/flags.make' has modification time 0.1 s in the future
+Building CXX object CMakeFiles/cmTC_d2f70.dir/feature_tests.cxx.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++    -std=c++2a -o CMakeFiles/cmTC_d2f70.dir/feature_tests.cxx.o -c /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_d2f70
+/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d2f70.dir/link.txt --verbose=1
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++       -rdynamic CMakeFiles/cmTC_d2f70.dir/feature_tests.cxx.o  -o cmTC_d2f70 
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[1]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [-std=c++17] compiler features compiled with the following output:
+Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_6527e/fast 
+gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: Warning: File 'Makefile' has modification time 0.095 s in the future
+/usr/bin/gmake -f CMakeFiles/cmTC_6527e.dir/build.make CMakeFiles/cmTC_6527e.dir/build
+gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[2]: Warning: File 'CMakeFiles/cmTC_6527e.dir/flags.make' has modification time 0.061 s in the future
+Building CXX object CMakeFiles/cmTC_6527e.dir/feature_tests.cxx.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++    -std=c++17 -o CMakeFiles/cmTC_6527e.dir/feature_tests.cxx.o -c /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_6527e
+/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6527e.dir/link.txt --verbose=1
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++       -rdynamic CMakeFiles/cmTC_6527e.dir/feature_tests.cxx.o  -o cmTC_6527e 
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[1]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [-std=c++14] compiler features compiled with the following output:
+Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_a4f69/fast 
+gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: Warning: File 'Makefile' has modification time 0.093 s in the future
+/usr/bin/gmake -f CMakeFiles/cmTC_a4f69.dir/build.make CMakeFiles/cmTC_a4f69.dir/build
+gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[2]: Warning: File 'CMakeFiles/cmTC_a4f69.dir/progress.make' has modification time 0.17 s in the future
+Building CXX object CMakeFiles/cmTC_a4f69.dir/feature_tests.cxx.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++    -std=c++14 -o CMakeFiles/cmTC_a4f69.dir/feature_tests.cxx.o -c /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_a4f69
+/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a4f69.dir/link.txt --verbose=1
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++       -rdynamic CMakeFiles/cmTC_a4f69.dir/feature_tests.cxx.o  -o cmTC_a4f69 
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[1]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [-std=c++11] compiler features compiled with the following output:
+Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_1dd16/fast 
+gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: Warning: File 'Makefile' has modification time 0.1 s in the future
+/usr/bin/gmake -f CMakeFiles/cmTC_1dd16.dir/build.make CMakeFiles/cmTC_1dd16.dir/build
+gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[2]: Warning: File 'CMakeFiles/cmTC_1dd16.dir/flags.make' has modification time 0.088 s in the future
+Building CXX object CMakeFiles/cmTC_1dd16.dir/feature_tests.cxx.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++    -std=c++11 -o CMakeFiles/cmTC_1dd16.dir/feature_tests.cxx.o -c /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_1dd16
+/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1dd16.dir/link.txt --verbose=1
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++       -rdynamic CMakeFiles/cmTC_1dd16.dir/feature_tests.cxx.o  -o cmTC_1dd16 
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[1]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:0cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:0cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:0cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:0cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:0cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:0cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:0cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:0cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:0cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:0cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:0cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [-std=c++98] compiler features compiled with the following output:
+Change Dir: /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_e0252/fast 
+gmake[1]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: Warning: File 'Makefile' has modification time 0.11 s in the future
+/usr/bin/gmake -f CMakeFiles/cmTC_e0252.dir/build.make CMakeFiles/cmTC_e0252.dir/build
+gmake[2]: Entering directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[2]: Warning: File 'CMakeFiles/cmTC_e0252.dir/flags.make' has modification time 0.096 s in the future
+Building CXX object CMakeFiles/cmTC_e0252.dir/feature_tests.cxx.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++    -std=c++98 -o CMakeFiles/cmTC_e0252.dir/feature_tests.cxx.o -c /home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_e0252
+/sto2/sw/tools/cmake/3.14.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e0252.dir/link.txt --verbose=1
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/c++       -rdynamic CMakeFiles/cmTC_e0252.dir/feature_tests.cxx.o  -o cmTC_e0252 
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+gmake[1]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[1]: Leaving directory '/sto2/home/jm17923/acrc_internship/summer20/iqtree/IQ-TREE/neon_test_build/neon_test_build/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:0cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:0cxx_alias_templates
+    Feature record: CXX_FEATURE:0cxx_alignas
+    Feature record: CXX_FEATURE:0cxx_alignof
+    Feature record: CXX_FEATURE:0cxx_attributes
+    Feature record: CXX_FEATURE:0cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:0cxx_auto_type
+    Feature record: CXX_FEATURE:0cxx_binary_literals
+    Feature record: CXX_FEATURE:0cxx_constexpr
+    Feature record: CXX_FEATURE:0cxx_contextual_conversions
+    Feature record: CXX_FEATURE:0cxx_decltype
+    Feature record: CXX_FEATURE:0cxx_decltype_auto
+    Feature record: CXX_FEATURE:0cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:0cxx_default_function_template_args
+    Feature record: CXX_FEATURE:0cxx_defaulted_functions
+    Feature record: CXX_FEATURE:0cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:0cxx_delegating_constructors
+    Feature record: CXX_FEATURE:0cxx_deleted_functions
+    Feature record: CXX_FEATURE:0cxx_digit_separators
+    Feature record: CXX_FEATURE:0cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:0cxx_explicit_conversions
+    Feature record: CXX_FEATURE:0cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:0cxx_extern_templates
+    Feature record: CXX_FEATURE:0cxx_final
+    Feature record: CXX_FEATURE:0cxx_func_identifier
+    Feature record: CXX_FEATURE:0cxx_generalized_initializers
+    Feature record: CXX_FEATURE:0cxx_generic_lambdas
+    Feature record: CXX_FEATURE:0cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:0cxx_inline_namespaces
+    Feature record: CXX_FEATURE:0cxx_lambdas
+    Feature record: CXX_FEATURE:0cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:0cxx_local_type_template_args
+    Feature record: CXX_FEATURE:0cxx_long_long_type
+    Feature record: CXX_FEATURE:0cxx_noexcept
+    Feature record: CXX_FEATURE:0cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:0cxx_nullptr
+    Feature record: CXX_FEATURE:0cxx_override
+    Feature record: CXX_FEATURE:0cxx_range_for
+    Feature record: CXX_FEATURE:0cxx_raw_string_literals
+    Feature record: CXX_FEATURE:0cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:0cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:0cxx_return_type_deduction
+    Feature record: CXX_FEATURE:0cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:0cxx_rvalue_references
+    Feature record: CXX_FEATURE:0cxx_sizeof_member
+    Feature record: CXX_FEATURE:0cxx_static_assert
+    Feature record: CXX_FEATURE:0cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:0cxx_thread_local
+    Feature record: CXX_FEATURE:0cxx_trailing_return_types
+    Feature record: CXX_FEATURE:0cxx_unicode_literals
+    Feature record: CXX_FEATURE:0cxx_uniform_initialization
+    Feature record: CXX_FEATURE:0cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:0cxx_user_literals
+    Feature record: CXX_FEATURE:0cxx_variable_templates
+    Feature record: CXX_FEATURE:0cxx_variadic_macros
+    Feature record: CXX_FEATURE:0cxx_variadic_templates

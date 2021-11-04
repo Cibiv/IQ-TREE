@@ -22,7 +22,7 @@
 #include <string.h>
 #include "modelliemarkov.h"
 #include "modelunrest.h"
-#include <Eigen/Eigenvalues>
+#include <eigen/Eigen/Eigenvalues>
 using namespace Eigen;
 
 

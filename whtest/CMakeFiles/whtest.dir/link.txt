@@ -1,0 +1,2 @@
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/ar qc libwhtest.a  CMakeFiles/whtest.dir/eigen.c.o CMakeFiles/whtest.dir/eigen_sym.c.o CMakeFiles/whtest.dir/random.c.o CMakeFiles/whtest.dir/weisslambda.c.o CMakeFiles/whtest.dir/weisslambda_sub.c.o CMakeFiles/whtest.dir/whtest.c.o CMakeFiles/whtest.dir/whtest_sub.c.o CMakeFiles/whtest.dir/whtest_wrapper.cpp.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/ranlib libwhtest.a

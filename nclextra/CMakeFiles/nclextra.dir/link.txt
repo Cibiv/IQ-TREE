@@ -1,0 +1,2 @@
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/ar qc libnclextra.a  CMakeFiles/nclextra.dir/mpdablock.cpp.o CMakeFiles/nclextra.dir/msetsblock.cpp.o CMakeFiles/nclextra.dir/msplitsblock.cpp.o CMakeFiles/nclextra.dir/modelsblock.cpp.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/ranlib libnclextra.a

@@ -1,0 +1,2 @@
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/ar qc libutils.a  CMakeFiles/utils.dir/eigendecomposition.cpp.o CMakeFiles/utils.dir/gzstream.cpp.o CMakeFiles/utils.dir/optimization.cpp.o CMakeFiles/utils.dir/stoprule.cpp.o CMakeFiles/utils.dir/tools.cpp.o CMakeFiles/utils.dir/pllnni.cpp.o CMakeFiles/utils.dir/checkpoint.cpp.o CMakeFiles/utils.dir/MPIHelper.cpp.o
+/home/jm17923/Software/arm/compiler/20.2/gcc-9.3.0_Generic-AArch64_SLES-12_aarch64-linux/bin/ranlib libutils.a

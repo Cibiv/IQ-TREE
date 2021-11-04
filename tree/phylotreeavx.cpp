@@ -20,8 +20,10 @@
 #include "phylokernelnew.h"
 #include "phylokernelnonrev.h"
 
-#ifndef __AVX__
+#ifndef __AVX__ 
+#if !defined(__ARM_NEON)
 #error "You must compile this file with AVX enabled!"
+#endif
 #endif
 
 void PhyloTree::setParsimonyKernelAVX() {
